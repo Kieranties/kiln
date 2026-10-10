@@ -140,15 +140,15 @@
     {
       "id": "multi_hop-2",
       "category": "multi_hop",
-      "question": "Which club was hit by the stale seat map in September, and who is their head of digital and our account manager there?",
+      "question": "What short-term fix did we ship for seats showing as free when they had already sold, and who is the head of digital at the club that was hit, so I can let them know?",
       "primary": [
         "work/2026/Seat map shows sold seats as available.md",
         "anchors/organisation/Harbour Athletic.md"
       ],
       "secondary": [
         "sources/jira/2026-09-16 NWA-352 Seat map shows sold seats as available.md",
-        "anchors/person/Kwame Mensah.md",
-        "anchors/person/Ellie Thornbury.md"
+        "decisions/2026/2026-02-18 Cache the seat map for 60 seconds.md",
+        "anchors/person/Kwame Mensah.md"
       ]
     },
     {
