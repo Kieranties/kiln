@@ -86,6 +86,9 @@ export function initBase(path: string, name: string, cfgPath: string = configPat
   if (!NAME_PATTERN.test(name)) {
     throw new KilnError('validation', `Invalid base name "${name}": use letters, digits, "_" and "-"`);
   }
+  if (name.toLowerCase() === 'all') {
+    throw new KilnError('validation', 'The base name "all" is reserved (it selects every base in search)');
+  }
   const abs = resolve(path);
 
   // Check the config first so a conflict changes nothing on disk.

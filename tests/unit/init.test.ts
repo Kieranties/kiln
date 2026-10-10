@@ -187,7 +187,7 @@ describe('initBase', () => {
     expect(loadConfig(cfgPath).bases).toHaveLength(1);
   });
 
-  it.each(['', 'has space', 'a/b', 'bad.name'])('rejects invalid name %j', (name) => {
+  it.each(['', 'has space', 'a/b', 'bad.name', 'all', 'ALL', 'All'])('rejects invalid or reserved name %j', (name) => {
     expect(() => initBase(basePath, name, cfgPath)).toThrowError(expect.objectContaining({ code: 'validation' }));
     expect(existsSync(basePath)).toBe(false);
   });

@@ -1,27 +1,156 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { startMcpServer } from './mcp/server.js';
+import { loadConfig, resolveBase } from './config.js';
+import { KilnError, type Base } from './types.js';
 
-const USAGE = 'Usage: kiln mcp    Start the MCP stdio server\n';
+// Index-backed modules are imported lazily: loading node:sqlite prints an ExperimentalWarning to stderr, which the
+// no-base paths (`init` aside) and `--line` hooks should not emit.
 
-function usage(): void {
-  process.stderr.write(USAGE);
-  process.exitCode = 2;
+const USAGE = `Usage:
+  kiln mcp                                     Start the MCP stdio server
+  kiln init <path> --name <base>               Create a base and register it
+  kiln validate [--base <name>]                Print findings; exit 1 on schema errors
+  kiln reindex [--base <name>]                 Rebuild the index and print its stats
+  kiln status [--line] [--cwd <dir>] [--base <name>]
+                                               Print the base's inbox and review counts
+`;
+
+/** A bad command line: reported with usage, exit code 2. */
+class UsageError extends Error {}
+
+type Parsed = { values: Record<string, string | boolean | undefined>; positionals: string[] };
+
+function parse(args: string[], options: Record<string, { type: 'string' | 'boolean' }>, positionals: number): Parsed {
+  let parsed: Parsed;
+  try {
+    parsed = parseArgs({ args, options, allowPositionals: true, strict: true }) as Parsed;
+  } catch (e) {
+    throw new UsageError((e as Error).message);
+  }
+  if (parsed.positionals.length !== positionals) {
+    throw new UsageError(
+      positionals === 0
+        ? `Unexpected argument "${parsed.positionals[0]}"`
+        : `Expected ${positionals} argument${positionals === 1 ? '' : 's'}, got ${parsed.positionals.length}`,
+    );
+  }
+  return parsed;
 }
+
+const str = (v: string | boolean | undefined): string | undefined => (typeof v === 'string' ? v : undefined);
+
+async function withIndex<T>(base: Base, fn: (index: import('./index/db.js').Index) => T): Promise<T> {
+  const { Index } = await import('./index/db.js');
+  const index = Index.open(base);
+  try {
+    return fn(index);
+  } finally {
+    index.close();
+  }
+}
+
+function print(text: string): void {
+  process.stdout.write(`${text}\n`);
+}
+
+async function cmdMcp(args: string[]): Promise<void> {
+  parse(args, {}, 0);
+  const { startMcpServer } = await import('./mcp/server.js');
+  await startMcpServer({ cwd: process.env.CLAUDE_PROJECT_DIR || process.cwd() });
+}
+
+async function cmdInit(args: string[]): Promise<void> {
+  const { positionals, values } = parse(args, { name: { type: 'string' } }, 1);
+  const name = str(values.name);
+  if (name === undefined) throw new UsageError('Missing required option --name');
+  const { initBase } = await import('./init.js');
+  const base = initBase(positionals[0]!, name);
+  print(JSON.stringify({ name: base.name, path: base.path }));
+}
+
+async function cmdValidate(args: string[]): Promise<void> {
+  const { values } = parse(args, { base: { type: 'string' } }, 0);
+  const base = resolveBase(loadConfig(), { explicit: str(values.base), cwd: process.cwd() });
+  const { validateBase } = await import('./validate.js');
+  const findings = await withIndex(base, (index) => {
+    index.reconcile();
+    return validateBase(index);
+  });
+  const counts = new Map<string, number>();
+  for (const f of findings) {
+    print(`${f.kind}\t${f.path}\t${f.message.replace(/\s*[\r\n]+\s*/g, ' ')}`);
+    counts.set(f.kind, (counts.get(f.kind) ?? 0) + 1);
+  }
+  const perKind = [...counts].map(([kind, n]) => `${kind} ${n}`).join(', ');
+  print(`${findings.length} findings${perKind === '' ? '' : `: ${perKind}`}`);
+  if (counts.has('schema')) process.exitCode = 1;
+}
+
+async function cmdReindex(args: string[]): Promise<void> {
+  const { values } = parse(args, { base: { type: 'string' } }, 0);
+  const base = resolveBase(loadConfig(), { explicit: str(values.base), cwd: process.cwd() });
+  const stats = await withIndex(base, (index) => index.reconcile({ force: true }));
+  print(JSON.stringify(stats));
+}
+
+async function cmdStatus(args: string[]): Promise<void> {
+  const { values } = parse(args, { line: { type: 'boolean' }, cwd: { type: 'string' }, base: { type: 'string' } }, 0);
+  const cwd = str(values.cwd) ?? process.cwd();
+  let base: Base;
+  try {
+    base = resolveBase(loadConfig(), { explicit: str(values.base), cwd });
+  } catch (e) {
+    if (e instanceof KilnError && e.code === 'no_base') return; // nothing to orient on: stay silent
+    throw e;
+  }
+  const status = await withIndex(base, (index) => {
+    index.ensureFresh();
+    return index.status();
+  });
+  if (values.line === true) {
+    print(`kiln: base=${status.base} · inbox ${status.inbox} · needs review ${status.needsReview}`);
+  } else {
+    print(
+      JSON.stringify({
+        base: status.base,
+        path: base.path,
+        cwd,
+        notes: status.notes,
+        inbox: status.inbox,
+        needsReview: status.needsReview,
+      }),
+    );
+  }
+}
+
+const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
+  mcp: cmdMcp,
+  init: cmdInit,
+  validate: cmdValidate,
+  reindex: cmdReindex,
+  status: cmdStatus,
+};
 
 async function main(argv: string[]): Promise<void> {
-  let positionals: string[];
-  try {
-    ({ positionals } = parseArgs({ args: argv, allowPositionals: true, options: {} }));
-  } catch {
-    return usage();
+  const [command, ...rest] = argv;
+  const run = command !== undefined && Object.hasOwn(COMMANDS, command) ? COMMANDS[command] : undefined;
+  if (!run) {
+    throw new UsageError(command === undefined ? 'Missing command' : `Unknown command "${command}"`);
   }
-  const [command, ...rest] = positionals;
-  if (command === 'mcp' && rest.length === 0) {
-    await startMcpServer({ cwd: process.env.CLAUDE_PROJECT_DIR ?? process.cwd() });
-    return;
-  }
-  usage();
+  await run(rest);
 }
 
-await main(process.argv.slice(2));
+try {
+  await main(process.argv.slice(2));
+} catch (e) {
+  if (e instanceof UsageError) {
+    process.stderr.write(`${e.message}\n${USAGE}`);
+    process.exitCode = 2;
+  } else if (e instanceof KilnError) {
+    process.stderr.write(`${e.code}: ${e.message}\n`);
+    process.exitCode = 1;
+  } else {
+    process.stderr.write(`${e instanceof Error ? e.message : String(e)}\n`);
+    process.exitCode = 1;
+  }
+}
