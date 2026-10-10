@@ -43,7 +43,7 @@ async function withIndex<T>(base: Base, fn: (index: import('./index/db.js').Inde
   const { Index } = await import('./index/db.js');
   const index = Index.open(base);
   try {
-    return fn(index);
+    return await fn(index);
   } finally {
     index.close();
   }
@@ -100,7 +100,8 @@ async function cmdStatus(args: string[]): Promise<void> {
   try {
     base = resolveBase(loadConfig(), { explicit: str(values.base), cwd });
   } catch (e) {
-    if (e instanceof KilnError && e.code === 'no_base') return; // nothing to orient on: stay silent
+    // Nothing to orient on: stay silent. An explicit --base that does not exist is a real error.
+    if (e instanceof KilnError && e.code === 'no_base' && str(values.base) === undefined) return;
     throw e;
   }
   const status = await withIndex(base, (index) => {

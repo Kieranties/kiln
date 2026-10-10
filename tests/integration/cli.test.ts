@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -31,15 +31,13 @@ function writeNote(base: string, rel: string, lines: string[]): void {
 }
 
 beforeAll(() => {
-  // A shell is needed to run npm (npm.cmd) on Windows.
-  execFileSync('npm run build', { cwd: REPO, shell: true, stdio: 'pipe' });
-  if (!existsSync(CLI)) throw new Error(`${CLI} is missing after "npm run build"`);
+  if (!existsSync(CLI)) throw new Error(`${CLI} is missing; the vitest globalSetup should have built it`);
   root = mkdtempSync(join(tmpdir(), 'kiln-cli-'));
   cfgPath = join(root, 'config.yaml');
 });
 
 afterAll(() => {
-  rmSync(root, { recursive: true, force: true });
+  if (root) rmSync(root, { recursive: true, force: true });
 });
 
 describe('kiln CLI', () => {
@@ -140,6 +138,12 @@ describe('kiln CLI', () => {
     expect(r.code).toBe(1);
     expect(r.stderr).toMatch(/^validation: /);
     expect(existsSync(target)).toBe(false);
+  });
+
+  it('status reports an explicit unknown base as no_base and exits 1', () => {
+    const r = kiln(['status', '--line', '--base', 'no-such-base']);
+    expect(r.code).toBe(1);
+    expect(r.stderr).toMatch(/^no_base: /);
   });
 
   it('prints a KilnError as "<code>: <message>" and exits 1', () => {
