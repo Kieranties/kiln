@@ -107,7 +107,7 @@ review_reason: ""
 Type-specific fields:
 - **decision:** `decided_on`, `supersedes`, `superseded_by`, `project`
 - **work:** `project`, `ticket`, `last_checkpoint`
-- **source:** `source_id`, `dedupe_key`, `url`, `captured_at`, `captured_by` (manual or watcher; only manual exists in v1), `why`, `linked_to`
+- **source:** `source_id`, `dedupe_key`, `url`, `captured_at`, `captured_by` (manual or watcher; only manual exists in v1), `why`, `linked_to`, `triage_outcome` (the outcome triage chose, kept for history and scoring)
 
 **Body sections** are fixed headings, so edits can target a single section:
 - **anchor:** Summary (dated current truth) · Facts · Known issues · Decisions · Open work
