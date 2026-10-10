@@ -236,7 +236,7 @@ function register(server: McpServer, bases: Bases): void {
   server.registerTool(
     'capture',
     {
-      description: `Capture text or an external item into the inbox as a source note. kind is one of: ${KINDS.source.join(', ')}. With source_id, capturing the same kind and source_id again refreshes that source instead of duplicating it.`,
+      description: `Capture text or an external item into the inbox as a source note. kind is one of: ${KINDS.source.join(', ')}. With source_id, capturing the same kind and source_id again refreshes that source instead of duplicating it; when the content changed, the refreshed source returns to the inbox.`,
       inputSchema: {
         kind: z.string(),
         title: z.string(),

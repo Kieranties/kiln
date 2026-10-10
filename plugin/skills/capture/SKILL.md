@@ -32,13 +32,13 @@ Put something into the kiln inbox as a `source` note, so `triage` can file it la
    - `title`: short and findable. Lead with the key where there is one: `NWA-142 Turnstiles reject mobile tickets at North Stand`.
    - `content`: **the relevant extract, not the whole history.** Keep the description, the decisions, the current state, open questions and who owns what. Drop bot noise, reactions, signatures and repeated quoted replies. Quote decisions and commitments verbatim. Markdown.
    - `url`: the link to the item, when there is one.
-   - `source_id`: the item's key in its system (table above). Capturing the same `kind` + `source_id` again refreshes that source instead of duplicating it, so re-capture freely when an item has moved on.
+   - `source_id`: the item's key in its system (table above). Capturing the same `kind` + `source_id` again refreshes that source instead of duplicating it, so re-capture freely when an item has moved on. When the content changed, the refreshed source returns to the inbox (`triage: pending`) even if it was triaged before, keeping its earlier outcome and `linked_to` as history.
    - `why`: one line on why this is worth keeping, from the user's words where they gave a reason.
    - `base`: only if the user named a base; otherwise the session's base is used.
 
 4. **Confirm briefly**: the title and path from the result, and whether it was new or a refresh (`created`).
 
-5. **Offer to triage immediately**: "Captured. Triage it now?" If yes, follow the `triage` skill for this item.
+5. **Offer to triage immediately**: "Captured. Triage it now?" If yes, follow the `triage` skill for this item. For a refresh with new content, say it is back in the inbox and offer the same: "Refreshed; it is back in the inbox. Triage the update now?"
 
 ## Example
 

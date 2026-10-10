@@ -128,8 +128,9 @@ export class Store {
 
   /**
    * Capture a source into the inbox; a new source gets an `id`. With a `sourceId`, `dedupe_key` is `kind:sourceId`,
-   * and a repeat capture of the same key replaces the existing source's body and bumps `captured_at` and `updated`,
-   * leaving everything else (id and triage included) as it is.
+   * and a repeat capture of the same key replaces the existing source's body and bumps `captured_at` and `updated`.
+   * When the body changed, `triage` returns to `pending` (`triage_outcome` and `linked_to` stay as history); the id and
+   * everything else stay as they are.
    */
   capture(i: CaptureInput): WriteResult {
     this.index.ensureFresh();
@@ -358,7 +359,10 @@ export class Store {
     return row?.path;
   }
 
-  /** Replace a captured source's body (in the file's EOL) and bump `captured_at` and `updated`. */
+  /**
+   * Replace a captured source's body (in the file's EOL) and bump `captured_at` and `updated`; a changed body also sets
+   * `triage: pending`.
+   */
   #recapture(rel: string, key: string, content: string, today: string, capturedAt: string): WriteResult {
     const text = this.#read(rel);
     const split = splitNote(text);
@@ -372,9 +376,13 @@ export class Store {
     let head = text.slice(0, text.length - split.body.length);
     // A file that ends at the closing fence with no EOL: start the body on a line of its own.
     if (!head.endsWith('\n')) head += split.eol;
-    const replaced = head + content.replace(/\r?\n/g, split.eol);
+    const body = content.replace(/\r?\n/g, split.eol);
+    const replaced = head + body;
+    const set: Fields = { captured_at: capturedAt, updated: today };
+    // New content means the item moved on: back to the inbox. triage_outcome and linked_to stay as history.
+    if (body !== split.body && fields.triage !== 'pending') set.triage = 'pending';
     const id = typeof fields.id === 'string' && fields.id !== '' ? fields.id : null;
-    return this.#write(rel, patchFields(replaced, { captured_at: capturedAt, updated: today }), id, false);
+    return this.#write(rel, patchFields(replaced, set), id, false);
   }
 
   /** The revision-guarded update path shared by updateNote and markSource: plan, then write, under one lock. */

@@ -132,10 +132,10 @@ describe('capture', () => {
     expect(b.path).toBe('sources/note/2026-10-10 Gate idea (2).md');
   });
 
-  it('capturing the same kind+sourceId updates the existing source', () => {
+  it('capturing the same kind+sourceId updates the existing source and returns it to the inbox', () => {
     const s = store();
     const first = s.capture({ kind: 'jira', title: 'NWA-42 Turnstile outage', content: 'Status: open\n', sourceId: 'NWA-42' });
-    s.markSource({ idOrPath: first.path, ifRevision: first.revision, triage: 'dismissed', outcome: 'dismiss' });
+    s.markSource({ idOrPath: first.path, ifRevision: first.revision, triage: 'linked', outcome: 'update-work-item', linkedTo: ['[[Fix turnstile firmware]]'] });
 
     clock = new Date('2026-10-12T12:00:00.000Z');
     const again = s.capture({ kind: 'jira', title: 'NWA-42 renamed upstream', content: 'Status: resolved\nFixed by firmware 4.2.\n', sourceId: 'NWA-42' });
@@ -150,11 +150,28 @@ describe('capture', () => {
     expect(f.updated).toBe('2026-10-12');
     expect(f.created).toBe('2026-10-10');
     expect(f.title).toBe('NWA-42 Turnstile outage');
-    expect(f.triage).toBe('dismissed');
-    expect(f.triage_outcome).toBe('dismiss');
+    // The body changed, so the source is back in the inbox; the earlier outcome and links stay as history.
+    expect(f.triage).toBe('pending');
+    expect(f.triage_outcome).toBe('update-work-item');
+    expect(f.linked_to).toEqual(['[[Fix turnstile firmware]]']);
+    expect(ix.inbox().map((n) => n.path)).toEqual([again.path]);
     expect(splitNote(read(again.path)).body).toBe('Status: resolved\nFixed by firmware 4.2.\n');
     expect(again.revision).toBe(rev(again.path));
     expect(ix.get(again.path).revision).toBe(again.revision);
+  });
+
+  it('a repeat capture with an identical body leaves triage alone', () => {
+    const s = store();
+    const first = s.capture({ kind: 'jira', title: 'NWA-42 Turnstile outage', content: 'Status: open\n', sourceId: 'NWA-42' });
+    s.markSource({ idOrPath: first.path, ifRevision: first.revision, triage: 'dismissed', outcome: 'dismiss' });
+
+    clock = new Date('2026-10-12T12:00:00.000Z');
+    const again = s.capture({ kind: 'jira', title: 'NWA-42 Turnstile outage', content: 'Status: open\n', sourceId: 'NWA-42' });
+
+    expect(again.created).toBe(false);
+    const f = fieldsOf(again.path);
+    expect(f).toMatchObject({ triage: 'dismissed', triage_outcome: 'dismiss', captured_at: '2026-10-12T12:00:00.000Z', updated: '2026-10-12' });
+    expect(ix.inbox()).toEqual([]);
   });
 
   it('a repeat capture into a CRLF source writes the new content with CRLF', () => {
@@ -186,7 +203,8 @@ describe('capture', () => {
     expect(split.body).toBe('Merged into main.\n');
     expect(parseFields(split.fmText)).toMatchObject({
       type: 'source',
-      triage: 'linked',
+      // The body went from empty to new content, so the source returns to the inbox.
+      triage: 'pending',
       dedupe_key: 'github:PR-7',
       captured_at: '2026-10-10T12:00:00.000Z',
       updated: '2026-10-10',
