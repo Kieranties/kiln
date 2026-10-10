@@ -46,7 +46,7 @@ export function resolveBase(cfg: KilnConfig, opts: { explicit?: string; cwd: str
   if (opts.explicit) return findBase(cfg, opts.explicit);
   const cwd = normalise(opts.cwd);
   for (const rule of cfg.rules) {
-    if (picomatch(normalise(rule.path), { nocase: isWin })(cwd)) return findBase(cfg, rule.base);
+    if (picomatch(normalise(rule.path), { nocase: isWin, dot: true })(cwd)) return findBase(cfg, rule.base);
   }
   if (cfg.default_base) return findBase(cfg, cfg.default_base);
   throw new KilnError('no_base', `No base matches "${opts.cwd}" and no default_base is configured`);

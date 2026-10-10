@@ -31,6 +31,11 @@ describe('resolveBase', () => {
     expect(resolveBase(cfg, { cwd: win('z:/WORK/repo') }).name).toBe('work');
   });
 
+  it('rules match cwd under dot-directories', () => {
+    const c: KilnConfig = { bases: [work], rules: [{ path: 'D:/src/kiln/**', base: 'work' }] };
+    expect(resolveBase(c, { cwd: 'D:/src/kiln/.claude/worktrees/x' }).name).toBe('work');
+  });
+
   it('falls back to default_base', () => {
     const c: KilnConfig = { ...cfg, rules: [], default_base: 'other' };
     expect(resolveBase(c, { cwd: win('Z:/elsewhere') }).name).toBe('other');
