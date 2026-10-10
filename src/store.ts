@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { parseFields, renderNote, splitNote } from './frontmatter.js';
 import type { Index } from './index/db.js';
 import type { NoteRef } from './index/read.js';
@@ -31,6 +31,14 @@ export type MarkSourceInput = {
   linkedTo?: string[];
 };
 
+export type SupersedeInput = {
+  oldIdOrPath: string;
+  ifRevision: string;
+  newDecision: { fields: Fields; sections: { heading: string; text: string }[] };
+};
+
+export type SupersedeResult = { created: WriteResult; superseded: WriteResult };
+
 export type StoreIo = { rename?: typeof renameSync; now?: () => Date };
 
 /** File-lock retries: 5 attempts, 100 ms apart. */
@@ -50,6 +58,12 @@ const KILN_OWNED = ['id', 'created'];
 export function pathKey(rel: string): string {
   const p = rel.replace(/\\/g, '/');
   return process.platform === 'win32' ? p.toLowerCase() : p;
+}
+
+/** A note's title as the index has it: the frontmatter `title` when non-empty, else the file name without `.md`. */
+function titleOf(fields: Fields, rel: string): string {
+  const t = fields.title;
+  return typeof t === 'string' && t.trim() !== '' ? t : basename(rel, '.md');
 }
 
 function sleepSync(ms: number): void {
@@ -191,6 +205,75 @@ export class Store {
         throw invalid([{ field: 'type', message: `only a source can be triaged; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call markSource on a source note' }]);
       }
     });
+  }
+
+  /**
+   * Replace a decision with a new one, under one lock. Checks `ifRevision` and that the old note is a decision, then
+   * creates the new decision (validated and duplicate-checked, the old decision aside) with `supersedes`,
+   * `review: needed` and `review_reason`, and patches the old one to `status: superseded` with `superseded_by`. If the
+   * patch fails, the new file is moved to `.kiln/trash/`, the index rolls back, and the original error is rethrown.
+   */
+  supersede(i: SupersedeInput): SupersedeResult {
+    this.index.ensureFresh();
+    return this.index.transaction(() => {
+      const rel = this.index.get(i.oldIdOrPath).path;
+      const bytes = this.#readBytes(rel);
+      const current = sha256(bytes);
+      if (current !== i.ifRevision) {
+        throw new KilnError('conflict', `"${rel}" has changed since revision ${i.ifRevision}; re-read it and redo the change`, {
+          reason: 'stale_revision',
+          current,
+        });
+      }
+      const oldFields = parseFields(splitNote(bytes.toString('utf8')).fmText);
+      if (oldFields.type !== 'decision') {
+        throw invalid([
+          { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(oldFields.type ?? null)}`, hint: 'call supersede on a decision note' },
+        ]);
+      }
+      const oldTitle = titleOf(oldFields, rel);
+
+      const created = this.#create(
+        {
+          type: 'decision',
+          fields: { ...i.newDecision.fields, supersedes: [`[[${oldTitle}]]`], review: 'needed', review_reason: `supersedes ${oldTitle}` },
+          sections: i.newDecision.sections,
+        },
+        new Set([rel]),
+      );
+      const newTitle = i.newDecision.fields.title as string;
+
+      try {
+        const superseded = this.#update({ idOrPath: rel, ifRevision: i.ifRevision, set: { status: 'superseded', superseded_by: [`[[${newTitle}]]`] } });
+        return { created, superseded };
+      } catch (e) {
+        this.#trash(created.path, e);
+        throw e;
+      }
+    });
+  }
+
+  /**
+   * Move a just-written file to `.kiln/trash/<timestamp>-<name>` (a rename, never a delete) while unwinding a failed
+   * write. A failed move is attached to `cause`'s `details` as `rollback` so the original error still surfaces.
+   */
+  #trash(rel: string, cause: unknown): void {
+    const stamp = this.#now().toISOString().replace(/[:.]/g, '-');
+    const name = basename(rel, '.md');
+    const dir = join(this.base.path, '.kiln', 'trash');
+    try {
+      mkdirSync(dir, { recursive: true });
+      let target = join(dir, `${stamp}-${name}.md`);
+      for (let n = 2; existsSync(target); n++) target = join(dir, `${stamp}-${name} (${n}).md`);
+      this.#rename(join(this.base.path, rel), target);
+    } catch (moveError) {
+      if (cause !== null && typeof cause === 'object') {
+        const prior = (cause as { details?: unknown }).details;
+        const details = prior !== null && typeof prior === 'object' ? prior : prior === undefined ? {} : { original: prior };
+        const message = moveError instanceof Error ? moveError.message : String(moveError);
+        Object.assign(cause, { details: { ...details, rollback: { path: rel, error: `could not move the new file to .kiln/trash: ${message}` } } });
+      }
+    }
   }
 
   /** createNote, with `excludePaths` left out of the duplicate check (supersede excludes the decision it replaces). */
