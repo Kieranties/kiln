@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, renameSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { KilnError, type Base } from '../types.js';
 import { IndexWriter, reconcileFiles, sha256, type FileStat, type ReconcileStats } from './reconcile.js';
@@ -134,7 +134,7 @@ export class Index {
    */
   static open(base: Base, opts: { now?: () => number } = {}): Index {
     const file = indexFile(base);
-    mkdirSync(join(file, '..'), { recursive: true });
+    mkdirSync(dirname(file), { recursive: true });
     const now = opts.now ?? Date.now;
     try {
       return Index.#openAt(base, file, now);
@@ -147,14 +147,13 @@ export class Index {
 
   /**
    * Whether the base's index file exists with the current schema version. Checked read-only, so unlike `open` it never
-   * creates or builds anything; SQLite errors (busy, corrupt) are thrown to the caller.
+   * creates or builds anything. It does not wait on a lock: SQLite errors (busy, corrupt) are thrown to the caller.
    */
   static isBuilt(base: Base): boolean {
     const file = indexFile(base);
     if (!existsSync(file)) return false;
     const db = new DatabaseSync(file, { readOnly: true });
     try {
-      db.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
       return schemaVersion(db) === SCHEMA_VERSION;
     } finally {
       db.close();
