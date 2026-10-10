@@ -164,6 +164,22 @@ Setup: the 189 raw notes and 219 distilled notes were mixed into the 100k synthe
 - The same model family wrote the scenario and the key, so the signals in the captures are probably cleaner than real life.
 - The full run once diffed a single original file (an isolation slip). It is unlikely to have mattered.
 
+## Follow-up B2: Obsidian on the 100k synthetic vault (manual, measured by the owner)
+
+| Test | Result |
+|---|---|
+| First index of the vault (cold) | just over 1 minute; all 100,000 files in the metadata cache |
+| Reopen the vault | a few seconds |
+| Bases view (`kiln-active-work.base`) | first render ~1 s; sorting by `updated` slightly slower |
+| Ctrl+Shift+F "renewal" | ~10 s, 214,530 matches (worst case: the term is in most synthetic notes) |
+
+**Finding:** Obsidian is a workable viewer at 100k notes on this machine. Its search is slow for very common terms, but kiln's own index serves search.
+
+**Layout implications:**
+- One vault per knowledge base.
+- Source snapshots may stay in the vault, optionally hidden from Obsidian search to keep it uncluttered.
+- No need to move high-volume material out of the vault.
+
 ## Implications (for discussion, not decided)
 
 1. **Build a small, purpose-built index:**
