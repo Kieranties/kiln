@@ -31,7 +31,7 @@ export function saveConfig(cfg: KilnConfig, path: string = configPath()): void {
 }
 
 /** Absolute, forward-slash path; lowercased on win32 so comparisons are case-insensitive. */
-function normalise(p: string): string {
+export function normalise(p: string): string {
   const s = resolve(p).replaceAll('\\', '/');
   return isWin ? s.toLowerCase() : s;
 }

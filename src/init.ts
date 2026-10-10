@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { configPath, loadConfig, saveConfig } from './config.js';
+import { configPath, loadConfig, normalise, saveConfig } from './config.js';
 import { KilnError, type Base } from './types.js';
 
 const FOLDERS = [
@@ -68,12 +68,6 @@ views:
 
 const NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
-/** Forward-slash path; lowercased on win32 so comparisons are case-insensitive. */
-function comparable(p: string): string {
-  const s = resolve(p).replaceAll('\\', '/');
-  return process.platform === 'win32' ? s.toLowerCase() : s;
-}
-
 /** Appends `line` unless an existing line equals it (trimmed). Creates the file if missing; keeps its EOL style. */
 function ensureLine(file: string, line: string): void {
   if (!existsSync(file)) {
@@ -97,8 +91,8 @@ export function initBase(path: string, name: string, cfgPath: string = configPat
   // Check the config first so a conflict changes nothing on disk.
   const cfg = loadConfig(cfgPath);
   const sameName = cfg.bases.find((b) => b.name === name);
-  const samePath = cfg.bases.find((b) => comparable(b.path) === comparable(abs));
-  if (sameName && comparable(sameName.path) !== comparable(abs)) {
+  const samePath = cfg.bases.find((b) => normalise(b.path) === normalise(abs));
+  if (sameName && normalise(sameName.path) !== normalise(abs)) {
     throw new KilnError('validation', `Base "${name}" is already registered at ${sameName.path}`, {
       name,
       registered: sameName.path,

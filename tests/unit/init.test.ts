@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { parse } from 'yaml';
 import { loadConfig, saveConfig } from '../../src/config.js';
 import { initBase } from '../../src/init.js';
@@ -149,9 +149,16 @@ describe('initBase', () => {
   });
 
   it('resolves a relative path to an absolute one', () => {
-    const base = initBase(join(tmp, 'x', '..', 'rel'), 'rel', cfgPath);
-    expect(base.path).toBe(join(tmp, 'rel'));
-    expect(existsSync(join(tmp, 'rel', 'views'))).toBe(true);
+    vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+    try {
+      const base = initBase(join('sub', 'rel'), 'rel', cfgPath);
+      expect(isAbsolute(base.path)).toBe(true);
+      expect(base.path).toBe(join(tmp, 'sub', 'rel'));
+      expect(existsSync(join(tmp, 'sub', 'rel', 'views'))).toBe(true);
+      expect(loadConfig(cfgPath).bases).toEqual([{ name: 'rel', path: join(tmp, 'sub', 'rel') }]);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it('rejects a name already registered at a different path, changing nothing', () => {
