@@ -120,8 +120,17 @@ describe('validateFields', () => {
     expectIssue(issuesFor({ ...valid(), title: '' }), 'title');
     expectIssue(issuesFor({ ...valid(), title: '   ' }), 'title');
     expectIssue(issuesFor({ ...valid(), title: 42 }), 'title');
+  });
+
+  it('requires title on Claude-written notes only', () => {
     const { title: _title, ...rest } = valid();
-    expectIssue(issuesFor(rest), 'title');
+    expectIssue(issuesFor(rest, true), 'title');
+    expect(issuesFor(rest, false)).toEqual([]);
+    expect(issuesFor({ type: 'work', status: 'active' })).toEqual([]);
+  });
+
+  it('still rejects a present but blank title when not Claude-written', () => {
+    expectIssue(issuesFor({ ...valid(), title: '' }, false), 'title');
   });
 
   it.each(['created', 'updated'])('%s must be an ISO date', (field) => {

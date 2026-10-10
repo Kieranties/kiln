@@ -130,8 +130,10 @@ export function validateFields(fields: Fields, opts: { claudeWritten: boolean })
   if (KINDS[noteType].length > 0) checkEnum('kind', KINDS[noteType]);
   if (STATUSES[noteType].length > 0) checkEnum('status', STATUSES[noteType]);
 
+  // Hand-written notes may omit `title` (the indexer falls back to the filename), so it is
+  // required only on Claude-written notes; when present it must always be a non-empty string.
   if (!isPresent(fields.title)) {
-    add('title', 'title is required', 'set title to a short non-empty string');
+    if (opts.claudeWritten) add('title', 'title is required on Claude-written notes', 'set title to a short non-empty string');
   } else if (!isString(fields.title) || fields.title.trim() === '') {
     add('title', 'title must be a non-empty string', 'set title to a short non-empty string');
   }
