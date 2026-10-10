@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Index } from '../../src/index/db.js';
 import { KilnError, type Base } from '../../src/types.js';
@@ -303,6 +304,71 @@ describe('Index reconcile', () => {
     expect(rows(ix, "select * from notes where path = 'ghost.md'")).toEqual([]);
     expect(count(ix, 'notes')).toBe(10);
     expect(ix.reconcile()).toMatchObject({ changed: 0, rebuilt: false });
+  });
+});
+
+describe('Index recovery', () => {
+  const indexDir = () => join(base.path, '.kiln', 'index');
+  const writeGarbage = () => {
+    mkdirSync(indexDir(), { recursive: true });
+    writeFileSync(join(indexDir(), 'kiln.sqlite'), 'this is not a sqlite database, it is Northwind Arena noise\n'.repeat(40));
+    writeFileSync(join(indexDir(), 'kiln.sqlite-wal'), 'stale wal\n');
+  };
+
+  it('a corrupt index file is set aside and rebuilt on open', () => {
+    writeTen();
+    writeGarbage();
+
+    const ix = openIndex();
+
+    expect(count(ix, 'notes')).toBe(10);
+    expect(ftsPaths(ix, 'Topic')).toHaveLength(10);
+    const names = readdirSync(indexDir());
+    const corrupt = names.filter((n) => n.startsWith('kiln.sqlite.corrupt-'));
+    expect(corrupt.some((n) => !n.endsWith('-wal') && !n.endsWith('-shm'))).toBe(true);
+    expect(ix.reconcile()).toMatchObject({ changed: 0, rebuilt: false });
+  });
+
+  it.runIf(process.platform === 'win32')('a corrupt index held open elsewhere raises busy', () => {
+    writeTen();
+    writeGarbage();
+    const holder = new DatabaseSync(join(indexDir(), 'kiln.sqlite'));
+    try {
+      let err: unknown;
+      try {
+        openIndex();
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(KilnError);
+      expect((err as KilnError).code).toBe('busy');
+      expect((err as KilnError).message).toMatch(/corrupt/);
+    } finally {
+      holder.close();
+    }
+  });
+
+  it('ensureFresh proceeds on the existing snapshot while another session holds the write lock', () => {
+    writeTen();
+    let now = 0;
+    const ix = openIndex({ now: () => now });
+    ix.db.exec('pragma busy_timeout = 50');
+    const other = new DatabaseSync(join(base.path, '.kiln', 'index', 'kiln.sqlite'));
+    write('notes/Late.md', 'late arrival\n');
+    now += 20_000;
+    other.exec('BEGIN IMMEDIATE');
+    try {
+      expect(() => ix.ensureFresh()).not.toThrow();
+      expect(count(ix, 'notes')).toBe(10);
+      expect(() => ix.reconcile()).toThrow(KilnError);
+    } finally {
+      other.exec('ROLLBACK');
+      other.close();
+    }
+
+    // The failed check did not count as a check, so the next call rescans without the clock moving.
+    ix.ensureFresh();
+    expect(count(ix, 'notes')).toBe(11);
   });
 });
 

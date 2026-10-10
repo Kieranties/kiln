@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { KilnError, type Base } from '../types.js';
@@ -73,6 +73,34 @@ function isBusy(e: unknown): boolean {
   return typeof code === 'number' && ((code & 0xff) === 5 || (code & 0xff) === 6);
 }
 
+/** SQLITE_CORRUPT (11) or SQLITE_NOTADB (26), including their extended codes. */
+function isCorrupt(e: unknown): boolean {
+  const code = (e as { errcode?: unknown }).errcode;
+  return typeof code === 'number' && ((code & 0xff) === 11 || (code & 0xff) === 26);
+}
+
+/**
+ * Rename a corrupt `kiln.sqlite` and its `-wal`/`-shm` to `kiln.sqlite.corrupt-<timestamp>[-wal|-shm]`.
+ * Raises `KilnError('busy')` when another process holds the files open.
+ */
+function setAside(file: string): void {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  for (const suffix of ['', '-wal', '-shm']) {
+    try {
+      renameSync(file + suffix, `${file}.corrupt-${stamp}${suffix}`);
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' && suffix !== '') continue;
+      if (code === 'EBUSY' || code === 'EPERM') {
+        throw new KilnError('busy', 'The kiln index is corrupt and is held open by another session; close it and try again', {
+          cause: e,
+        });
+      }
+      throw e;
+    }
+  }
+}
+
 /**
  * kiln's rebuildable SQLite index over one base, at `<base>/.kiln/index/kiln.sqlite` (WAL).
  * Every write runs inside `transaction()` (`BEGIN IMMEDIATE`), which is the cross-process write lock.
@@ -91,12 +119,27 @@ export class Index {
     this.#now = now;
   }
 
-  /** Open (creating if needed) the base's index. A missing or outdated schema is rebuilt from the files before returning. */
+  /**
+   * Open (creating if needed) the base's index. A missing or outdated schema is rebuilt from the files before returning.
+   * A corrupt index file is renamed aside (never deleted) and rebuilt; this is retried once only.
+   */
   static open(base: Base, opts: { now?: () => number } = {}): Index {
     const dir = join(base.path, '.kiln', 'index');
     mkdirSync(dir, { recursive: true });
-    const db = new DatabaseSync(join(dir, 'kiln.sqlite'));
-    const index = new Index(base, db, opts.now ?? Date.now);
+    const file = join(dir, 'kiln.sqlite');
+    const now = opts.now ?? Date.now;
+    try {
+      return Index.#openAt(base, file, now);
+    } catch (e) {
+      if (!isCorrupt(e)) throw e;
+      setAside(file);
+      return Index.#openAt(base, file, now);
+    }
+  }
+
+  static #openAt(base: Base, file: string, now: () => number): Index {
+    const db = new DatabaseSync(file);
+    const index = new Index(base, db, now);
     try {
       db.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
       db.exec('PRAGMA journal_mode = WAL');
@@ -155,9 +198,18 @@ export class Index {
     return { ...stats, ms: performance.now() - t0 };
   }
 
-  /** Reconcile when this process last checked more than `maxAgeMs` ago (or never). */
+  /**
+   * Reconcile when this process last checked more than `maxAgeMs` ago (or never). When another session holds the
+   * write lock past the busy timeout, carry on with the committed snapshot (WAL readers are not blocked) and leave
+   * the last-check time alone so the next call retries.
+   */
   ensureFresh(maxAgeMs = FRESH_MS): void {
-    if (this.#lastCheck === undefined || this.#now() - this.#lastCheck > maxAgeMs) this.reconcile();
+    if (this.#lastCheck !== undefined && this.#now() - this.#lastCheck <= maxAgeMs) return;
+    try {
+      this.reconcile();
+    } catch (e) {
+      if (!(e instanceof KilnError && e.code === 'busy')) throw e;
+    }
   }
 
   /** Index a note kiln has just written, from its text and the written file's stat. Joins the caller's transaction. */

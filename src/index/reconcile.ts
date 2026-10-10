@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { DatabaseSync, StatementSync } from 'node:sqlite';
 import { parseFields, splitNote } from '../frontmatter.js';
 import { extractLinks } from '../links.js';
-import type { Fields } from '../types.js';
+import { KilnError, type Fields } from '../types.js';
 
 export type ReconcileStats = {
   scanned: number;
@@ -135,7 +135,8 @@ export class IndexWriter {
     let fields: Fields;
     try {
       fields = parseFields(split.fmText);
-    } catch {
+    } catch (e) {
+      if (!(e instanceof KilnError && e.code === 'validation')) throw e;
       fields = {};
     }
     const id = typeof fields.id === 'string' && fields.id !== '' ? fields.id : null;
