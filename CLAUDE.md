@@ -30,7 +30,3 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 - Windows 11; Git Bash is the shell (use `/d/...` paths in Bash and `D:\...` in the file tools). Use `pwsh`, never `powershell`.
 - Node 24 (`node:sqlite`). TypeScript ESM, vitest.
 - **npm:** the user's global npm registry may be a private one. This repo's `.npmrc` must set `registry=https://registry.npmjs.org/`. If a global install is needed, pass `--userconfig` pointing at a clean npmrc.
-
-## Commits
-
-End commit messages with the attribution trailer given in the session's instructions. PR descriptions end with the Claude Code footer.
