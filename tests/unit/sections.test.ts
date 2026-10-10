@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderNote, splitNote } from '../../src/frontmatter.js';
-import { editSections } from '../../src/sections.js';
+import { editSections, readSection } from '../../src/sections.js';
 import { KilnError } from '../../src/types.js';
 
 const BOM = String.fromCharCode(0xfeff);
@@ -187,5 +187,15 @@ describe('editSections', () => {
     for (const heading of ['', '   ', 'a\nb']) {
       expect(() => editSections('## A\n', [{ heading, mode: 'append', text: 'x' }])).toThrow(KilnError);
     }
+  });
+});
+
+describe('readSection', () => {
+  it('returns a section by case-insensitive heading, ignoring fenced headings and trailing blank lines', () => {
+    const text = `${FM}\n## SUMMARY\nline 1\n\`\`\`\n## Not a heading\n\`\`\`\n### Child\nline 2\n\n\n## Facts\nf\n`;
+    expect(readSection(text, 'summary')).toBe('line 1\n```\n## Not a heading\n```\n### Child\nline 2\n');
+    expect(readSection(text, ' Facts ')).toBe('f\n');
+    expect(readSection(text, 'Missing')).toBeNull();
+    expect(readSection('## Empty\n', 'Empty')).toBe('');
   });
 });

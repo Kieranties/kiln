@@ -100,7 +100,7 @@ export class IndexWriter {
       'INSERT INTO notes(path, id, type, kind, title, status, triage, review, created, updated, fields_json) ' +
         'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     );
-    this.#insertLink = db.prepare('INSERT INTO links(src_path, target) VALUES (?, ?)');
+    this.#insertLink = db.prepare('INSERT INTO links(src_path, target, target_lc) VALUES (?, ?, ?)');
     this.#insertAlias = db.prepare('INSERT INTO aliases(name_lc, path) VALUES (?, ?)');
     this.#insertFts = db.prepare(
       'INSERT INTO fts(rowid, title, aliases, summary, keywords, body) VALUES (?, ?, ?, ?, ?, ?)',
@@ -157,7 +157,7 @@ export class IndexWriter {
       text(fields.updated),
       JSON.stringify(fields),
     );
-    for (const target of extractLinks(fields, split.body)) this.#insertLink.run(rel, target);
+    for (const target of extractLinks(fields, split.body)) this.#insertLink.run(rel, target, target.toLowerCase());
     for (const name of new Set([title, ...aliases].map((a) => a.toLowerCase()))) this.#insertAlias.run(name, rel);
     this.#insertFts.run(
       rowid,

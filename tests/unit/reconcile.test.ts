@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Index } from '../../src/index/db.js';
+import { Index, SCHEMA_VERSION } from '../../src/index/db.js';
 import { KilnError, type Base } from '../../src/types.js';
 
 let base: Base;
@@ -111,9 +111,9 @@ describe('Index reconcile', () => {
       { name_lc: 'manny' },
     ]);
     expect(rows(ix, "select name_lc from aliases where path = 'notes/scratch idea.md'")).toEqual([{ name_lc: 'scratch idea' }]);
-    expect(rows(ix, 'select src_path, target from links order by target')).toEqual([
-      { src_path: 'anchors/person/Emmanuel Park.md', target: 'Northwind Arena' },
-      { src_path: 'anchors/person/Emmanuel Park.md', target: 'Ticketing Platform' },
+    expect(rows(ix, 'select src_path, target, target_lc from links order by target')).toEqual([
+      { src_path: 'anchors/person/Emmanuel Park.md', target: 'Northwind Arena', target_lc: 'northwind arena' },
+      { src_path: 'anchors/person/Emmanuel Park.md', target: 'Ticketing Platform', target_lc: 'ticketing platform' },
     ]);
 
     expect(ftsPaths(ix, 'manny')).toEqual(['anchors/person/Emmanuel Park.md']);
@@ -300,7 +300,7 @@ describe('Index reconcile', () => {
     open.pop();
 
     const ix = openIndex();
-    expect((ix.db.prepare('pragma user_version').get() as { user_version: number }).user_version).toBe(1);
+    expect((ix.db.prepare('pragma user_version').get() as { user_version: number }).user_version).toBe(SCHEMA_VERSION);
     expect(rows(ix, "select * from notes where path = 'ghost.md'")).toEqual([]);
     expect(count(ix, 'notes')).toBe(10);
     expect(ix.reconcile()).toMatchObject({ changed: 0, rebuilt: false });

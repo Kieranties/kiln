@@ -65,6 +65,23 @@ function createSection(body: string, heading: string, text: string, eol: Eol, bl
   return terminated + (isBlank(last) ? '' : eol) + block;
 }
 
+/**
+ * The `## heading` section in `lines` (trimmed, case-insensitive): the heading line index, and the end of its content
+ * (exclusive), which stops before the next heading of level 2 or above and before the section's trailing blank lines.
+ */
+function locateSection(lines: Line[], heading: string): { start: number; contentEnd: number } | null {
+  const headings = scanHeadings(lines);
+  const target = heading.trim().toLowerCase();
+  const start = headings.findIndex((h) => h !== null && h.level === 2 && h.text.toLowerCase() === target);
+  if (start < 0) return null;
+  let end = start + 1;
+  while (end < lines.length && !(headings[end] !== null && headings[end]!.level <= 2)) end++;
+  // The section's trailing blank lines are the separator before the next heading; edits stay above them.
+  let contentEnd = end;
+  while (contentEnd > start + 1 && isBlank(lines[contentEnd - 1])) contentEnd--;
+  return { start, contentEnd };
+}
+
 function applyEdit(body: string, edit: SectionEdit, eol: Eol, blankAfterFence: boolean): string {
   const heading = edit.heading.trim();
   if (heading === '' || /[\r\n]/.test(heading)) {
@@ -72,17 +89,9 @@ function applyEdit(body: string, edit: SectionEdit, eol: Eol, blankAfterFence: b
   }
   const text = normalise(edit.text, eol);
   const lines = toLines(body);
-  const headings = scanHeadings(lines);
-  const target = heading.toLowerCase();
-  const start = headings.findIndex((h) => h !== null && h.level === 2 && h.text.toLowerCase() === target);
-
-  if (start < 0) return createSection(body, heading, text, eol, blankAfterFence);
-
-  let end = start + 1;
-  while (end < lines.length && !(headings[end] !== null && headings[end]!.level <= 2)) end++;
-  // The section's trailing blank lines are the separator before the next heading; edits stay above them.
-  let contentEnd = end;
-  while (contentEnd > start + 1 && isBlank(lines[contentEnd - 1])) contentEnd--;
+  const found = locateSection(lines, heading);
+  if (!found) return createSection(body, heading, text, eol, blankAfterFence);
+  const { start, contentEnd } = found;
 
   if (edit.mode === 'replace') {
     const headingLine = lines[start];
@@ -113,4 +122,14 @@ export function editSections(text: string, edits: SectionEdit[]): string {
   }
   for (const edit of edits) current = applyEdit(current, edit, eol, fmText !== null);
   return prefix + current;
+}
+
+/**
+ * The content of a note's `## heading` section, found by the same rules as `editSections`: without the heading line
+ * or the section's trailing blank lines. Null when the note has no such section.
+ */
+export function readSection(text: string, heading: string): string | null {
+  const lines = toLines(splitNote(text).body);
+  const found = locateSection(lines, heading);
+  return found ? join(lines.slice(found.start + 1, found.contentEnd)) : null;
 }

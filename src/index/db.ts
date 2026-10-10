@@ -3,11 +3,13 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { KilnError, type Base } from '../types.js';
 import { IndexWriter, reconcileFiles, sha256, type FileStat, type ReconcileStats } from './reconcile.js';
+import * as read from './read.js';
+import type { Brief, IndexStatus, NoteRecord, NoteRef, QueryFilter, ResolveResult, SearchHit, SearchParams } from './read.js';
 
 export type { ReconcileStats } from './reconcile.js';
 
 /** Bump when the DDL below changes; a mismatch drops, recreates and repopulates the tables in one transaction. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const BUSY_TIMEOUT_MS = 5_000;
 const FRESH_MS = 10_000;
@@ -39,11 +41,13 @@ CREATE TABLE notes (
 CREATE INDEX notes_id ON notes(id);
 CREATE INDEX notes_type_status ON notes(type, status);
 CREATE TABLE links (
-  src_path TEXT NOT NULL,
-  target   TEXT NOT NULL
+  src_path  TEXT NOT NULL,
+  target    TEXT NOT NULL,
+  target_lc TEXT NOT NULL
 );
 CREATE INDEX links_src ON links(src_path);
 CREATE INDEX links_target ON links(target);
+CREATE INDEX links_target_lc ON links(target_lc);
 CREATE TABLE aliases (
   name_lc TEXT NOT NULL,
   path    TEXT NOT NULL
@@ -218,6 +222,39 @@ export class Index {
     this.transaction(() =>
       this.#getWriter().upsert(rel.replace(/\\/g, '/'), text, sha256(bytes), { size: stat.size, mtimeMs: stat.mtimeMs }),
     );
+  }
+
+  /** Read API (see `read.ts`). None of these reconcile first; callers decide when to `ensureFresh`. */
+  search(p: SearchParams): SearchHit[] {
+    return read.search(this, p);
+  }
+
+  matchAnchors(text: string): string[] {
+    return read.matchAnchors(this, text);
+  }
+
+  resolve(name: string): ResolveResult {
+    return read.resolve(this, name);
+  }
+
+  query(f: QueryFilter): NoteRef[] {
+    return read.query(this, f);
+  }
+
+  brief(idOrPath: string): Brief {
+    return read.brief(this, idOrPath);
+  }
+
+  get(idOrPath: string): NoteRecord {
+    return read.get(this, idOrPath);
+  }
+
+  inbox(limit?: number): NoteRef[] {
+    return read.inbox(this, limit);
+  }
+
+  status(): IndexStatus {
+    return read.status(this);
   }
 
   close(): void {
