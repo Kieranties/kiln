@@ -87,12 +87,14 @@ const statements = new WeakMap<DatabaseSync, Map<string, StatementSync>>();
 
 /**
  * A prepared statement, cached per connection. The first call on a connection also registers `kiln_lower`, a
- * Unicode-aware `lower()` (SQLite's own folds ASCII only).
+ * Unicode-aware `lower()` (SQLite's own folds ASCII only), and `kiln_link_target`, which reads a `[[target|label]]`
+ * (or plain) value as its lowercased target.
  */
 function stmt(ix: Index, sql: string): StatementSync {
   let cache = statements.get(ix.db);
   if (!cache) {
     ix.db.function('kiln_lower', { deterministic: true }, (v) => (typeof v === 'string' ? v.toLowerCase() : v));
+    ix.db.function('kiln_link_target', { deterministic: true }, (v) => (typeof v === 'string' ? stripLink(v).toLowerCase() : v));
     cache = new Map();
     statements.set(ix.db, cache);
   }
@@ -388,7 +390,8 @@ export function brief(ix: Index, idOrPath: string): Brief {
 
 /**
  * Structured filters, newest `updated` first. `anchors` matches notes linking any of the anchors by any of their names
- * (an empty list does not filter); `project` matches the `project` field as `[[X]]` or `X`, case-insensitively.
+ * (an empty list does not filter); `project` matches a `project` field whose link target (`[[X]]`, `[[X|label]]` or
+ * plain `X`) is the given name or any name of the project it names (title, alias or file stem), case-insensitively.
  */
 export function query(ix: Index, f: QueryFilter): NoteRef[] {
   const where: string[] = [];
@@ -405,9 +408,8 @@ export function query(ix: Index, f: QueryFilter): NoteRef[] {
     params.push(JSON.stringify(scopeOf(ix, f.anchors).linkNames));
   }
   if (f.project !== undefined) {
-    const name = stripLink(f.project).toLowerCase();
-    where.push("kiln_lower(json_extract(n.fields_json, '$.project')) IN (?, ?)");
-    params.push(name, `[[${name}]]`);
+    where.push("kiln_link_target(json_extract(n.fields_json, '$.project')) IN (SELECT value FROM json_each(?))");
+    params.push(JSON.stringify(scopeOf(ix, [f.project]).linkNames));
   }
   if (f.review !== undefined) where.push(f.review ? "n.review = 'needed'" : 'n.review IS NULL');
   if (f.updatedAfter !== undefined) {

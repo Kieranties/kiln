@@ -3,6 +3,7 @@ import { basename, dirname, join } from 'node:path';
 import { parseFields, renderNote, splitNote } from './frontmatter.js';
 import type { Index } from './index/db.js';
 import type { NoteRef } from './index/read.js';
+import { linkTo } from './links.js';
 import { sha256, titleOf } from './index/reconcile.js';
 import { patchFields } from './patch.js';
 import { newId, placeNote } from './place.js';
@@ -99,6 +100,9 @@ type CandidateRow = NoteRef & { sources: string | null };
 
 /** A write worked out and validated but not yet made: the target, its new text and id, and the note's fields. */
 type Planned = { rel: string; text: string; id: string | null; fields: Fields };
+
+/** A note read under the lock with its revision checked: its path, text and current fields. */
+type Current = { rel: string; text: string; fields: Fields };
 
 function toRef(r: NoteRef): NoteRef {
   return { id: r.id, path: r.path, title: r.title, type: r.type, kind: r.kind, status: r.status, updated: r.updated };
@@ -209,38 +213,36 @@ export class Store {
 
   /**
    * Replace a decision with a new one, under one lock. Both writes are planned and validated before either is made:
-   * the old note's revision and type, its patch to `status: superseded` with `superseded_by`, and the new decision
-   * (validated and duplicate-checked, the old decision aside) with `supersedes`, `review: needed` and `review_reason`.
-   * Then the new file is written, then the old one. If a write fails while the old file is still unpatched on disk,
+   * the old note's revision and type; the new decision (validated and duplicate-checked, the old decision aside) with
+   * `supersedes`, `review: needed` and `review_reason`; then the old note's patch to `status: superseded` with
+   * `superseded_by`. Both links are `[[<file stem>|<title>]]` (see `linkTo`), so Obsidian resolves the date-prefixed
+   * file names. Then the new file is written, then the old one. If a write fails while the old file is still unpatched on disk,
    * the new file is moved to `.kiln/trash/`; the index rolls back and the original error is rethrown. If both files
    * landed (the failure came after the old file's rename), both stay: they agree, and the next reconcile indexes them.
    */
   supersede(i: SupersedeInput): SupersedeResult {
     this.index.ensureFresh();
-    const newTitle = i.newDecision.fields.title;
-    // The old note's patch links to the new title, so a missing title must surface as the new decision's own issue.
-    if (typeof newTitle !== 'string' || newTitle.trim() === '') validate({ ...i.newDecision.fields, type: 'decision' }, true);
-
     return this.index.transaction(() => {
-      const oldPlan = this.#planUpdate(
-        { idOrPath: i.oldIdOrPath, ifRevision: i.ifRevision, set: { status: 'superseded', superseded_by: [`[[${newTitle as string}]]`] } },
-        (fields) => {
-          if (fields.type !== 'decision') {
-            throw invalid([
-              { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call supersede on a decision note' },
-            ]);
-          }
-        },
-      );
-      const oldTitle = titleOf(oldPlan.fields, oldPlan.rel);
+      const old = this.#readChecked(i.oldIdOrPath, i.ifRevision, (fields) => {
+        if (fields.type !== 'decision') {
+          throw invalid([
+            { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call supersede on a decision note' },
+          ]);
+        }
+      });
+      // Plan the new decision first: the old one's superseded_by links to its file stem.
+      const oldTitle = titleOf(old.fields, old.rel);
       const newPlan = this.#planCreate(
         {
           type: 'decision',
-          fields: { ...i.newDecision.fields, supersedes: [`[[${oldTitle}]]`], review: 'needed', review_reason: `supersedes ${oldTitle}` },
+          fields: { ...i.newDecision.fields, supersedes: [linkTo(old.rel, oldTitle)], review: 'needed', review_reason: `supersedes ${oldTitle}` },
           sections: i.newDecision.sections,
         },
-        new Set([oldPlan.rel]),
+        new Set([old.rel]),
       );
+      const oldPlan = this.#planPatch(old, {
+        set: { status: 'superseded', superseded_by: [linkTo(newPlan.rel, newPlan.fields.title as string)] },
+      });
 
       try {
         const created = this.#write(newPlan.rel, newPlan.text, newPlan.id, true);
@@ -393,11 +395,16 @@ export class Store {
     if (owned.length > 0) {
       throw invalid(owned.map((k) => ({ field: k, message: `${k} is assigned by kiln and cannot be changed`, hint: `remove ${k} from set and unset` })));
     }
-    const rel = this.index.get(i.idOrPath).path;
+    return this.#planPatch(this.#readChecked(i.idOrPath, i.ifRevision, check), i);
+  }
+
+  /** Resolve a note, re-read it, check `ifRevision`, and run `check` on its current fields (it may throw to refuse). */
+  #readChecked(idOrPath: string, ifRevision: string, check?: (fields: Fields) => void): Current {
+    const rel = this.index.get(idOrPath).path;
     const bytes = this.#readBytes(rel);
     const current = sha256(bytes);
-    if (current !== i.ifRevision) {
-      throw new KilnError('conflict', `"${rel}" has changed since revision ${i.ifRevision}; re-read it and redo the change`, {
+    if (current !== ifRevision) {
+      throw new KilnError('conflict', `"${rel}" has changed since revision ${ifRevision}; re-read it and redo the change`, {
         reason: 'stale_revision',
         current,
       });
@@ -405,7 +412,11 @@ export class Store {
     const text = bytes.toString('utf8');
     const fields = parseFields(splitNote(text).fmText);
     check?.(fields);
+    return { rel, text, fields };
+  }
 
+  /** Merge, validate and patch an already read and checked note. The result's `fields` are those before the update. */
+  #planPatch({ rel, text, fields }: Current, i: Pick<UpdateNoteInput, 'set' | 'unset' | 'sections'>): Planned {
     const updated = localDate(this.#now());
     const unset = i.unset ?? [];
     const set: Fields = { ...i.set, updated };

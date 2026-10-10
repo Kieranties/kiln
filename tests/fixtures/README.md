@@ -35,6 +35,8 @@ tests/fixtures/
 
 Every typed knowledge note carries `summary`, `aliases`, `sources` and `confidence`, and every `[[link]]` resolves. So `validate` reports no findings on the base.
 
+The fixtures link by title (`[[Title]]`), including to dated decisions and sources. kiln resolves these, but Obsidian does not. kiln and the skills now write `[[<file stem>|<Title>]]`. The fixture links are frozen, because changing them would invalidate the retrieval thresholds.
+
 Facts are spread across notes on purpose, as they would be in a real vault. For example, an incident names a client, the client anchor names its account manager, and a decision explains the cause of a bug.
 
 ## How the fixtures are used

@@ -26,3 +26,13 @@ export function extractLinks(fields: Fields, body: string): string[] {
   targetsIn(body, found);
   return [...found.values()];
 }
+
+/**
+ * The link kiln writes to the note at base-relative `rel`: `[[<file stem>|<title>]]`, which Obsidian resolves by file
+ * name, or plain `[[<title>]]` when the stem already is the title.
+ */
+export function linkTo(rel: string, title: string): string {
+  const path = rel.replace(/\\/g, '/');
+  const stem = path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '');
+  return stem === title ? `[[${title}]]` : `[[${stem}|${title}]]`;
+}

@@ -279,6 +279,31 @@ describe('query', () => {
     expect(ix.query({ limit: 2 })).toHaveLength(2);
   });
 
+  it('a piped [[stem|Title]] link to a date-prefixed decision counts as linking for brief and query anchors', () => {
+    const lanes = 'decisions/2026/2026-10-10 Phone-only entry lanes.md';
+    write(lanes, note(
+      { type: 'decision', title: 'Phone-only entry lanes', status: 'active', updated: '2026-10-10',
+        anchors: '["[[2026-10-01 Mobile tickets at gates|Mobile tickets at gates]]"]' },
+      '\n## Decision\nTwo lanes per stand.\n',
+    ));
+    ix.reconcile();
+    expect(paths(ix.brief(P.mobile).activeDecisions)).toEqual([lanes]);
+    expect(paths(ix.query({ anchors: ['Mobile tickets at gates'] }))).toEqual([lanes]);
+    expect(paths(ix.query({ anchors: ['[[2026-10-01 Mobile tickets at gates|Mobile tickets at gates]]'] }))).toEqual([lanes]);
+  });
+
+  it('project matches a piped [[stem|Title]] link by the project title, alias or stem', () => {
+    write('projects/Gate Upgrade Phase 2.md', note({ type: 'project', title: '"Gate Upgrade: Phase 2"', status: 'active', aliases: '["GU2"]' }, ''));
+    write('work/2026/Wire gate 9.md', note(
+      { type: 'work', kind: 'chore', title: 'Wire gate 9', status: 'active', project: '"[[Gate Upgrade Phase 2|Gate Upgrade: Phase 2]]"' },
+      '',
+    ));
+    ix.reconcile();
+    for (const name of ['Gate Upgrade: Phase 2', '[[Gate Upgrade Phase 2|Gate Upgrade: Phase 2]]', 'gu2', 'Gate Upgrade Phase 2']) {
+      expect(paths(ix.query({ project: name })), name).toEqual(['work/2026/Wire gate 9.md']);
+    }
+  });
+
   it('project matches case-insensitively beyond ASCII', () => {
     write('work/2026/Bar refit.md', note({ type: 'work', kind: 'chore', title: 'Bar refit', status: 'active', project: '"[[Ölstand Refit]]"' }, ''));
     ix.reconcile();

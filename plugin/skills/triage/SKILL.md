@@ -7,6 +7,8 @@ description: Use when the user asks to triage, process, file or clear the kiln i
 
 Turn captured sources into knowledge: decide what each one means, file it, record the outcome. **Every write goes through the kiln tools; never write files in the base directly** (the write guard blocks it).
 
+**Links:** build every link from the note's `path`, as returned by `get`, `create_note`, `capture`, `resolve` or `search`. A link is `[[<path basename without .md>|<title>]]`, e.g. `[[2026-10-08 Patch turnstile firmware before reverting|Patch turnstile firmware before reverting]]` for `decisions/2026/2026-10-08 Patch turnstile firmware before reverting.md`. Decision and source files start with a date, so a bare `[[<title>]]` does not open in Obsidian. When the basename already is the title, `[[<title>]]` is the same link.
+
 ## Loop
 
 1. Call `inbox({ limit: 10 })`. Work through **at most 10 items per batch**, oldest first. After a batch, report and ask before starting the next.
@@ -37,7 +39,7 @@ Tie-break: if an existing note already covers the source, use `duplicate-of`, no
 
 Superseding: `get` the old decision, then `supersede({ old_id_or_path, if_revision: <the OLD decision's revision>, new_decision: { fields: { title, status: "active" /* or "proposed" if not final */, decided_on, summary, aliases, sources, confidence, anchors, ... }, sections: [{ heading: "Context", text }, { heading: "Decision", text }, { heading: "Consequences", text }] } })`.
 
-If a source carries two things (a decision and a work update), file both, use the outcome for the main one, and list every note touched in `linked_to`.
+If a source carries two things (a decision and a work update), file both, use the outcome for the main one, and list every note touched in `linked_to`, each linked from its path.
 
 ## Updating a work note (`update-work-item`)
 
@@ -48,17 +50,17 @@ If a source carries two things (a decision and a work update), file both, use th
     - when the source **only adds** items and closes none: `mode: "append"` with the new items, verbatim;
     - otherwise `mode: "replace"` with the **merged current list**: every existing item that is still open, kept verbatim; minus only the items the source shows are closed (each recorded in the checkpoint); plus the new items, verbatim.
   - Never paraphrase open items, and never drop one the source does not show closed.
-- `set`: `last_checkpoint` (today), `status` if it changed, and `sources` as the existing list **plus** `[[<source title>]]`.
+- `set`: `last_checkpoint` (today), `status` if it changed, and `sources` as the existing list **plus** the link to the source, `[[<source basename>|<source title>]]`.
 
 ## What every note you write must carry
 
 Every note you create must carry these fields. When you update a note, add the source to its `sources`, and set any of the others it is missing:
 - `summary`: 1-2 plain-language sentences.
 - `aliases`: at least one other name it will be looked up by (ticket key, nickname, short name).
-- `sources`: wikilinks to the source notes it came from, e.g. `[[NWA-142 Turnstiles reject mobile tickets at North Stand]]`.
+- `sources`: links to the source notes it came from, e.g. `[[2026-10-10 NWA-142 Turnstiles reject mobile tickets at North Stand|NWA-142 Turnstiles reject mobile tickets at North Stand]]` for `sources/jira/2026-10-10 NWA-142 Turnstiles reject mobile tickets at North Stand.md`.
 - `confidence`: `verbatim` when the content is taken directly from the source, `inferred` when you concluded it.
 - `status`: kiln sets no default, and a note without one is missed by status queries and briefs. Decision `active` (`proposed` when not final); work `active`; anchor and reference `active`; project `shaping` or `active`.
-- Links to anchors in `anchors`, and to the project in `project`, as `[[Note title]]`.
+- Links to anchors in `anchors`, and to the project in `project`, built from their paths, e.g. `[[Turnstile Network]]` for `anchors/service/Turnstile Network.md`.
 
 **Review flag.** Rate your own confidence in each filing (the outcome chosen, the target, the content). When it is **medium or low**, also set `review: "needed"` and a `review_reason` that says what to check, e.g. `"Inferred that the Thursday patch covers gate 4 as well as gate 3"`. `supersede` sets the flag itself.
 
@@ -70,9 +72,11 @@ mark_source({
   if_revision: <source revision>,
   triage: "linked",            // "dismissed" for dismiss and duplicate-of
   outcome: "update-work-item", // the outcome chosen
-  linked_to: ["[[Fix North Stand turnstile firmware]]"]
+  linked_to: ["[[Fix North Stand turnstile firmware]]"] // from work/2026/Fix North Stand turnstile firmware.md
 })
 ```
+
+A new decision is linked by its dated file name, e.g. `linked_to: ["[[2026-10-10 Patch gate 4 before the derby|Patch gate 4 before the derby]]"]`.
 
 ## Conflicts
 
@@ -91,7 +95,7 @@ Source: `NWA-142 Turnstiles reject mobile tickets at North Stand`, a Jira update
 - Outcome `update-work-item`, in one `update_note`:
   - append the checkpoint `- <today>: Vendor patch fixed gate 3 (closed "Patch gate 3"); gate 4 still rejects mobile tickets.`;
   - replace `Open items` with the merged list: "Patch gate 4", "Brief stewards on the paper-ticket fallback" (both still open, kept verbatim), plus the new "Replace the gate 4 reader cable";
-  - add the source to `sources`.
+  - add the source to `sources` as `[[<source basename>|NWA-142 Turnstiles reject mobile tickets at North Stand]]`, the basename taken from the source's `path`.
 - Confidence high, so no review flag. `mark_source` with `triage: "linked"`.
 
 ## If the kiln tools are unavailable

@@ -100,6 +100,12 @@ describe('validateBase', () => {
     expect(of(run(), 'broken_link')).toEqual([]);
   });
 
+  it('broken_link: a piped [[stem|Title]] link to a date-prefixed decision resolves', () => {
+    write('decisions/2026/2026-10-01 Mobile tickets.md', good('decision', 'Mobile tickets', ['decided_on: 2026-10-01']));
+    write('work/2026/Wire gate 9.md', good('work', 'Wire gate 9', ['anchors: ["[[2026-10-01 Mobile tickets|Mobile tickets]]"]'], '\nPer [[2026-10-01 Mobile tickets|Mobile tickets]].\n'));
+    expect(of(run(), 'broken_link')).toEqual([]);
+  });
+
   it('missing_enrichment: flags non-source notes without a summary or aliases; sources and typeless notes are exempt', () => {
     write('anchors/topic/Parking.md', note(['type: anchor', 'kind: topic', 'title: Parking', 'summary: Where cars go.']));
     write('anchors/topic/Catering.md', note(['type: anchor', 'kind: topic', 'title: Catering', 'aliases: ["Food"]', 'summary: "  "']));

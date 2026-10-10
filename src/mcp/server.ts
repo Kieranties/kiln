@@ -261,7 +261,7 @@ function register(server: McpServer, bases: Bases): void {
       inputSchema: {
         type: z.enum(KNOWLEDGE_TYPES),
         kind: z.string().optional(),
-        fields: fields.describe('Frontmatter fields; links are "[[Note title]]"'),
+        fields: fields.describe('Frontmatter fields; a link is "[[<file stem>|<title>]]", where the stem is the path basename of the linked note, without .md'),
         sections: newSections.optional().describe('Body sections, in order'),
         new_reason: z.string().optional().describe('Why this is not a duplicate of the conflicting note'),
         base,
@@ -325,7 +325,7 @@ function register(server: McpServer, bases: Bases): void {
         if_revision: ifRevision,
         triage: z.enum(['linked', 'dismissed']),
         outcome: z.enum(TRIAGE_OUTCOMES as [string, ...string[]]),
-        linked_to: wikilinks.optional().describe('Wikilinks such as "[[Fix turnstile firmware]]"'),
+        linked_to: wikilinks.optional().describe('Links such as "[[2026-10-08 Patch turnstile firmware|Patch turnstile firmware]]": "[[<file stem>|<title>]]", with the stem taken from the path of the note'),
         base,
       },
     },

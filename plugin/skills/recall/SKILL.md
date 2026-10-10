@@ -22,7 +22,7 @@ Answer from the user's knowledge base with the kiln tools, in this order. Stop a
 ## Answering
 
 - Be concise: lead with the answer, then the supporting points.
-- **Cite `[[links]]` to every note you used**, using the note titles, e.g. "Mobile tickets fail at gates 3 and 4 ([[Fix North Stand turnstile firmware]]); the vendor patch is the agreed fix ([[2026-10-08 Patch turnstile firmware before reverting]])."
+- **Cite `[[links]]` to every note you used**, built from each note's `path`: `[[<path basename without .md>|<title>]]`, or `[[<title>]]` when the basename is the title. Decision and source files start with a date, so a bare title does not open in Obsidian. E.g. "Mobile tickets fail at gates 3 and 4 ([[Fix North Stand turnstile firmware]]); the vendor patch is the agreed fix ([[2026-10-08 Patch turnstile firmware before reverting|Patch turnstile firmware before reverting]])."
 - **Say when an answer rests on a superseded decision.** If the decision you found has `status: superseded`, say so and follow `superseded_by` to the current one.
 - **Say when a note is flagged `review: needed`**: it is unconfirmed; mention its `review_reason`.
 - **Say when nothing was found.** "I found nothing in kiln about X" is a complete answer. Do not fill gaps from general knowledge without saying that is what you are doing.

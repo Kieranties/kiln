@@ -81,6 +81,9 @@ const OLD = 'Paper tickets for away fans';
 const NEW = 'Mobile-only tickets for away fans';
 const OLD_PATH = `decisions/2026/2026-03-02 ${OLD}.md`;
 const NEW_PATH = `decisions/2026/2026-10-09 ${NEW}.md`;
+/** The Obsidian-resolvable links supersede writes: `[[<file stem>|<title>]]`. */
+const OLD_LINK = `[[2026-03-02 ${OLD}|${OLD}]]`;
+const NEW_LINK = `[[2026-10-09 ${NEW}|${NEW}]]`;
 
 /** The decision to supersede, created on 2026-10-01. */
 function oldDecision(s: Store) {
@@ -123,7 +126,7 @@ describe('supersede', () => {
       status: 'active',
       decided_on: '2026-10-09',
       created: '2026-10-10',
-      supersedes: [`[[${OLD}]]`],
+      supersedes: [OLD_LINK],
       review: 'needed',
       review_reason: `supersedes ${OLD}`,
     });
@@ -132,14 +135,14 @@ describe('supersede', () => {
     const oldFields = fieldsOf(OLD_PATH);
     expect(oldFields).toMatchObject({
       status: 'superseded',
-      superseded_by: [`[[${NEW}]]`],
+      superseded_by: [NEW_LINK],
       updated: '2026-10-10',
       created: '2026-10-01',
       title: OLD,
     });
     expect(oldFields).not.toHaveProperty('review');
 
-    expect(ix.get(old.id!).fields).toMatchObject({ status: 'superseded', superseded_by: [`[[${NEW}]]`] });
+    expect(ix.get(old.id!).fields).toMatchObject({ status: 'superseded', superseded_by: [NEW_LINK] });
     expect(ix.get(r.created.id!).revision).toBe(r.created.revision);
     expect(ix.status().needsReview).toBe(1);
   });
@@ -223,7 +226,7 @@ describe('supersede', () => {
     expect((e as { details?: unknown }).details).toBeUndefined();
     const trashed = `.kiln/trash/2026-10-10T12-00-00-000Z-2026-10-09 ${NEW}.md`;
     expect(readdirSync(abs('.kiln/trash'))).toEqual([trashed.slice('.kiln/trash/'.length)]);
-    expect(fieldsOf(trashed)).toMatchObject({ title: NEW, supersedes: [`[[${OLD}]]`] });
+    expect(fieldsOf(trashed)).toMatchObject({ title: NEW, supersedes: [OLD_LINK] });
     expect(readdirSync(abs('decisions/2026'))).toEqual([`2026-03-02 ${OLD}.md`]);
     expect(kilnError(() => ix.get(NEW_PATH)).code).toBe('not_found');
     expect(ix.status()).toMatchObject({ notes: 1, needsReview: 0 });
@@ -313,13 +316,13 @@ describe('supersede', () => {
 
     expect(e).toBe(injected);
     expect(existsSync(abs('.kiln/trash'))).toBe(false);
-    expect(fieldsOf(NEW_PATH)).toMatchObject({ supersedes: [`[[${OLD}]]`] });
-    expect(fieldsOf(OLD_PATH)).toMatchObject({ status: 'superseded', superseded_by: [`[[${NEW}]]`] });
+    expect(fieldsOf(NEW_PATH)).toMatchObject({ supersedes: [OLD_LINK] });
+    expect(fieldsOf(OLD_PATH)).toMatchObject({ status: 'superseded', superseded_by: [NEW_LINK] });
     // The index rolled back; the next reconcile brings it in line with the two files.
     expect(kilnError(() => ix.get(NEW_PATH)).code).toBe('not_found');
     ix.reconcile({ force: true });
     expect(ix.get(old.id!).fields.status).toBe('superseded');
-    expect(ix.get(NEW_PATH).fields.supersedes).toEqual([`[[${OLD}]]`]);
+    expect(ix.get(NEW_PATH).fields.supersedes).toEqual([OLD_LINK]);
   });
 
   it('an index failure on the new decision moves it to trash and leaves old unchanged', () => {
@@ -382,7 +385,7 @@ describe('supersede', () => {
 
     expect(r.created.path).toBe('decisions/2026/2026-10-09 Paper tickets for the away fans.md');
     expect(r.superseded.path).toBe(OLD_PATH);
-    expect(fieldsOf(OLD_PATH).superseded_by).toEqual(['[[Paper tickets for the away fans]]']);
+    expect(fieldsOf(OLD_PATH).superseded_by).toEqual(['[[2026-10-09 Paper tickets for the away fans|Paper tickets for the away fans]]']);
   });
 
   it('the duplicate check still runs against other decisions', () => {
@@ -426,6 +429,6 @@ describe('supersede', () => {
       review_reason: 'supersedes 2025-11-20 Season ticket pricing',
     });
     expect(r.superseded.id).toBeNull();
-    expect(fieldsOf(rel)).toMatchObject({ status: 'superseded', superseded_by: ['[[Tiered season ticket pricing]]'] });
+    expect(fieldsOf(rel)).toMatchObject({ status: 'superseded', superseded_by: ['[[2026-10-09 Tiered season ticket pricing|Tiered season ticket pricing]]'] });
   });
 });
