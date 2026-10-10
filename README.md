@@ -25,4 +25,6 @@ Claude Code is the main agent. Obsidian is the cockpit for viewing and approving
 
 ## Docs
 
-- [Vision](docs/vision.md): the agreed model, architecture and flow
+- [Vision](docs/vision.md): the model, architecture and flow (current direction)
+- [KB core spec (lean v1)](docs/specs/2026-10-10-kb-core-design.md) and [implementation plan](docs/plans/2026-10-10-kb-core-v1.md)
+- [Decision log](docs/context/2026-10-10-decision-log.md) and [research](docs/research/)
