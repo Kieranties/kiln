@@ -3,7 +3,7 @@ import { basename, dirname, join } from 'node:path';
 import { parseFields, renderNote, splitNote } from './frontmatter.js';
 import type { Index } from './index/db.js';
 import type { NoteRef } from './index/read.js';
-import { sha256 } from './index/reconcile.js';
+import { sha256, titleOf } from './index/reconcile.js';
 import { patchFields } from './patch.js';
 import { newId, placeNote } from './place.js';
 import { TRIAGE_OUTCOMES, validateFields } from './schema.js';
@@ -60,12 +60,6 @@ export function pathKey(rel: string): string {
   return process.platform === 'win32' ? p.toLowerCase() : p;
 }
 
-/** A note's title as the index has it: the frontmatter `title` when non-empty, else the file name without `.md`. */
-function titleOf(fields: Fields, rel: string): string {
-  const t = fields.title;
-  return typeof t === 'string' && t.trim() !== '' ? t : basename(rel, '.md');
-}
-
 function sleepSync(ms: number): void {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
@@ -102,6 +96,9 @@ function sameSet(a: Set<string>, b: Set<string>): boolean {
 }
 
 type CandidateRow = NoteRef & { sources: string | null };
+
+/** A write worked out and validated but not yet made: the target, its new text and id, and the note's fields. */
+type Planned = { rel: string; text: string; id: string | null; fields: Fields };
 
 function toRef(r: NoteRef): NoteRef {
   return { id: r.id, path: r.path, title: r.title, type: r.type, kind: r.kind, status: r.status, updated: r.updated };
@@ -171,7 +168,10 @@ export class Store {
    */
   createNote(i: CreateNoteInput): WriteResult {
     this.index.ensureFresh();
-    return this.#create(i, new Set());
+    return this.index.transaction(() => {
+      const p = this.#planCreate(i, new Set());
+      return this.#write(p.rel, p.text, p.id, true);
+    });
   }
 
   /**
@@ -208,49 +208,59 @@ export class Store {
   }
 
   /**
-   * Replace a decision with a new one, under one lock. Checks `ifRevision` and that the old note is a decision, then
-   * creates the new decision (validated and duplicate-checked, the old decision aside) with `supersedes`,
-   * `review: needed` and `review_reason`, and patches the old one to `status: superseded` with `superseded_by`. If the
-   * patch fails, the new file is moved to `.kiln/trash/`, the index rolls back, and the original error is rethrown.
+   * Replace a decision with a new one, under one lock. Both writes are planned and validated before either is made:
+   * the old note's revision and type, its patch to `status: superseded` with `superseded_by`, and the new decision
+   * (validated and duplicate-checked, the old decision aside) with `supersedes`, `review: needed` and `review_reason`.
+   * Then the new file is written, then the old one. If a write fails while the old file is still unpatched on disk,
+   * the new file is moved to `.kiln/trash/`; the index rolls back and the original error is rethrown. If both files
+   * landed (the failure came after the old file's rename), both stay: they agree, and the next reconcile indexes them.
    */
   supersede(i: SupersedeInput): SupersedeResult {
     this.index.ensureFresh();
-    return this.index.transaction(() => {
-      const rel = this.index.get(i.oldIdOrPath).path;
-      const bytes = this.#readBytes(rel);
-      const current = sha256(bytes);
-      if (current !== i.ifRevision) {
-        throw new KilnError('conflict', `"${rel}" has changed since revision ${i.ifRevision}; re-read it and redo the change`, {
-          reason: 'stale_revision',
-          current,
-        });
-      }
-      const oldFields = parseFields(splitNote(bytes.toString('utf8')).fmText);
-      if (oldFields.type !== 'decision') {
-        throw invalid([
-          { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(oldFields.type ?? null)}`, hint: 'call supersede on a decision note' },
-        ]);
-      }
-      const oldTitle = titleOf(oldFields, rel);
+    const newTitle = i.newDecision.fields.title;
+    // The old note's patch links to the new title, so a missing title must surface as the new decision's own issue.
+    if (typeof newTitle !== 'string' || newTitle.trim() === '') validate({ ...i.newDecision.fields, type: 'decision' }, true);
 
-      const created = this.#create(
+    return this.index.transaction(() => {
+      const oldPlan = this.#planUpdate(
+        { idOrPath: i.oldIdOrPath, ifRevision: i.ifRevision, set: { status: 'superseded', superseded_by: [`[[${newTitle as string}]]`] } },
+        (fields) => {
+          if (fields.type !== 'decision') {
+            throw invalid([
+              { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call supersede on a decision note' },
+            ]);
+          }
+        },
+      );
+      const oldTitle = titleOf(oldPlan.fields, oldPlan.rel);
+      const newPlan = this.#planCreate(
         {
           type: 'decision',
           fields: { ...i.newDecision.fields, supersedes: [`[[${oldTitle}]]`], review: 'needed', review_reason: `supersedes ${oldTitle}` },
           sections: i.newDecision.sections,
         },
-        new Set([rel]),
+        new Set([oldPlan.rel]),
       );
-      const newTitle = i.newDecision.fields.title as string;
 
       try {
-        const superseded = this.#update({ idOrPath: rel, ifRevision: i.ifRevision, set: { status: 'superseded', superseded_by: [`[[${newTitle}]]`] } });
+        const created = this.#write(newPlan.rel, newPlan.text, newPlan.id, true);
+        const superseded = this.#write(oldPlan.rel, oldPlan.text, oldPlan.id, false);
         return { created, superseded };
       } catch (e) {
-        this.#trash(created.path, e);
+        const newLanded = existsSync(join(this.base.path, newPlan.rel));
+        if (newLanded && this.#revisionOf(oldPlan.rel) === i.ifRevision) this.#trash(newPlan.rel, e);
         throw e;
       }
     });
+  }
+
+  /** The sha256 of a file's bytes, or null when it cannot be read. */
+  #revisionOf(rel: string): string | null {
+    try {
+      return sha256(readFileSync(join(this.base.path, rel)));
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -265,7 +275,7 @@ export class Store {
       mkdirSync(dir, { recursive: true });
       let target = join(dir, `${stamp}-${name}.md`);
       for (let n = 2; existsSync(target); n++) target = join(dir, `${stamp}-${name} (${n}).md`);
-      this.#rename(join(this.base.path, rel), target);
+      this.#renameWithRetry(join(this.base.path, rel), target, rel);
     } catch (moveError) {
       if (cause !== null && typeof cause === 'object') {
         const prior = (cause as { details?: unknown }).details;
@@ -276,8 +286,12 @@ export class Store {
     }
   }
 
-  /** createNote, with `excludePaths` left out of the duplicate check (supersede excludes the decision it replaces). */
-  #create(i: CreateNoteInput, excludePaths: Set<string>): WriteResult {
+  /**
+   * Plan a new note without writing: assign id and dates, validate as Claude-written, run the duplicate check (unless
+   * `newReason` is given) leaving out `excludePaths` (supersede excludes the decision it replaces), and place it. The
+   * caller holds the transaction.
+   */
+  #planCreate(i: CreateNoteInput, excludePaths: Set<string>): Planned {
     const today = localDate(this.#now());
     const fields: Fields = { ...i.fields, type: i.type };
     if (i.kind !== undefined) fields.kind = i.kind;
@@ -286,20 +300,18 @@ export class Store {
     fields.updated = today;
     validate(fields, true);
 
-    return this.index.transaction(() => {
-      if (i.newReason === undefined) {
-        const existing = this.#findDuplicate(fields, excludePaths);
-        if (existing) {
-          throw new KilnError(
-            'conflict',
-            `A similar ${existing.type} already exists: "${existing.title}" (${existing.path}). Update it instead, or retry with newReason`,
-            { reason: 'duplicate', existing },
-          );
-        }
+    if (i.newReason === undefined) {
+      const existing = this.#findDuplicate(fields, excludePaths);
+      if (existing) {
+        throw new KilnError(
+          'conflict',
+          `A similar ${existing.type} already exists: "${existing.title}" (${existing.path}). Update it instead, or retry with newReason`,
+          { reason: 'duplicate', existing },
+        );
       }
-      const rel = placeNote(fields, (p) => existsSync(join(this.base.path, p)));
-      return this.#write(rel, renderNote(fields, i.sections), fields.id as string, true);
-    });
+    }
+    const rel = placeNote(fields, (p) => existsSync(join(this.base.path, p)));
+    return { rel, text: renderNote(fields, i.sections), id: fields.id as string, fields };
   }
 
   /**
@@ -363,41 +375,48 @@ export class Store {
     return this.#write(rel, patchFields(replaced, { captured_at: capturedAt, updated: today }), id, false);
   }
 
-  /**
-   * The revision-guarded update path shared by updateNote and markSource. `check` sees the note's current fields
-   * (re-read inside the transaction) and may throw to refuse the update.
-   */
+  /** The revision-guarded update path shared by updateNote and markSource: plan, then write, under one lock. */
   #update(i: UpdateNoteInput, check?: (fields: Fields) => void): WriteResult {
+    return this.index.transaction(() => {
+      const p = this.#planUpdate(i, check);
+      return this.#write(p.rel, p.text, p.id, false);
+    });
+  }
+
+  /**
+   * Plan a revision-guarded update without writing: refuse kiln-owned keys, resolve the note, re-read it and check
+   * `ifRevision`, run `check` on its current fields (it may throw to refuse), merge, validate and patch the text. The
+   * result's `fields` are the note's fields before the update. The caller holds the transaction.
+   */
+  #planUpdate(i: UpdateNoteInput, check?: (fields: Fields) => void): Planned {
     const owned = KILN_OWNED.filter((k) => (i.set !== undefined && Object.hasOwn(i.set, k)) || (i.unset ?? []).includes(k));
     if (owned.length > 0) {
       throw invalid(owned.map((k) => ({ field: k, message: `${k} is assigned by kiln and cannot be changed`, hint: `remove ${k} from set and unset` })));
     }
-    return this.index.transaction(() => {
-      const rel = this.index.get(i.idOrPath).path;
-      const bytes = this.#readBytes(rel);
-      const current = sha256(bytes);
-      if (current !== i.ifRevision) {
-        throw new KilnError('conflict', `"${rel}" has changed since revision ${i.ifRevision}; re-read it and redo the change`, {
-          reason: 'stale_revision',
-          current,
-        });
-      }
-      const text = bytes.toString('utf8');
-      const fields = parseFields(splitNote(text).fmText);
-      check?.(fields);
+    const rel = this.index.get(i.idOrPath).path;
+    const bytes = this.#readBytes(rel);
+    const current = sha256(bytes);
+    if (current !== i.ifRevision) {
+      throw new KilnError('conflict', `"${rel}" has changed since revision ${i.ifRevision}; re-read it and redo the change`, {
+        reason: 'stale_revision',
+        current,
+      });
+    }
+    const text = bytes.toString('utf8');
+    const fields = parseFields(splitNote(text).fmText);
+    check?.(fields);
 
-      const updated = localDate(this.#now());
-      const unset = i.unset ?? [];
-      const set: Fields = { ...i.set, updated };
-      const merged: Fields = { ...fields, ...set };
-      for (const k of unset) if (k !== 'updated') delete merged[k];
-      if (merged.type !== undefined && merged.type !== null) validate(merged, false);
+    const updated = localDate(this.#now());
+    const unset = i.unset ?? [];
+    const set: Fields = { ...i.set, updated };
+    const merged: Fields = { ...fields, ...set };
+    for (const k of unset) if (k !== 'updated') delete merged[k];
+    if (merged.type !== undefined && merged.type !== null) validate(merged, false);
 
-      let next = patchFields(text, set, unset.filter((k) => k !== 'updated'));
-      if (i.sections && i.sections.length > 0) next = editSections(next, i.sections);
-      const id = typeof merged.id === 'string' && merged.id !== '' ? merged.id : null;
-      return this.#write(rel, next, id, false);
-    });
+    let next = patchFields(text, set, unset.filter((k) => k !== 'updated'));
+    if (i.sections && i.sections.length > 0) next = editSections(next, i.sections);
+    const id = typeof merged.id === 'string' && merged.id !== '' ? merged.id : null;
+    return { rel, text: next, id, fields };
   }
 
   #readBytes(rel: string): Buffer {
@@ -414,9 +433,8 @@ export class Store {
   }
 
   /**
-   * Write `text` to `rel` atomically and index it: write `<file>.kiln-tmp`, rename it over the target (retrying on
-   * EPERM/EBUSY/EACCES), then upsert the index. A rename that keeps failing removes the temp file and raises
-   * `locked_file`. The caller holds the transaction.
+   * Write `text` to `rel` atomically and index it: write `<file>.kiln-tmp`, rename it over the target with
+   * `#renameWithRetry`, then upsert the index. A failed rename removes the temp file. The caller holds the transaction.
    */
   #write(rel: string, text: string, id: string | null, created: boolean): WriteResult {
     const abs = join(this.base.path, rel);
@@ -430,18 +448,32 @@ export class Store {
       throw e;
     }
 
+    try {
+      this.#renameWithRetry(tmp, abs, rel);
+    } catch (e) {
+      rmSync(tmp, { force: true });
+      throw e;
+    }
+
+    this.index.upsertText(rel, text, statSync(abs));
+    return { id, path: rel, revision: sha256(bytes), created };
+  }
+
+  /**
+   * Rename `from` to `to`, retrying while the file is locked (EPERM/EBUSY/EACCES: 5 attempts, 100 ms apart). A lock
+   * that outlasts the retries raises `locked_file` naming `rel`; any other error is rethrown as is.
+   */
+  #renameWithRetry(from: string, to: string, rel: string): void {
     for (let attempt = 1; ; attempt++) {
       try {
-        this.#rename(tmp, abs);
-        break;
+        this.#rename(from, to);
+        return;
       } catch (e) {
-        const code = (e as NodeJS.ErrnoException).code ?? '';
-        const locked = LOCK_CODES.has(code);
+        const locked = LOCK_CODES.has((e as NodeJS.ErrnoException).code ?? '');
         if (locked && attempt < RENAME_ATTEMPTS) {
           sleepSync(RENAME_DELAY_MS);
           continue;
         }
-        rmSync(tmp, { force: true });
         if (!locked) throw e;
         throw new KilnError(
           'locked_file',
@@ -450,8 +482,5 @@ export class Store {
         );
       }
     }
-
-    this.index.upsertText(rel, text, statSync(abs));
-    return { id, path: rel, revision: sha256(bytes), created };
   }
 }

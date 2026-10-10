@@ -63,7 +63,7 @@ function strings(v: unknown): string[] {
 }
 
 /** The frontmatter `title` when it is a non-empty string, otherwise the file name without `.md`. */
-function titleOf(fields: Fields, rel: string): string {
+export function titleOf(fields: Fields, rel: string): string {
   const t = fields.title;
   if (typeof t === 'string' && t.trim() !== '') return t;
   return rel.slice(rel.lastIndexOf('/') + 1).replace(/\.md$/, '');

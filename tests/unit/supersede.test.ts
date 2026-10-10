@@ -257,22 +257,120 @@ describe('supersede', () => {
     ]);
   });
 
-  it('a failed trash move is attached to the original error, which is rethrown', () => {
+  it('a trash move that is locked a few times is retried and the vault ends consistent', () => {
     const old = oldDecision(store());
     const before = readFileSync(abs(OLD_PATH));
     const injected = errno('EIO');
-    const io = failingRename((n) => (n === 2 ? injected : n === 3 ? errno('EACCES') : undefined));
+    // Call 2 fails the old file's write; calls 3-6 find the new file locked (4 attempts); call 7 moves it to trash.
+    const io = failingRename((n) => (n === 2 ? injected : n >= 3 && n <= 6 ? errno('EPERM') : undefined));
 
     const e = thrown(() =>
       store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
     );
 
     expect(e).toBe(injected);
-    expect((e as { details?: unknown }).details).toMatchObject({ rollback: { path: NEW_PATH, error: expect.stringContaining('EACCES') } });
+    expect((e as { details?: unknown }).details).toBeUndefined();
+    expect(io.calls).toBe(7);
+    expect(readdirSync(abs('.kiln/trash'))).toHaveLength(1);
+    expect(readdirSync(abs('decisions/2026'))).toEqual([`2026-03-02 ${OLD}.md`]);
+    expect(readFileSync(abs(OLD_PATH)).equals(before)).toBe(true);
+    expect(ix.status().notes).toBe(1);
+  });
+
+  it('a failed trash move is attached to the original error, which is rethrown', () => {
+    const old = oldDecision(store());
+    const before = readFileSync(abs(OLD_PATH));
+    const injected = errno('EIO');
+    // The new file stays locked through all 5 trash attempts (calls 3-7).
+    const io = failingRename((n) => (n === 2 ? injected : n >= 3 ? errno('EACCES') : undefined));
+
+    const e = thrown(() =>
+      store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+    );
+
+    expect(e).toBe(injected);
+    expect(io.calls).toBe(7);
+    expect((e as { details?: unknown }).details).toMatchObject({ rollback: { path: NEW_PATH, error: expect.stringContaining('is locked') } });
     // The move failed, so the new file is still in the vault, but the index has rolled back and the old file is intact.
     expect(existsSync(abs(NEW_PATH))).toBe(true);
     expect(kilnError(() => ix.get(NEW_PATH)).code).toBe('not_found');
     expect(readFileSync(abs(OLD_PATH)).equals(before)).toBe(true);
+  });
+
+  it('an index failure after both files landed leaves both, consistent, and rethrows', () => {
+    const old = oldDecision(store());
+    const injected = new Error('disk I/O error');
+    const upsert = ix.upsertText.bind(ix);
+    let upserts = 0;
+    ix.upsertText = (...a) => {
+      if (++upserts === 2) throw injected;
+      upsert(...a);
+    };
+
+    const e = thrown(() =>
+      store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+    );
+
+    expect(e).toBe(injected);
+    expect(existsSync(abs('.kiln/trash'))).toBe(false);
+    expect(fieldsOf(NEW_PATH)).toMatchObject({ supersedes: [`[[${OLD}]]`] });
+    expect(fieldsOf(OLD_PATH)).toMatchObject({ status: 'superseded', superseded_by: [`[[${NEW}]]`] });
+    // The index rolled back; the next reconcile brings it in line with the two files.
+    expect(kilnError(() => ix.get(NEW_PATH)).code).toBe('not_found');
+    ix.reconcile({ force: true });
+    expect(ix.get(old.id!).fields.status).toBe('superseded');
+    expect(ix.get(NEW_PATH).fields.supersedes).toEqual([`[[${OLD}]]`]);
+  });
+
+  it('an index failure on the new decision moves it to trash and leaves old unchanged', () => {
+    const old = oldDecision(store());
+    const before = readFileSync(abs(OLD_PATH));
+    const injected = new Error('disk I/O error');
+    ix.upsertText = () => {
+      throw injected;
+    };
+
+    const e = thrown(() =>
+      store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+    );
+
+    expect(e).toBe(injected);
+    expect(readdirSync(abs('.kiln/trash'))).toHaveLength(1);
+    expect(readdirSync(abs('decisions/2026'))).toEqual([`2026-03-02 ${OLD}.md`]);
+    expect(readFileSync(abs(OLD_PATH)).equals(before)).toBe(true);
+  });
+
+  it('a new title the old decision cannot link to raises validation and writes nothing', () => {
+    const old = oldDecision(store());
+    const before = read(OLD_PATH);
+    let calls = 0;
+    const s = store({
+      rename: (from, to) => {
+        calls++;
+        renameSync(from, to);
+      },
+    });
+
+    const e = kilnError(() =>
+      s.supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision('Mobile tickets [draft]', { decided_on: '2026-10-09' }) }),
+    );
+
+    expect(e.code).toBe('validation');
+    expect(e.message).toContain('superseded_by');
+    expect(calls).toBe(0);
+    expect(readdirSync(abs('decisions/2026'))).toEqual([`2026-03-02 ${OLD}.md`]);
+    expect(existsSync(abs('.kiln/trash'))).toBe(false);
+    expect(read(OLD_PATH)).toBe(before);
+  });
+
+  it('a new decision without a title raises validation on title and writes nothing', () => {
+    const old = oldDecision(store());
+    const e = kilnError(() =>
+      store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { title: undefined, decided_on: '2026-10-09' }) }),
+    );
+    expect(e.code).toBe('validation');
+    expect((e.details as { issues: { field: string }[] }).issues.map((i) => i.field)).toEqual(['title']);
+    expect(readdirSync(abs('decisions/2026'))).toEqual([`2026-03-02 ${OLD}.md`]);
   });
 
   it('the duplicate check excludes the superseded decision, given by path in another case and with backslashes', () => {
