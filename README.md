@@ -67,9 +67,9 @@ KILN_EVAL_RECORD=1 npx vitest run tests/eval/retrieval.test.ts
 npx tsx scripts/scale.ts --notes 100000 --out <dir>
 ```
 
-The script copies the fixture base into `<dir>` and generates notes until the base holds N. It recombines fixture titles, frontmatter patterns and paragraphs with a seeded PRNG, so the output is deterministic and fictional. It times the cold build (`Index.open` on the fresh base), a forced rebuild, a no-change re-check, and 50 searches built from the golden questions. It prints PASS or FAIL against the targets and exits 1 on any FAIL.
+The script copies the fixture base into `<dir>` and generates notes until the base holds N. It recombines fixture titles, frontmatter patterns and paragraphs with a seeded PRNG, so the output is deterministic and fictional. It times the cold build (`Index.open` on the fresh base), a forced rebuild, a no-change re-check, and 50 searches built from the golden questions. It prints PASS or FAIL against the targets. Exit codes: 0 every target met, 1 a target missed, 2 bad usage or an error.
 
-`<dir>` must be missing or empty, or be the output of an earlier run (it holds a `.kiln-scale` marker). Delete it when you are done: 100k notes take about 600 MB.
+`<dir>` must be missing or empty, or be the output of an earlier run (it holds a `.kiln-scale` marker). Delete it when you are done: 100k notes take about 600 MB on disk.
 
 #### Scale (100k notes)
 
@@ -85,21 +85,49 @@ Measured 2026-10-10 on Windows 11, Node 24 (24.3.0), Intel Core Ultra 9 285K, De
 
 The files had just been written, so the cold build ran with a warm OS file cache.
 
+A generated note averages about 1.25 KB, so the base holds about 125 MB of note content. The ~600 MB figure is on-disk usage, most of it the index (`kiln.sqlite`, about 440 MB). All the vocabulary is recombined from the 105 fixture notes, so a real vault with a wider vocabulary may index and search differently.
+
 ### Manual triage check
 
 This scores the `triage` skill against one simulated day of captures (`tests/fixtures/day/`). It needs a Claude session, so it is not part of `npm test`.
 
+**Point the session at the scratch base.** The kiln tools choose a base in this order: an explicit `--base`, then the first `rules` entry matching the working directory, then `default_base`. `kiln init` adds no rule, and the triage skill names no base. Without the rule in step 2, a session in the scratch folder triages your **real** inbox if you have a default base.
+
 1. Create a scratch base: `kiln init <tmp> --name triage-check`.
-2. Copy `tests/fixtures/base/*` into it.
-3. Copy each `tests/fixtures/day/captures/*.md` into `<tmp>/sources/<kind>/`, using the capture's `kind` field.
-4. In a Claude session in `<tmp>`, run the `triage` skill until the inbox is empty.
-5. Score the result:
+2. Add a rule for it at the **top** of `rules` in `~/.kiln/config.yaml` (or the file `$KILN_CONFIG` names). Rules are tried in order and the first match wins. Use forward slashes:
+
+   ```yaml
+   rules:
+     - path: <tmp>/**
+       base: triage-check
+   ```
+
+3. Check that the scratch base is the one in use. Do not start the session until this prints `base=triage-check`:
+
+   ```sh
+   kiln status --line --cwd <tmp>
+   ```
+
+4. Copy the fixture base into it, then put each capture in `sources/<kind>/`, by its `kind` field. The scorer looks for captures by file name under `sources/`:
+
+   ```sh
+   cp -r tests/fixtures/base/* <tmp>/
+   for f in tests/fixtures/day/captures/*.md; do
+     kind=$(sed -n 's/^kind: //p' "$f" | head -n 1 | tr -d '\r')
+     cp "$f" "<tmp>/sources/$kind/"
+   done
+   ```
+
+5. Start a Claude session with `<tmp>` as its working directory. Run the `triage` skill until the inbox is empty.
+6. Score the result:
 
    ```sh
    npx tsx scripts/score-triage.ts <tmp> tests/fixtures/day/answer-key.json
    ```
 
-   The script prints the outcome accuracy and one line per mismatch. For information, it also lists every `linked_to` that does not match an expected existing note. It exits 1 if accuracy is below 0.90.
+   The script prints the outcome accuracy and one line per mismatch. For information, it also lists every `linked_to` that does not match an expected existing note. Exit codes: 0 when accuracy is at least 0.90, 1 when it is below, 2 for bad usage or an error.
+
+7. Clean up: remove the `triage-check` rule and the `triage-check` entry under `bases` from the config, then delete `<tmp>`. If `default_base` is `triage-check`, which happens when it was your first base, remove that too. Until the base entry is gone, a second run's `kiln init ... --name triage-check` at a new path fails with "Base "triage-check" is already registered".
 
 ## Docs
 

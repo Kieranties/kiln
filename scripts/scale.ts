@@ -435,6 +435,7 @@ type Row = { measure: string; ms: number; target: number; unit: 's' | 'ms' };
 
 const fmt = (ms: number, unit: 's' | 'ms'): string => (unit === 's' ? `${(ms / 1000).toFixed(2)} s` : `${ms.toFixed(1)} ms`);
 
+/** Exit codes: 0 every target met; 1 a target missed; 2 bad usage or an error. */
 function main(argv: string[]): number {
   const { values } = parseArgs({ args: argv, options: { notes: { type: 'string' }, out: { type: 'string' } }, strict: true });
   const total = Number(values.notes);
@@ -510,4 +511,10 @@ function main(argv: string[]): number {
   }
 }
 
-process.exitCode = main(process.argv.slice(2));
+try {
+  process.exitCode = main(process.argv.slice(2));
+} catch (e) {
+  // A crash must not look like a missed target (exit 1).
+  process.stderr.write(`ERROR: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}\n`);
+  process.exitCode = 2;
+}

@@ -6,9 +6,9 @@
  * Prints the outcome accuracy, one line per mismatch, and (for information only) every `linked_to` that does not
  * resolve to one of its capture's existing-path targets. Exits 1 when accuracy is below 0.90.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { parseFields, splitNote } from '../src/frontmatter.js';
 import { scanVault, titleOf } from '../src/index/reconcile.js';
 import type { Fields } from '../src/types.js';
@@ -134,19 +134,49 @@ export function formatScore(s: TriageScore): string {
   return lines.join('\n');
 }
 
+/** A path for comparison: symlinks resolved, absolute, forward slashes, no script extension, lowercased on win32. */
+function comparable(p: string): string {
+  let real = resolve(p);
+  for (const candidate of [real, `${real}.ts`]) {
+    try {
+      real = realpathSync.native(candidate);
+      break;
+    } catch {
+      // Not there (or not readable): compare the path as given.
+    }
+  }
+  const s = real.replaceAll('\\', '/').replace(/\.[cm]?[jt]s$/, '');
+  return process.platform === 'win32' ? s.toLowerCase() : s;
+}
+
+/**
+ * Whether `argv1` (the script path the process was started with) names the module at `moduleUrl`. Tolerates
+ * drive-letter and other case differences on Windows, either separator, a missing extension and symlinks, so the
+ * gate cannot be skipped (and exit 0) just because the path was spelled differently.
+ */
+export function isEntry(argv1: string | undefined, moduleUrl: string): boolean {
+  return argv1 !== undefined && argv1 !== '' && comparable(argv1) === comparable(fileURLToPath(moduleUrl));
+}
+
+/** Exit codes: 0 accuracy >= 0.90; 1 accuracy below it; 2 bad usage or an error. */
 function main(argv: string[]): number {
   if (argv.length !== 2) {
     process.stderr.write('Usage: npx tsx scripts/score-triage.ts <basePath> <answer-key.json>\n');
     return 2;
   }
-  const key = JSON.parse(readFileSync(argv[1]!, 'utf8')) as AnswerKey;
-  const score = scoreTriage(resolve(argv[0]!), key);
-  process.stdout.write(`${formatScore(score)}\n`);
-  const pass = score.accuracy >= PASS_ACCURACY;
-  process.stdout.write(`\n${pass ? 'PASS' : 'FAIL'}: accuracy ${score.accuracy.toFixed(2)} (target >= ${PASS_ACCURACY.toFixed(2)})\n`);
-  return pass ? 0 : 1;
+  try {
+    const key = JSON.parse(readFileSync(argv[1]!, 'utf8')) as AnswerKey;
+    const score = scoreTriage(resolve(argv[0]!), key);
+    process.stdout.write(`${formatScore(score)}\n`);
+    const pass = score.accuracy >= PASS_ACCURACY;
+    process.stdout.write(`\n${pass ? 'PASS' : 'FAIL'}: accuracy ${score.accuracy.toFixed(2)} (target >= ${PASS_ACCURACY.toFixed(2)})\n`);
+    return pass ? 0 : 1;
+  } catch (e) {
+    process.stderr.write(`ERROR: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}\n`);
+    return 2;
+  }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+if (isEntry(process.argv[1], import.meta.url)) {
   process.exitCode = main(process.argv.slice(2));
 }

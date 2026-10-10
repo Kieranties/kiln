@@ -1,8 +1,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { formatScore, scoreTriage, type AnswerKey } from '../../scripts/score-triage.js';
+import { formatScore, isEntry, scoreTriage, type AnswerKey } from '../../scripts/score-triage.js';
 
 let base: string;
 
@@ -76,5 +77,21 @@ describe('score-triage', () => {
     expect(report).toContain('accuracy: 0.40 (2/5)');
     expect(report).toContain('b.md: expected supersede, got new-decision');
     expect(report).toContain('d.md: expected dismiss, got missing');
+  });
+
+  it('score-triage recognises its own entry path despite case, separator and extension differences', () => {
+    const file = join(base, 'scripts', 'score-triage.ts');
+    write('scripts/score-triage.ts', '');
+    const url = pathToFileURL(file).href;
+    expect(isEntry(file, url)).toBe(true);
+    expect(isEntry(file.replaceAll('\\', '/'), url)).toBe(true);
+    expect(isEntry(file.replace(/\.ts$/, ''), url)).toBe(true);
+    if (process.platform === 'win32') {
+      const flipped = file[0] === file[0]!.toUpperCase() ? file[0]!.toLowerCase() + file.slice(1) : file[0]!.toUpperCase() + file.slice(1);
+      expect(isEntry(flipped, url)).toBe(true);
+      expect(isEntry(file.toUpperCase(), url)).toBe(true);
+    }
+    expect(isEntry(join(base, 'scripts', 'scale.ts'), url)).toBe(false);
+    expect(isEntry(undefined, url)).toBe(false);
   });
 });
