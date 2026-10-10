@@ -2,52 +2,114 @@
 
 A personal knowledge and work system: unshaped things in, finished things out.
 
-Work arrives from trackers, conversations, meetings and ad-hoc thoughts. kiln captures it, shapes it into durable knowledge, starts workspaces with the right context, and distils what was learned back into knowledge when the work closes.
+## What kiln v1 does
 
-Claude Code is the main agent. Obsidian is the cockpit for viewing and approving. Herdr hosts workspaces. n8n runs intake outside Claude.
+kiln v1 is a knowledge base you can reach from any Claude Code session. Through its Claude Code plugin you can:
 
-## Core jobs
+- **capture** a Jira issue, a Slack thread, a PR, an email, a meeting or pasted text into an inbox;
+- **triage** the inbox into anchors, projects, work items, decisions and references;
+- **recall** what you know or decided, with `[[links]]` to the notes;
+- **review** what Claude filed and flagged as unsure.
 
-| Job | Question it answers |
-|---|---|
-| **Capture** | Throw anything in from anywhere and trust it lands somewhere findable |
-| **Resume** | What am I working on, what state is it in, where did I stop? |
-| **Start** | Kick off work with Claude already holding the relevant context |
-| **Recall** | What do I know, or what did we decide, about X, with links to sources? |
-
-## Principles
-
-1. **Reachable from any session.** Knowledge is reachable from any Claude session in any repo or worktree. Obsidian is a viewer, not the gate.
-2. **One inbox, many feeders.** Watchers and manual capture land in one inbox; one triage step files them.
-3. **Clean slate.** Earlier setups are prior art, not foundations.
-4. **Personal, local-first.** Knowledge stays private and local. Contributions to repos are deliberate.
-5. **Remote truth, selective local context.** External systems own their data. Only what you engage with is held locally, as a summary. Writes out are explicit and approved.
+Markdown files in a folder (a *base*) are the truth. kiln keeps a rebuildable SQLite index beside them. Obsidian is the viewer; open the base folder as a vault.
 
 ## Install
 
 Requires Node 24 or later (kiln uses `node:sqlite`).
 
-```sh
-npm install
-npm run build
-npm link                                    # puts the `kiln` binary on your PATH
-claude plugin marketplace add <repo path>   # this repo's .claude-plugin/marketplace.json
-claude plugin install kiln@kiln
-```
+**Install from the main checkout, not a git worktree.** The `npm link` and the plugin point at the folder you install from. If that folder is a worktree and the worktree is cleaned up, kiln breaks in every session.
 
-## Create a base
+1. **Add a `.npmrc`** to the repo root containing:
 
-```sh
-kiln init <path> --name <base>
-```
+   ```
+   registry=https://registry.npmjs.org/
+   ```
 
-This creates the folder layout (`anchors/`, `projects/`, `work/`, `decisions/`, `references/`, `notes/`, `attachments/`, `sources/<kind>/`, `views/`), the Obsidian views and the ignore entries, and registers the base in the kiln config. The first base you register becomes the default.
+   The owner must add this file by hand: a permission rule blocks agents from writing it.
 
-## Claude Code plugin
+2. Build, link and install the plugin:
 
-The plugin in `plugin/` (marketplace manifest in `.claude-plugin/`) registers the `kiln mcp` server, the capture, triage, recall and review skills, and two hooks: a write guard on Write/Edit/MultiEdit/NotebookEdit and a session orientation line. Both the hooks and the MCP server run the `kiln` binary on your PATH (installed with `npm link`).
+   ```sh
+   npm install
+   npm run build
+   npm link                                    # puts the `kiln` binary on your PATH
+   claude plugin marketplace add <repo path>   # this repo's .claude-plugin/marketplace.json
+   claude plugin install kiln@kiln
+   ```
+
+The plugin in `plugin/` registers the `kiln mcp` server, the capture, triage, recall and review skills, and two hooks: the write guard and a session orientation line. Both the hooks and the MCP server run the `kiln` binary on your PATH.
 
 **Rebuild and relink together.** The plugin and the linked binary must match. After pulling or changing kiln, run `npm run build && npm link` and update the plugin in the same step. If the hooks call a `kiln` that lacks a command they expect, they fail. A mismatched binary can block every Write and Edit: an older binary without the `hook` command exits with code 2, which Claude Code treats as "block this tool call".
+
+## Configure
+
+kiln reads `~/.kiln/config.yaml`. Set `KILN_CONFIG` to use another file.
+
+```yaml
+bases:
+  - name: work
+    path: Z:/kb/work
+  - name: personal
+    path: C:/Users/me/kb/personal
+rules:
+  - path: Z:/clients/**
+    base: work
+  - path: Z:/code/**
+    base: work
+default_base: personal
+```
+
+- `bases`: each base's name and folder.
+- `rules`: which base a working folder uses.
+  - A rule's `path` is an absolute glob with forward slashes.
+  - Rules are tried in order, and the first match wins.
+  - Matching is case-insensitive on Windows.
+- `default_base`: the base used when no rule matches.
+
+**Base resolution order:** an explicit `base` (a tool argument or `--base`), then the first matching rule, then `default_base`. With none of them, kiln reports `no_base`.
+
+**`kiln init` rewrites this file.** It drops comments and any keys kiln does not know. Keep notes about your setup somewhere else.
+
+### Where the MCP server looks
+
+The MCP server resolves the base from the session's project root: `CLAUDE_PROJECT_DIR`, or its launch directory when that is unset. In a git worktree session, this is the **main repo root**, not the worktree. For example, a session in `D:\src\kiln\.claude\worktrees\…` ran the server with `cwd` `D:\src\kiln`. So write rules for the project root, e.g. `D:/src/kiln/**`.
+
+To check which base a folder gets: `kiln status --line --cwd <folder>`.
+
+## Start a base
+
+```sh
+kiln init <path> --name <name>
+```
+
+This creates the folder layout (`anchors/`, `projects/`, `work/`, `decisions/`, `references/`, `notes/`, `attachments/`, `sources/<kind>/`, `views/`), the Obsidian views and the ignore entries, and registers the base in the config. The first base you register becomes `default_base`. `init` adds no rule; add one under `rules` if the base belongs to particular folders.
+
+**Build the index straight after init**, before you start a session:
+
+```sh
+kiln reindex --base <name>
+```
+
+For an existing or large folder this can take a while (about 30 s per 100,000 notes). The session-start hook never builds the index: until you run `kiln reindex`, it prints `kiln: base=<name> · index not built: run kiln reindex`.
+
+## Command reference
+
+| Command | What it does |
+|---|---|
+| `kiln init <path> --name <name>` | Create a base at `<path>` and register it. Prints `{ name, path }`. |
+| `kiln validate [--base <name>]` | Bring the index up to date, then print one line per finding (`kind`, path, message) and a count per kind. Finding kinds: `schema`, `broken_link`, `missing_enrichment` and `possible_duplicate`. Exit code 0 when there are no `schema` findings, 1 when there are any (or on an error such as an unknown base), 2 on bad usage. |
+| `kiln reindex [--base <name>]` | Rebuild the index from the files and print its stats. |
+| `kiln status [--line] [--cwd <dir>] [--base <name>]` | Print the base as JSON: `base`, `path`, `cwd`, and the `notes`, `inbox` and `needsReview` counts. Builds the index if it is missing. `--line` prints the one-line orientation instead. `--cwd` matches rules against `<dir>` instead of the current folder. Prints nothing when no base matches. |
+| `kiln mcp` | Start the MCP server on stdio. The plugin runs it. |
+| `kiln hook write-guard` / `kiln hook session-start` | The plugin's hooks. Each reads the hook's JSON on stdin. An unknown hook name exits 1, which does not block. |
+
+The base for `validate`, `reindex` and `status` follows the resolution order above, matched from the current folder.
+
+## Write guard
+
+Every write to a base goes through kiln, so notes stay valid and indexed. The guard is a PreToolUse hook that blocks Claude's **Write, Edit, MultiEdit and NotebookEdit** on any file inside a base, and names the kiln tools to use instead. It follows junctions and symlinks, and reads Git Bash `/x/...` paths as drive paths.
+
+It does **not** cover Bash. A shell command can still write into a base.
 
 ## Checks
 
@@ -91,6 +153,8 @@ A generated note averages about 1.25 KB, so the base holds about 125 MB of note 
 
 This scores the `triage` skill against one simulated day of captures (`tests/fixtures/day/`). It needs a Claude session, so it is not part of `npm test`.
 
+**Result:** a headless `claude -p` run on 2026-10-10 with the `kiln:triage` skill scored 12/12 (1.00). It emptied the inbox, and `validate` was clean afterwards.
+
 **Point the session at the scratch base.** The kiln tools choose a base in this order: an explicit `--base`, then the first `rules` entry matching the working directory, then `default_base`. `kiln init` adds no rule, and the triage skill names no base. Without the rule in step 2, a session in the scratch folder triages your **real** inbox if you have a default base.
 
 1. Create a scratch base: `kiln init <tmp> --name triage-check`.
@@ -118,8 +182,9 @@ This scores the `triage` skill against one simulated day of captures (`tests/fix
    done
    ```
 
-5. Start a Claude session with `<tmp>` as its working directory. Run the `triage` skill until the inbox is empty.
-6. Score the result:
+5. Build the index: `kiln reindex --base triage-check`.
+6. Start a Claude session with `<tmp>` as its working directory. Run the `triage` skill until the inbox is empty.
+7. Score the result:
 
    ```sh
    npx tsx scripts/score-triage.ts <tmp> tests/fixtures/day/answer-key.json
@@ -127,7 +192,20 @@ This scores the `triage` skill against one simulated day of captures (`tests/fix
 
    The script prints the outcome accuracy and one line per mismatch. For information, it also lists every `linked_to` that does not match an expected existing note. Exit codes: 0 when accuracy is at least 0.90, 1 when it is below, 2 for bad usage or an error.
 
-7. Clean up: remove the `triage-check` rule and the `triage-check` entry under `bases` from the config, then delete `<tmp>`. If `default_base` is `triage-check`, which happens when it was your first base, remove that too. Until the base entry is gone, a second run's `kiln init ... --name triage-check` at a new path fails with "Base "triage-check" is already registered".
+8. Clean up: remove the `triage-check` rule and the `triage-check` entry under `bases` from the config, then delete `<tmp>`. If `default_base` is `triage-check`, which happens when it was your first base, remove that too. Until the base entry is gone, a second run's `kiln init ... --name triage-check` at a new path fails with "Base "triage-check" is already registered".
+
+## About kiln
+
+Work arrives from trackers, conversations, meetings and ad-hoc thoughts. kiln captures it and shapes it into durable knowledge. Later stages start workspaces with the right context, and distil what was learned back into knowledge when the work closes. Claude Code is the main agent and Obsidian the cockpit for viewing and approving.
+
+| Job | Question it answers |
+|---|---|
+| **Capture** | Throw anything in from anywhere and trust it lands somewhere findable |
+| **Resume** | What am I working on, what state is it in, where did I stop? |
+| **Start** | Kick off work with Claude already holding the relevant context |
+| **Recall** | What do I know, or what did we decide, about X, with links to sources? |
+
+Principles: knowledge is reachable from any session; one inbox has many feeders; earlier setups are prior art, not foundations; everything stays personal and local-first; external systems own their data, and writes out are explicit. See the vision for the full model.
 
 ## Docs
 
