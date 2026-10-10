@@ -43,6 +43,15 @@ const SAME_SOURCES_TITLE = 0.5;
 
 const WIKILINK = /^\[\[[^\[\]]+\]\]$/;
 
+/** Fields kiln assigns itself; updates may not set or unset them. */
+const KILN_OWNED = ['id', 'created'];
+
+/** A base-relative path in comparable form: forward slashes, and lowercased on Windows (case-insensitive paths). */
+export function pathKey(rel: string): string {
+  const p = rel.replace(/\\/g, '/');
+  return process.platform === 'win32' ? p.toLowerCase() : p;
+}
+
 function sleepSync(ms: number): void {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
@@ -103,11 +112,12 @@ export class Store {
   }
 
   /**
-   * Capture a source into the inbox. With a `sourceId`, `dedupe_key` is `kind:sourceId`, and a repeat capture of the
-   * same key replaces the existing source's body and bumps `captured_at` and `updated`, leaving everything else
-   * (triage included) as it is.
+   * Capture a source into the inbox; a new source gets an `id`. With a `sourceId`, `dedupe_key` is `kind:sourceId`,
+   * and a repeat capture of the same key replaces the existing source's body and bumps `captured_at` and `updated`,
+   * leaving everything else (id and triage included) as it is.
    */
   capture(i: CaptureInput): WriteResult {
+    this.index.ensureFresh();
     const now = this.#now();
     const today = localDate(now);
     const capturedAt = now.toISOString();
@@ -133,9 +143,11 @@ export class Store {
     return this.index.transaction(() => {
       const existing = dedupeKey === undefined ? undefined : this.#sourceByKey(dedupeKey);
       if (existing !== undefined) return this.#recapture(existing, dedupeKey!, i.content, today, capturedAt);
-      const rel = placeNote(fields, (p) => existsSync(join(this.base.path, p)));
-      const text = renderNote(fields, []) + i.content.replace(/\r?\n/g, '\n');
-      return this.#write(rel, text, null, true);
+      const id = newId();
+      const source = { id, ...fields };
+      const rel = placeNote(source, (p) => existsSync(join(this.base.path, p)));
+      const text = renderNote(source, []) + i.content.replace(/\r?\n/g, '\n');
+      return this.#write(rel, text, id, true);
     });
   }
 
@@ -144,6 +156,7 @@ export class Store {
    * (unless `newReason` is given) raises `conflict` with `reason: 'duplicate'` when a matching note exists.
    */
   createNote(i: CreateNoteInput): WriteResult {
+    this.index.ensureFresh();
     return this.#create(i, new Set());
   }
 
@@ -152,11 +165,13 @@ export class Store {
    * targeted keys and sections change, and `updated` is bumped. Merged fields are validated when they have a `type`.
    */
   updateNote(i: UpdateNoteInput): WriteResult {
+    this.index.ensureFresh();
     return this.#update(i);
   }
 
   /** Record the triage outcome on a source: `triage`, `triage_outcome` and, when given, `linked_to`. */
   markSource(i: MarkSourceInput): WriteResult {
+    this.index.ensureFresh();
     const issues: ValidationIssue[] = [];
     if (i.triage !== 'linked' && i.triage !== 'dismissed') {
       issues.push({ field: 'triage', message: `triage ${JSON.stringify(i.triage)} is not a triage outcome`, hint: 'use one of: linked, dismissed' });
@@ -211,12 +226,13 @@ export class Store {
   #findDuplicate(fields: Fields, excludePaths: Set<string>): NoteRef | null {
     const cols = 'n.id, n.path, n.title, n.type, n.kind, n.status, n.updated';
     const db = this.index.db;
+    const excluded = new Set([...excludePaths].map(pathKey));
     const key = fields.dedupe_key;
     if (typeof key === 'string' && key !== '') {
       const rows = db
         .prepare(`SELECT ${cols} FROM notes n WHERE json_extract(n.fields_json, '$.dedupe_key') = ? ORDER BY n.path`)
         .all(key) as NoteRef[];
-      const hit = rows.find((r) => !excludePaths.has(r.path));
+      const hit = rows.find((r) => !excluded.has(pathKey(r.path)));
       if (hit) return toRef(hit);
     }
 
@@ -227,7 +243,7 @@ export class Store {
       .all(fields.type as string) as CandidateRow[];
     let best: { ref: NoteRef; score: number } | null = null;
     for (const r of rows) {
-      if (excludePaths.has(r.path)) continue;
+      if (excluded.has(pathKey(r.path))) continue;
       const score = similarity(title, r.title);
       const matches =
         score >= SAME_TITLE ||
@@ -256,7 +272,9 @@ export class Store {
         current: sha256(Buffer.from(text, 'utf8')),
       });
     }
-    const head = text.slice(0, text.length - split.body.length);
+    let head = text.slice(0, text.length - split.body.length);
+    // A file that ends at the closing fence with no EOL: start the body on a line of its own.
+    if (!head.endsWith('\n')) head += split.eol;
     const replaced = head + content.replace(/\r?\n/g, split.eol);
     const id = typeof fields.id === 'string' && fields.id !== '' ? fields.id : null;
     return this.#write(rel, patchFields(replaced, { captured_at: capturedAt, updated: today }), id, false);
@@ -267,6 +285,10 @@ export class Store {
    * (re-read inside the transaction) and may throw to refuse the update.
    */
   #update(i: UpdateNoteInput, check?: (fields: Fields) => void): WriteResult {
+    const owned = KILN_OWNED.filter((k) => (i.set !== undefined && Object.hasOwn(i.set, k)) || (i.unset ?? []).includes(k));
+    if (owned.length > 0) {
+      throw invalid(owned.map((k) => ({ field: k, message: `${k} is assigned by kiln and cannot be changed`, hint: `remove ${k} from set and unset` })));
+    }
     return this.index.transaction(() => {
       const rel = this.index.get(i.idOrPath).path;
       const bytes = this.#readBytes(rel);

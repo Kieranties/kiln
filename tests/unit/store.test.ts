@@ -5,16 +5,19 @@ import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { parseFields, splitNote } from '../../src/frontmatter.js';
 import { Index } from '../../src/index/db.js';
-import { Store } from '../../src/store.js';
+import { pathKey, Store } from '../../src/store.js';
 import { KilnError, type Base, type Fields } from '../../src/types.js';
 
 let base: Base;
 let ix: Index;
 let clock: Date;
+/** The index's own clock (ms), which drives the ensureFresh throttle. */
+let ixNow: number;
 
 beforeEach(() => {
   base = { name: 'test', path: mkdtempSync(join(tmpdir(), 'kiln-store-')) };
-  ix = Index.open(base);
+  ixNow = 0;
+  ix = Index.open(base, { now: () => ixNow });
   // Midday UTC, so the local date is 2026-10-10 in every common time zone.
   clock = new Date('2026-10-10T12:00:00.000Z');
 });
@@ -95,11 +98,12 @@ describe('capture', () => {
     });
 
     expect(r.created).toBe(true);
-    expect(r.id).toBeNull();
+    expect(r.id).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
     expect(r.path).toBe('sources/email/2026-10-10 Firmware vendor email.md');
     expect(r.revision).toBe(rev(r.path));
     const f = fieldsOf(r.path);
     expect(f).toEqual({
+      id: r.id,
       type: 'source',
       kind: 'email',
       title: 'Firmware vendor email',
@@ -138,6 +142,8 @@ describe('capture', () => {
 
     expect(again.created).toBe(false);
     expect(again.path).toBe(first.path);
+    expect(again.id).toBe(first.id);
+    expect(fieldsOf(again.path).id).toBe(first.id);
     expect(readdirSync(abs('sources/jira'))).toEqual(['2026-10-10 NWA-42 Turnstile outage.md']);
     const f = fieldsOf(again.path);
     expect(f.captured_at).toBe('2026-10-12T12:00:00.000Z');
@@ -163,6 +169,28 @@ describe('capture', () => {
       '---\r\ntype: source\r\nkind: slack\r\ntitle: Gate queue chatter\r\ncaptured_at: "2026-10-10T12:00:00.000Z"\r\n' +
         'triage: pending\r\nsource_id: C42-1\r\ndedupe_key: "slack:C42-1"\r\nupdated: 2026-10-10\r\n---\r\nline one\r\nline two\r\n',
     );
+  });
+
+  it('a repeat capture into a source that ends at the closing fence with no EOL keeps one valid frontmatter', () => {
+    const rel = 'sources/github/2026-09-30 Scanner driver PR.md';
+    handWrite(
+      rel,
+      '---\ntype: source\nkind: github\ntitle: Scanner driver PR\ncaptured_at: 2026-09-30\ntriage: linked\nsource_id: PR-7\ndedupe_key: "github:PR-7"\n---',
+    );
+    const r = store().capture({ kind: 'github', title: 'Scanner driver PR', content: 'Merged into main.\n', sourceId: 'PR-7' });
+
+    expect(r.created).toBe(false);
+    const text = read(rel);
+    expect(text.match(/^---$/gm)).toHaveLength(2);
+    const split = splitNote(text);
+    expect(split.body).toBe('Merged into main.\n');
+    expect(parseFields(split.fmText)).toMatchObject({
+      type: 'source',
+      triage: 'linked',
+      dedupe_key: 'github:PR-7',
+      captured_at: '2026-10-10T12:00:00.000Z',
+      updated: '2026-10-10',
+    });
   });
 });
 
@@ -226,6 +254,19 @@ describe('createNote', () => {
     const first = s.createNote(workNote('Stewarding rota', { dedupe_key: 'jira:NWA-7' }));
     const e = kilnError(() => s.createNote(workNote('Radio audit for stewards', { dedupe_key: 'jira:NWA-7' })));
     expect(e.details).toMatchObject({ reason: 'duplicate', existing: { path: first.path } });
+  });
+
+  it('createNote refreshes a stale index first, so a hand-written note is seen as a duplicate', () => {
+    const s = store();
+    s.createNote(workNote('Stewarding rota'));
+    // Written by hand after the last reconcile; the index does not know it yet.
+    mkdirSync(abs('notes'), { recursive: true });
+    writeFileSync(abs('notes/Radio channel plan.md'), '---\ntype: work\ntitle: Radio channel plan\n---\nChannels per stand.\n');
+    ixNow += 10_001;
+
+    const e = kilnError(() => s.createNote(workNote('Radio channel plan')));
+    expect(e.code).toBe('conflict');
+    expect(e.details).toMatchObject({ reason: 'duplicate', existing: { path: 'notes/Radio channel plan.md' } });
   });
 
   it('createNote with newReason bypasses the duplicate check', () => {
@@ -354,6 +395,23 @@ describe('updateNote', () => {
     expect(read(r.path)).toBe(before);
   });
 
+  it('updateNote refuses to set or unset id or created and writes nothing', () => {
+    const s = store();
+    const r = s.createNote(workNote('Fix turnstile firmware'));
+    const before = read(r.path);
+    const attempts = [
+      { set: { id: '01J9ZK3Q7V2M8N4P6R0S1T2XXX' } },
+      { set: { created: '2026-01-01' } },
+      { unset: ['id'] },
+      { unset: ['created'] },
+    ];
+    for (const a of attempts) {
+      const e = kilnError(() => s.updateNote({ idOrPath: r.path, ifRevision: r.revision, ...a }));
+      expect(e.code).toBe('validation');
+    }
+    expect(read(r.path)).toBe(before);
+  });
+
   it('updateNote of an unknown note raises not_found', () => {
     expect(kilnError(() => store().updateNote({ idOrPath: 'notes/Nope.md', ifRevision: 'x', set: { status: 'done' } })).code).toBe('not_found');
   });
@@ -451,3 +509,14 @@ describe('atomic writes', () => {
   });
 });
 
+
+describe('pathKey', () => {
+  it('normalises slashes, and case on Windows only', () => {
+    expect(pathKey('decisions\\2026\\Paper tickets.md')).toBe(pathKey('decisions/2026/Paper tickets.md'));
+    if (process.platform === 'win32') {
+      expect(pathKey('Decisions/2026/PAPER tickets.md')).toBe(pathKey('decisions/2026/paper tickets.md'));
+    } else {
+      expect(pathKey('Decisions/2026/PAPER tickets.md')).not.toBe(pathKey('decisions/2026/paper tickets.md'));
+    }
+  });
+});
