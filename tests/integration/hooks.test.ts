@@ -115,6 +115,22 @@ describe('kiln hook write-guard', () => {
   });
 });
 
+describe('kiln hook usage errors', () => {
+  it('an unknown or missing hook name exits 1 (non-blocking), not 2', () => {
+    for (const args of [['hook', 'no-such-hook'], ['hook'], ['hook', 'write-guard', 'extra']]) {
+      const r = spawnSync(process.execPath, [CLI, ...args], {
+        cwd: root,
+        env: { ...process.env, KILN_CONFIG: cfgPath },
+        input: writeInput(join(base, 'notes', 'Gate Staffing.md')),
+        encoding: 'utf8',
+      });
+      expect(r.status, args.join(' ')).toBe(1);
+      expect(r.stdout).toBe('');
+      expect(r.stderr).toMatch(/^kiln hook: /);
+    }
+  });
+});
+
 describe('kiln hook session-start', () => {
   it('session-start prints the orientation line for a matching cwd and nothing otherwise', () => {
     const cwd = join(repos, 'turnstile-firmware');

@@ -1,6 +1,6 @@
 ---
 name: review
-description: Use when the user asks to review kiln, work through the "Needs review" items, check what Claude filed or changed, confirm or revert flagged notes or superseded decisions, or deal with suspected duplicate notes. Walks each flagged note with the user and clears the flag once it is confirmed, edited or reverted.
+description: Use when the user asks to review their kiln knowledge base - work through kiln's "Needs review" items, check what Claude filed or changed in kiln notes, confirm or revert flagged kiln notes or superseded kiln decisions, or deal with suspected duplicate notes in the knowledge base. Not for reviewing code or code changes. Walks each flagged note with the user and clears the flag once it is confirmed, edited or reverted.
 ---
 
 # Review flagged kiln notes
@@ -44,7 +44,11 @@ kiln never deletes. Revert by restoring what was there and retiring what was add
 ## Possible duplicates
 
 For each `possible_duplicate` finding, `get` both notes and show them side by side: title, `summary`, `aliases`, `sources`, `updated`. Ask: **merge or keep both?**
-- **Merge:** pick the note to keep with the user. `update_note` it to add the other's `aliases` and `sources`, and append any content it lacks. Then retire the other through its status as in "Reverting", with a `[[link]]` to the kept note in its body.
+- **Merge:** pick the note to keep with the user. `update_note` it to add the other's `aliases` and `sources`, and append any content it lacks. Then retire the other, by its type:
+  - anchor or reference: `status: "archived"`; work: `status: "abandoned"`; project: `status: "closed"`; each with a `[[link]]` to the kept note in its body;
+  - decision: `update_note` with `set: { status: "superseded", superseded_by: ["[[<kept note title>]]"] }`;
+  - source: `mark_source` with `triage: "dismissed"`, `outcome: "duplicate-of"` and `linked_to: ["[[<kept note title>]]"]`;
+  - plain `note`: it has no status; tell the user, who can remove it in Obsidian.
 - **Keep both:** if the titles are confusingly close, offer to make one more specific with `update_note` (`set: { title, aliases }`).
 
 ## Conflicts

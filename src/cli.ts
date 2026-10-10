@@ -190,11 +190,22 @@ const HOOKS: Record<string, () => Promise<void>> = {
   'session-start': hookSessionStart,
 };
 
+/**
+ * A bad `hook` command line exits 1, not the usual usage code 2: to Claude Code a PreToolUse exit of 2 blocks the
+ * tool call, so a plugin that drifts from the installed binary would otherwise block every Write and Edit.
+ */
 async function cmdHook(args: string[]): Promise<void> {
-  const { positionals } = parse(args, {}, 1);
-  const name = positionals[0]!;
-  const run = Object.hasOwn(HOOKS, name) ? HOOKS[name] : undefined;
-  if (!run) throw new UsageError(`Unknown hook "${name}"`);
+  let run: (() => Promise<void>) | undefined;
+  try {
+    const name = parse(args, {}, 1).positionals[0]!;
+    run = Object.hasOwn(HOOKS, name) ? HOOKS[name] : undefined;
+    if (!run) throw new UsageError(`Unknown hook "${name}"; expected one of: ${Object.keys(HOOKS).join(', ')}`);
+  } catch (e) {
+    if (!(e instanceof UsageError)) throw e;
+    process.stderr.write(`kiln hook: ${e.message}\n`);
+    process.exitCode = 1;
+    return;
+  }
   await run();
 }
 

@@ -13,10 +13,12 @@
     ],
     "SessionStart": [
       {
+        "matcher": "startup|resume",
         "hooks": [
           {
             "type": "command",
-            "command": "kiln hook session-start"
+            "command": "kiln hook session-start",
+            "timeout": 10
           }
         ]
       }

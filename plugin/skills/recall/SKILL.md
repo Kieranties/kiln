@@ -1,6 +1,6 @@
 ---
 name: recall
-description: Use when the user asks what they know, decided, agreed or are working on, or asks about an organisation, product, service, person, project, ticket or past decision that may be in their kiln knowledge base ("what did we decide about...", "where are we on...", "remind me...", "what do I know about..."). Answers from kiln notes, in a fixed retrieval order, citing [[links]].
+description: Use when the user asks to recall something from kiln or their knowledge base or notes - what they know, decided or agreed, or where a project, ticket, organisation, product, person or past decision stands ("what did we decide about...", "where are we on...", "what do my notes say about...", "check kiln for..."). Not for questions about the code in the current repo. Answers from kiln notes, in a fixed retrieval order, citing [[links]].
 ---
 
 # Recall from kiln
@@ -9,7 +9,7 @@ Answer from the user's knowledge base with the kiln tools, in this order. Stop a
 
 ## Retrieval order
 
-1. **Resolve, then brief.** Call `resolve({ name })` for each named thing in the question: organisation, product, service, person, topic, project, ticket key. For each anchor or project found, call `brief({ id_or_path })` for its current truth, active decisions, open work and recent changes.
+1. **Resolve, then brief.** Call `resolve({ name })` for each named thing in the question: organisation, product, service, person, topic, project, ticket key. `resolve` already returns a brief of its best match; call `brief({ id_or_path })` only for the other anchors or projects it found that matter to the question.
 2. **Structured follow-up on those anchors** with `query`:
    - active decisions: `query({ type: "decision", status: "active", anchors: ["[[Turnstile Network]]"] })`
    - open work: `query({ type: "work", status: "active", anchors: [...] })` (and `status: "blocked"` when relevant)
@@ -31,7 +31,7 @@ Answer from the user's knowledge base with the kiln tools, in this order. Stop a
 ## Example (Northwind Arena)
 
 Question: "Where are we on the North Stand turnstiles?"
-1. `resolve("North Stand turnstiles")` finds the anchor `Turnstile Network`; `brief` it.
+1. `resolve("North Stand turnstiles")` finds the anchor `Turnstile Network` and returns its brief.
 2. `query({ type: "work", status: "active", anchors: ["[[Turnstile Network]]"] })` returns `Fix North Stand turnstile firmware`.
 3. Skip search: the brief and query answer it.
 4. `get` the work note for its latest checkpoint and open items.

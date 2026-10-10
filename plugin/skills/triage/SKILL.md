@@ -33,12 +33,19 @@ Turn captured sources into knowledge: decide what each one means, file it, recor
 | `new-reference` | A doc, spec, code location, post, thread, video, dashboard, sheet or slides worth finding again | `create_note` with `type: "reference"` and its `kind` |
 | `duplicate-of` | The source repeats something already filed, with nothing new | nothing; `mark_source` with `triage: "dismissed"` and `linked_to` the existing note |
 
+Superseding: `get` the old decision, then `supersede({ old_id_or_path, if_revision: <the OLD decision's revision>, new_decision: { fields: { title, decided_on, summary, aliases, sources, confidence, anchors, ... }, sections: [{ heading: "Context", text }, { heading: "Decision", text }, { heading: "Consequences", text }] } })`.
+
 If a source carries two things (a decision and a work update), file both, use the outcome for the main one, and list every note touched in `linked_to`.
 
 ## Updating a work note (`update-work-item`)
 
-One `update_note` call with the work note's `if_revision`:
-- `sections`: `{ heading: "Checkpoints", mode: "append", text: "- <today, YYYY-MM-DD>: <what changed>" }` (a dated checkpoint), and `{ heading: "Open items", mode: "replace", text: <the open items, listed verbatim from the source> }`. Never paraphrase open items.
+`get` the work note first: you need its current `Open items` and its `revision`. Then make one `update_note` call with that `if_revision`:
+- `sections`:
+  - `{ heading: "Checkpoints", mode: "append", text: "- <today, YYYY-MM-DD>: <what changed>" }`: a dated checkpoint that also names each item the source closed.
+  - `Open items`, merged so nothing still open is lost:
+    - when the source **only adds** items and closes none: `mode: "append"` with the new items, verbatim;
+    - otherwise `mode: "replace"` with the **merged current list**: every existing item that is still open, kept verbatim; minus only the items the source shows are closed (each recorded in the checkpoint); plus the new items, verbatim.
+  - Never paraphrase open items, and never drop one the source does not show closed.
 - `set`: `last_checkpoint` (today), `status` if it changed, and `sources` as the existing list **plus** `[[<source title>]]`.
 
 ## What every note you write must carry
@@ -76,9 +83,12 @@ After each batch, give a short summary: one line per item (source title, outcome
 
 ## Example (Northwind Arena)
 
-Source: `NWA-142 Turnstiles reject mobile tickets at North Stand`, a Jira update saying the vendor patch landed on gate 3 and gate 4 is still failing.
-- `resolve("NWA-142")` finds the work note `Fix North Stand turnstile firmware`.
-- Outcome `update-work-item`: append a dated checkpoint; replace `Open items` with "Gate 4 still rejects mobile tickets"; add the source to `sources`.
+Source: `NWA-142 Turnstiles reject mobile tickets at North Stand`, a Jira update saying the vendor patch fixed gate 3, gate 4 still rejects mobile tickets, and the gate 4 reader needs a new cable.
+- `resolve("NWA-142")` finds the work note `Fix North Stand turnstile firmware`; `get` it. Its `Open items` are "Patch gate 3", "Patch gate 4" and "Brief stewards on the paper-ticket fallback".
+- Outcome `update-work-item`, in one `update_note`:
+  - append the checkpoint `- <today>: Vendor patch fixed gate 3 (closed "Patch gate 3"); gate 4 still rejects mobile tickets.`;
+  - replace `Open items` with the merged list: "Patch gate 4", "Brief stewards on the paper-ticket fallback" (both still open, kept verbatim), plus the new "Replace the gate 4 reader cable";
+  - add the source to `sources`.
 - Confidence high, so no review flag. `mark_source` with `triage: "linked"`.
 
 ## If the kiln tools are unavailable
