@@ -12,7 +12,7 @@ All spikes were throwaway and ran in `D:\tmp\kiln-spike`. The test machine is an
 | 2 | mdbase on Windows | The native CLI runs without Rust. Typing, placement, **revision guard** and rename all work. But **writes reformat frontmatter they didn't touch**, every query scans the whole collection (6-20 s at 100k), and there is no ranked search and no MCP. Treat it as a design reference, not the engine. |
 | 3 | Golden-set retrieval (189 real notes, 40 questions) | **Plain BM25 (stemming, OR query) is a strong baseline**: recall@5 0.84, MRR 0.81. It **beat Basic Memory's hybrid search** (0.72, 0.69), and by a wide margin on reworded questions (0.83 vs 0.38). Write-time enrichment raises recall@10 (0.88 → 0.94) but not ranking. |
 | 4 | CPU embeddings | 100k notes is roughly **1-3 hours** for a first build: bge-small q8 in Node takes about 63 min, fp32 about 1.75 h. Daily top-ups take seconds. **Thread count is the lever, not batch size** (batch 1-2 with 16 threads is best). Basic Memory runs about 10× below what this CPU can do. |
-| 5 | Distilled structure vs raw (blind LLM judge) | Answer quality is **level** (37 vs 36 out of 40). Distilled sets need **2.7× less reading**, mark superseded decisions so nothing points to a stale answer, and contained 0 factual errors (4 minor overstatements). It cost ~940k tokens to distil 189 notes, and parallel writers produced duplicate notes. |
+| 5 | Distilled structure vs raw (blind LLM judge) | At 189 notes, answer quality is **level** (37 vs 36 out of 40). Distilled sets need **2.7× less reading**, mark superseded decisions so nothing points to a stale answer, and contained 0 factual errors (4 minor overstatements). It cost ~940k tokens to distil 189 notes, and parallel writers produced duplicate notes. |
 
 ## Spike 1: 100k-note synthetic base
 
@@ -111,7 +111,29 @@ Test sample: 3,000 chunks of about 353 tokens, roughly 2.7 chunks per note, whic
   - about 940k tokens to distil 189 notes (~5k per note)
   - ~8 duplicate decisions and work items from parallel writers, which is evidence for a single writer that deduplicates
   - first-name and person conflation, which agents flagged as `confidence: inferred`
-- **Untested:** whether structure's advantage grows at 100k notes, where raw retrieval gets noisier.
+- **Tested in B1 (below):** at 100k notes, structure's advantage grows sharply.
+
+## Follow-up B1: structure at 100k notes
+
+Setup: the 189 raw notes and 219 distilled notes were mixed into the 100k synthetic base, and the 40 golden questions were re-run. Each index built in ~9 s (~650 MB, non-contentless). Correction: the spike 5 script ranked only the first 200 matches without ordering them. Corrected 189-note figures for anchor-first are recall@5 0.95 (not 0.99); conclusions unchanged.
+
+| recall@5 | raw only (189 → 100k) | raw + distilled, boosted (100k) | anchor-first (189 → 100k) |
+|---|---|---|---|
+| decision / temporal | 0.86 → **0.14** | 0.93 | 1.00 → **1.00** |
+| resume / status | 0.83 → **0.25** | 0.67 | 1.00 → **1.00** |
+| multi-hop | 0.79 → 0.21 | 0.71 | 0.86 → 0.79 |
+| vocabulary mismatch | 0.83 → **0.00** | 0.29 | 0.92 → 0.46 |
+| exact term | 0.88 → 0.31 | 0.50 | 1.00 → 0.63 |
+| all 40 | 0.84 → 0.16 | 0.58 | 0.95 → **0.73** |
+
+- Average synthetic distractors in the top 5: raw 4.7, boosted 3.3, anchor-first 2.3.
+- **Findings:**
+  - At scale, anchor-first structure keeps every decision and status question answerable, while plain search collapses.
+  - The remaining weakness is questions whose wording matches no anchor name or alias. That is where enrichment, alias coverage and possibly vectors earn their place.
+- **Caveats:**
+  - The distractors are harsher than a real vault: every synthetic note is recombined from the same 189 notes, so all are on-topic.
+  - Ranked OR-queries averaged ~300 ms at 100k, against 14 ms for spike 1's simpler queries, so this is worth optimising.
+  - A blind judge was skipped because path prefixes would reveal which variant is which.
 
 ## Implications (for discussion, not decided)
 
