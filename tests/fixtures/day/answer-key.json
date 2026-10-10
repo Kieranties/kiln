@@ -1,0 +1,86 @@
+{
+  "captures": [
+    {
+      "file": "2026-10-10 Payments squad thread on NWA-311 refunds.md",
+      "expected_outcome": "update-work-item",
+      "targets": [
+        "work/2026/Duplicate charges on renewal retry.md"
+      ]
+    },
+    {
+      "file": "2026-10-10 Re Send rate limit increase for case 88213.md",
+      "expected_outcome": "update-work-item",
+      "targets": [
+        "work/2026/Password reset links expire too early.md"
+      ]
+    },
+    {
+      "file": "2026-10-10 Identity migration stand-up 10 October.md",
+      "expected_outcome": "update-work-item",
+      "targets": [
+        "work/2026/Move Club Console staff accounts to the new identity provider.md",
+        "work/2026/OIDC login for the Fan App.md"
+      ]
+    },
+    {
+      "file": "2026-10-10 Renewals steering 10 October.md",
+      "expected_outcome": "supersede",
+      "targets": [
+        "decisions/2026/2026-03-04 Season tickets are paid by card only.md"
+      ]
+    },
+    {
+      "file": "2026-10-10 NWA-371 Fan App crashes when opening tickets offline.md",
+      "expected_outcome": "new-work-item",
+      "targets": [
+        "new work/bug: Fan App crashes when opening tickets offline (NWA-371)"
+      ]
+    },
+    {
+      "file": "2026-10-10 Office kitchen deep clean on Friday.md",
+      "expected_outcome": "dismiss",
+      "targets": []
+    },
+    {
+      "file": "2026-10-10 Matchday hospitality trends autumn newsletter.md",
+      "expected_outcome": "dismiss",
+      "targets": []
+    },
+    {
+      "file": "2026-10-10 Payments on-call runbook wiki page.md",
+      "expected_outcome": "duplicate-of",
+      "targets": [
+        "references/Payments service runbook.md"
+      ]
+    },
+    {
+      "file": "2026-10-10 Ticketing ops sync 10 October.md",
+      "expected_outcome": "new-decision",
+      "targets": [
+        "new decision: Release unbooked easy-access seats to general sale 72 hours before kick-off"
+      ]
+    },
+    {
+      "file": "2026-10-10 Harbour Athletic capacity from January.md",
+      "expected_outcome": "link-to-anchor",
+      "targets": [
+        "anchors/organisation/Harbour Athletic.md"
+      ]
+    },
+    {
+      "file": "2026-10-10 Renewals funnel dashboard is live.md",
+      "expected_outcome": "new-reference",
+      "targets": [
+        "new reference/dashboard: Renewals funnel dashboard"
+      ]
+    },
+    {
+      "file": "2026-10-10 Priya to lead Payments from November.md",
+      "expected_outcome": "link-to-anchor",
+      "targets": [
+        "anchors/person/Priya Raman.md",
+        "anchors/service/Payments.md"
+      ]
+    }
+  ]
+}
