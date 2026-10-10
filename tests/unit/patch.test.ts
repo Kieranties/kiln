@@ -442,6 +442,77 @@ describe('patchFields', () => {
     expect(splitNote(fixed).fmText).toBe('id: x\n');
   });
 
+  it('finds keys whose values contain U+2028 or a lone CR, for set and unset', () => {
+    for (const sep of [String.fromCharCode(0x2028), '\r']) {
+      const input = lf('---', `title: a${sep}b`, `summary: c${sep}d # note`, `kind: "e${sep}f" # q`, 'status: active', '---');
+      expect(patchFields(input, { title: 'New', summary: 'S', kind: 'K' })).toBe(
+        lf('---', 'title: New', 'summary: S # note', 'kind: "K" # q', 'status: active', '---'),
+      );
+      expect(patchFields(input, {}, ['title', 'summary', 'kind'])).toBe(lf('---', 'status: active', '---'));
+    }
+  });
+
+  it("keeps a column-0 comment inside a value in that key's range", () => {
+    const list = lf('---', 'tags:', '# c', '- x', 'status: active', '---');
+    const replaced = patchFields(list, { tags: ['a', 'b'] });
+    expect(replaced).toBe(lf('---', 'tags:', '- a', '- b', 'status: active', '---'));
+    expect(fieldsOf(replaced)).toEqual({ tags: ['a', 'b'], status: 'active' });
+    expect(patchFields(list, {}, ['tags'])).toBe(lf('---', 'status: active', '---'));
+
+    const map = lf('---', 'extra:', '  a: 1', '# c', '  b: 2', '# about status', 'status: active', '---');
+    const flat = patchFields(map, { extra: 'x' });
+    expect(flat).toBe(lf('---', 'extra: x', '# about status', 'status: active', '---'));
+    expect(fieldsOf(flat)).toEqual({ extra: 'x', status: 'active' });
+  });
+
+  it('refuses to set or unset a key whose anchor is aliased by another key', () => {
+    const input = lf(
+      '---',
+      'defaults: &d',
+      '  owner: ops',
+      'venue: *d',
+      'list:',
+      '  - &item x',
+      'copy: *item',
+      'status: active',
+      '---',
+    );
+    const cases: [Record<string, unknown>, string[], RegExp][] = [
+      [{ defaults: 'x' }, [], /"defaults".*anchor &d/],
+      [{}, ['defaults'], /"defaults".*anchor &d/],
+      [{ list: ['y'] }, [], /"list".*anchor &item/],
+      [{}, ['list'], /"list".*anchor &item/],
+    ];
+    for (const [set, unset, message] of cases) {
+      expect(() => patchFields(input, set, unset)).toThrow(message);
+      try {
+        patchFields(input, set, unset);
+      } catch (e) {
+        expect((e as KilnError).code).toBe('validation');
+      }
+    }
+    // fine when every alias user is touched too, or when the anchor is unused
+    expect(patchFields(input, { venue: 'Main hall' }, ['defaults'])).toBe(
+      lf('---', 'venue: Main hall', 'list:', '  - &item x', 'copy: *item', 'status: active', '---'),
+    );
+    expect(patchFields(lf('---', 'a: &x 1', 'b: 2', '---'), { a: 3 })).toBe(lf('---', 'a: 3', 'b: 2', '---'));
+  });
+
+  it('throws instead of returning frontmatter that no longer parses, when the input parsed', () => {
+    // a quoted key is not recognised as an existing key, so appending would duplicate it
+    const quotedKey = lf('---', '"title": Old', '---');
+    expect(() => patchFields(quotedKey, { title: 'New' })).toThrow(/would not be valid YAML/);
+    try {
+      patchFields(quotedKey, { title: 'New' });
+    } catch (e) {
+      expect((e as KilnError).code).toBe('validation');
+    }
+    // input that never parsed skips the backstop: callers report it
+    expect(patchFields(lf('---', 'title: [unclosed', '---'), { status: 'x' })).toBe(
+      lf('---', 'title: [unclosed', 'status: x', '---'),
+    );
+  });
+
   it('throws validation for unsupported values', () => {
     const input = lf('---', 'id: a', '---');
     for (const set of [{ id: { a: 1 } }, { nested: { a: 1 } }, { id: [{ a: 1 }] }, { id: Number.NaN }]) {

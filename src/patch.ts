@@ -1,4 +1,5 @@
-import { renderNote, renderScalar, splitNote } from './frontmatter.js';
+import { isMap, isScalar, parseDocument, visit, type Document, type Node, type Pair } from 'yaml';
+import { parseFields, renderNote, renderScalar, splitNote } from './frontmatter.js';
 import { KilnError, type Fields } from './types.js';
 
 type Scalar = string | number | boolean | null;
@@ -20,12 +21,13 @@ type Original = {
   prefix: string;
 };
 
-const KEY_LINE = /^([A-Za-z_][\w-]*):(.*)$/;
+// The `s` flag matters: a line's text may contain a lone CR, U+2028 or U+2029, which `.` would not match.
+const KEY_LINE = /^([A-Za-z_][\w-]*):(.*)$/s;
 const ITEM = /^-(?:[ \t]|$)/;
 const BLANK = /^[ \t]*$/;
 const COMMENT = /^[ \t]*#/;
 /** What may follow a closed quoted scalar or flow list on its line: whitespace, optionally then a comment. */
-const AFTER_VALUE = /^(?:[ \t]*|[ \t]+#.*)$/;
+const AFTER_VALUE = /^(?:[ \t]*|[ \t]+#.*)$/s;
 const NULL_WORD = /^(?:null|Null|NULL|~)$/;
 const FLOW_UNSAFE = /[,[\]{}]/;
 
@@ -35,8 +37,10 @@ const FLOW_UNSAFE = /[,[\]{}]/;
  * shape differs from the original (scalar vs list, or an empty/null original) is written in `renderNote` style.
  * New keys are appended before the closing fence in `renderNote` style and order. A key in both `set` and `unset`
  * is removed. Undefined values are ignored. With no frontmatter, a block is created at the top (after a BOM).
- * Works on text lines and does not parse YAML: callers validate the frontmatter first.
- * Throws `KilnError('validation')` for values that are not scalars or lists of scalars.
+ * Edits text lines; callers validate the frontmatter first. When the original frontmatter is valid YAML, the patch
+ * is guarded: changing or removing a key that defines an anchor aliased by an untouched key, or producing
+ * frontmatter that no longer parses, throws instead of writing.
+ * Throws `KilnError('validation')` for those cases and for values that are not scalars or lists of scalars.
  */
 export function patchFields(text: string, set: Fields, unset: string[] = []): string {
   const removed = new Set(unset);
@@ -49,6 +53,9 @@ export function patchFields(text: string, set: Fields, unset: string[] = []): st
     const bom = text.charCodeAt(0) === 0xfeff ? text[0] : '';
     return bom + renderNote(Object.fromEntries(toSet), [], eol) + text.slice(bom.length);
   }
+
+  const validInput = parses(split.fmText);
+  if (validInput) checkAnchors(parseDocument(split.fmText), new Set([...removed, ...toSet.map(([k]) => k)]));
 
   const lines = toLines(split.fmText);
   const ranges = keyRanges(lines);
@@ -81,7 +88,57 @@ export function patchFields(text: string, set: Fields, unset: string[] = []): st
     const block = renderNote(added, [], eol);
     fm += block.slice(fence, block.length - fence);
   }
+  if (validInput) {
+    try {
+      parseFields(fm);
+    } catch (e) {
+      throw new KilnError(
+        'validation',
+        `Cannot patch frontmatter safely: the result would not be valid YAML (${(e as Error).message})`,
+      );
+    }
+  }
   return text.slice(0, split.fmStart) + fm + text.slice(split.fmEnd);
+}
+
+function parses(fmText: string): boolean {
+  try {
+    parseFields(fmText);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Throw when a key about to be replaced or removed defines an anchor (on its value or any node inside it) that an
+ * alias outside the touched keys refers to: the patch would leave that alias dangling or silently change it.
+ */
+function checkAnchors(doc: Document, touched: Set<string>): void {
+  if (!isMap(doc.contents)) return;
+  const touchedPairs = doc.contents.items.filter((p) => isScalar(p.key) && touched.has(String(p.key.value)));
+  for (const pair of touchedPairs) {
+    const anchors = new Set<string>();
+    visit(pair.value as Node | null, {
+      Node(_, node) {
+        if (node.anchor) anchors.add(node.anchor);
+      },
+    });
+    if (anchors.size === 0) continue;
+    let used: string | undefined;
+    visit(doc, {
+      Alias(_, node, path) {
+        if (anchors.has(node.source) && !path.some((p) => touchedPairs.includes(p as Pair))) used = node.source;
+      },
+    });
+    if (used !== undefined) {
+      throw new KilnError(
+        'validation',
+        `Cannot patch "${String((pair.key as { value: unknown }).value)}": it defines the YAML anchor &${used}, ` +
+          `which another key uses as *${used}; edit the note by hand`,
+      );
+    }
+  }
 }
 
 function toLines(s: string): Line[] {
@@ -105,9 +162,9 @@ function isContinuation(t: string): boolean {
 }
 
 /**
- * Map each top-level key (first occurrence) to its line range: the key line plus following indented or `- ` lines,
- * including blank lines between them but not trailing blank lines. A top-level key, a `#` comment at column 0, or
- * any other unindented line ends the range.
+ * Map each top-level key (first occurrence) to its line range: the key line plus following indented or `- ` lines.
+ * Blank lines and column-0 `#` comments belong to the range only when more continuation lines follow them, so a
+ * comment directly above the next key stays outside. A top-level key or any other unindented line ends the range.
  */
 function keyRanges(lines: Line[]): Map<string, Range> {
   const ranges = new Map<string, Range>();
@@ -122,7 +179,7 @@ function keyRanges(lines: Line[]): Map<string, Range> {
     for (let j = i + 1; j < lines.length; j++) {
       const t = lines[j].text;
       if (isContinuation(t)) end = j + 1;
-      else if (!BLANK.test(t)) break;
+      else if (!BLANK.test(t) && !t.startsWith('#')) break;
     }
     if (!ranges.has(m[1])) ranges.set(m[1], { start: i, end, rest: m[2] });
     i = end;
@@ -157,7 +214,7 @@ function analyse(rest: string, continuation: Line[]): Original {
   }
   if ('{|>&*!%@`'.includes(v[0])) return result('other', '');
 
-  const plain = /^(.*?)([ \t]+#.*|[ \t]*)$/.exec(v);
+  const plain = /^(.*?)([ \t]+#.*|[ \t]*)$/s.exec(v);
   if (!plain) return result('other', '');
   return result(NULL_WORD.test(plain[1]) ? 'empty' : 'plain', plain[2]);
 }
