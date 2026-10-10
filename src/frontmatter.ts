@@ -22,16 +22,19 @@ export type SplitNote = {
 /**
  * Split a note into frontmatter and body. The frontmatter must start at offset 0 with a `---` line and end at the
  * next line that is exactly `---`. An opening fence with no closing fence is treated as no frontmatter.
+ * A single leading UTF-8 BOM (U+FEFF) before the opening fence is tolerated: it stays in the text before `fmStart`
+ * (so both offsets shift by one) and splicing at the offsets preserves it.
  */
 export function splitNote(text: string): SplitNote {
-  const opening = text.startsWith('---\r\n') ? '\r\n' : text.startsWith('---\n') ? '\n' : null;
+  const bom = text.charCodeAt(0) === 0xfeff ? 1 : 0;
+  const opening = text.startsWith('---\r\n', bom) ? '\r\n' : text.startsWith('---\n', bom) ? '\n' : null;
   if (opening === null) {
     const nl = text.indexOf('\n');
     const eol: Eol = nl > 0 && text[nl - 1] === '\r' ? '\r\n' : '\n';
     return { fmText: null, body: text, eol, fmStart: 0, fmEnd: 0 };
   }
 
-  const fmStart = 3 + opening.length;
+  const fmStart = bom + 3 + opening.length;
   let lineStart = fmStart;
   while (lineStart <= text.length) {
     const nl = text.indexOf('\n', lineStart);

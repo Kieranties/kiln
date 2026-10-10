@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { parseFields, renderNote, renderScalar, splitNote } from '../../src/frontmatter.js';
 import { KilnError } from '../../src/types.js';
 
+const BOM = String.fromCharCode(0xfeff);
+
 describe('splitNote', () => {
   it('handles no frontmatter', () => {
     const text = '# Just a body\n\nNo fence here.\n';
@@ -76,6 +78,37 @@ describe('splitNote', () => {
 
   it('detects CRLF in a note without frontmatter', () => {
     expect(splitNote('line one\r\nline two\r\n').eol).toBe('\r\n');
+  });
+
+  it('tolerates a single leading UTF-8 BOM, shifting offsets by one and leaving the BOM in place', () => {
+    const lf = BOM + '---\nid: a\n---\nbody\n';
+    const r = splitNote(lf);
+    expect(r.fmText).toBe('id: a\n');
+    expect(r.body).toBe('body\n');
+    expect(r.eol).toBe('\n');
+    expect([r.fmStart, r.fmEnd]).toEqual([5, 11]);
+    expect(lf.slice(0, r.fmStart)).toBe(BOM + '---\n');
+    expect(lf.slice(r.fmStart, r.fmEnd)).toBe(r.fmText);
+
+    const crlf = BOM + '---\r\nid: a\r\n---\r\nbody\r\n';
+    const c = splitNote(crlf);
+    expect(c.fmText).toBe('id: a\r\n');
+    expect(c.eol).toBe('\r\n');
+    expect([c.fmStart, c.fmEnd]).toEqual([6, 13]);
+    expect(crlf.slice(c.fmStart, c.fmEnd)).toBe(c.fmText);
+
+    const empty = splitNote(BOM + '---\n---\nbody\n');
+    expect(empty.fmText).toBe('');
+    expect([empty.fmStart, empty.fmEnd]).toEqual([5, 5]);
+  });
+
+  it('treats a BOM without a fence, or a doubled BOM, as no frontmatter', () => {
+    for (const text of [BOM + '# Title\n', BOM + BOM + '---\nid: a\n---\n', BOM + '---\nid: a\n']) {
+      const r = splitNote(text);
+      expect(r.fmText).toBeNull();
+      expect(r.body).toBe(text);
+      expect([r.fmStart, r.fmEnd]).toEqual([0, 0]);
+    }
   });
 });
 
