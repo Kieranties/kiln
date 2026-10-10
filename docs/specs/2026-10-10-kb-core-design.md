@@ -1,275 +1,271 @@
-# kiln sub-project 1: KB core design
+# kiln sub-project 1: KB core design (lean v1)
 
 Date: 2026-10-10 · Status: **current direction for review, still exploratory** · Related: [vision](../vision.md), [landscape research](../research/2026-10-10-knowledge-landscape.md), [spike results](../research/2026-10-10-spike-results.md)
 
-## 1. Purpose and scope
+## 1. Goal and scope
 
-The KB core is the foundation the rest of kiln calls. It delivers three of the four core jobs from any Claude session:
+v1 delivers four things, from any Claude session:
 
-- **Capture**: manual capture into one inbox.
-- **Recall**: what do I know or what did we decide, with links back to sources.
-- **Resume**: what am I working on and what changed.
-
-It also provides the storage, write and query surface the later sub-projects build on.
-
-**In scope**
-- Knowledge-base layout and note types.
-- The kiln server (MCP + HTTP).
-- The index and retrieval.
-- Changeset writes.
-- The Claude Code plugin: skills, hooks, the `kiln mcp` launcher and the `kiln` CLI.
-- The test strategy, including generated fixtures.
-
-**Out of scope** (later sub-projects, in build order):
-- 2: feeders (n8n and the snapshot sweep)
-- 3: workspace lifecycle (context packs, close-out, outbound actions)
-- 4: the Obsidian cockpit plugins
-- 5: migration of the existing vault
+1. **Capture** knowledge from external sources and from you: Jira, Slack, GitHub, email or meetings by reference, plus text and links.
+2. **Triage** captures into a **human-readable structure** you can browse in Obsidian.
+3. **Query**: Claude answers questions from that structure, with links to the notes it used.
+4. **Review and filing**: a lightweight process for checking what Claude filed.
 
 **Planning scale:** tens of thousands of notes per base, growing to 100k or more, across several bases.
 
-## 2. Principles this design must honour
+**Out of scope for v1.** Everything below is listed in §10 and can be added without redesign:
+- automated feeders (n8n, watchers)
+- snapshot refresh
+- the HTTP API and an always-on server
+- the file watcher
+- git integration and operational logs
+- automatic link repair
+- the resume dashboard
+- workspace lifecycle
+- Obsidian cockpit plugins
+- migration of the old vault
+- vector search
 
-- **P1 Reachable from any session.** Every Claude session in any repo or worktree reaches kiln automatically.
-- **P2 One inbox, many feeders.**
-- **P3 Clean slate.**
-- **P4 Personal and local-first.** Knowledge stays local, and real knowledge never enters the code repo or its tests.
-- **P5 Remote truth, selective local context.**
+## 2. Principles
+
 - **Markdown is the truth.** The index is a rebuildable cache.
-- **Obsidian is the viewer and cockpit** (current direction), but kiln never requires it.
+- **Obsidian is the viewer**, but kiln never requires it.
+- **Reachable from any Claude session** in any repo or worktree.
+- **Remote truth, selective local context.** Keep what you engaged with, linked back to the original.
 - **Byte-preserving writes.** kiln changes only what it means to change.
-- **The server is deterministic.** It holds no external credentials and never calls an LLM. All judgement (triage, enrichment, distillation) happens in Claude sessions and arrives as proposals.
+- **kiln's tools are deterministic.** They hold no external credentials and never call an LLM. All judgement (triage, summaries, filing) happens in Claude sessions.
+- **No real knowledge in the code repo or its tests.** Realistic test data is generated.
 
-## 3. Process model
+## 3. How it runs
 
-- **One local daemon, `kiln serve`**, bound to `127.0.0.1`.
-  - It exposes an **HTTP API** (for n8n, Obsidian plugins and the CLI; bearer token from config) and **MCP** (for Claude).
-  - There is one process and so **one writer per base**.
-- **`kiln mcp`** is a stdio launcher registered at user scope.
-  - It starts the daemon if needed and proxies to it.
-  - It passes the session's working directory so the server can choose the base.
-- **Startup:** the daemon starts at Windows logon, and any `kiln` command starts it on demand.
-- **Hosting:** native Node on Windows for now. Docker and WSL hosting are on the future list.
-- **Config** lives in `~/.kiln/config.yaml`: port, token, `default_base`, `bases` (name → path) and `rules` (path glob → base, first match wins).
-  - Base resolution order: an explicit `base=`, then the session folder matched against the rules, then `default_base`.
-- **Change detection**
-  - `@parcel/watcher` gives hint events.
-  - A **stat-scan reconcile** runs at startup and every few minutes. It costs about 0.5 s per 100k notes and is the source of truth.
-  - Node `fs.watch` and chokidar are not used. In the spike they lost events silently or collapsed.
-- **Renames** arrive as delete + create and are paired by note `id`.
-- **Git is optional per base.** If the base is a repo:
-  - each applied **knowledge changeset** becomes one commit, so each change can be reverted on its own;
-  - **routine machine changes** (snapshot refreshes, `id` insertions, link repairs) are batched into **at most one maintenance commit per hour**, e.g. `kiln: maintenance (snapshots 112, links 37)`;
-  - kiln never pushes.
-- **Optional background job:** embeddings are off by default (see §6).
+- **`kiln mcp`** is an MCP stdio server.
+  - It is registered at user scope by the kiln Claude Code plugin, so every Claude session starts its own instance automatically.
+  - There is no long-running daemon in v1.
+- **Base selection:** the server matches the session's working folder against `rules` in `~/.kiln/config.yaml`. An explicit `base=` on any call overrides the match, and `default_base` is the fallback. Config holds `bases` (name → path), `rules` (path glob → base, first match wins) and `default_base`.
+- **Shared index, safe concurrency**
+  - Each base has one SQLite index at `<base>/.kiln/index/kiln.sqlite`, in WAL mode.
+  - Any number of sessions can read at once.
+  - **All writes** go through one write lock: a SQLite `BEGIN IMMEDIATE` transaction held for the duration of the write. Writes cover note files and index updates. One writer at a time across all sessions; a busy timeout makes others wait briefly.
+- **Freshness without a watcher**
+  - Before answering, the server re-checks the folder (file stat scan, about 0.5 s per 100k notes) if the last check was more than **10 seconds** ago.
+  - Changed files are re-parsed.
+  - kiln's own writes update the index in the same transaction.
+  - If more than about 30% of files changed, or the index schema changed, the index is rebuilt (about 16 s per 100k notes).
+- **CLI:** the same package provides `kiln init`, `kiln validate` and `kiln reindex`.
+  - `kiln init <path> --name <base>` creates the folders, ignore entries for `.kiln/` (git and Syncthing), and the Obsidian views (§4), and registers the base in config.
+- **Hosting:** native Node on Windows.
 
-## 4. Knowledge-base layout and note types
+## 4. Knowledge structure (human-readable)
 
+**Layout: one Obsidian vault per base**
 ```
-<base>/                                 one Obsidian vault per base
+<base>/
   anchors/{organisation,product,service,person,topic}/
   projects/
   work/<year>/
   decisions/<year>/
   references/   notes/   attachments/
-  sources/{jira,github,slack,email,meeting,web,note}/   inbox + snapshots (may be hidden from Obsidian search)
-  .kiln/log/events-YYYY-MM.jsonl        operational event log (ignored by git and sync; rotated monthly, ~12 months kept)
-  .kiln/index/                          SQLite index (ignored by git and sync; per machine)
+  sources/{jira,github,slack,email,meeting,web,note}/   captures (the inbox)
+  views/   Inbox.base · Needs review.base · Active work.base · Decisions.base
+  .kiln/index/                                         ignored by git and sync; per machine
 ```
 
-**Identity and moves**
-- A note's identity is its `id` (a ULID in frontmatter). Files may be moved or renamed freely.
-- kiln follows notes by `id`. It **automatically repairs** `[[links]]` broken by moves made outside Obsidian, where the `id` makes the target certain. Each repair is logged and can be undone through git.
-- Folder placement is the convention kiln uses when it creates a note, not a constraint. Mass reorganisations are discouraged only because of their cost.
-- Notes created without an `id` get one inserted the first time kiln sees them. This, and link repair, are the only automatic edits kiln makes to hand-written notes.
+**Identity.** Notes created by kiln carry an `id` (a ULID). Hand-written notes without an `id` are tracked by path. Files may be moved freely. `validate` reports any links broken by moves made outside Obsidian.
 
 **Types**
 
 | type | kinds | status |
 |---|---|---|
-| `anchor` | organisation (with `role`: client, vendor, partner, self), product, service, person, topic | active, archived |
+| `anchor` | organisation (`role`: client, vendor, partner, self), product, service, person, topic | active, archived |
 | `project` | none | shaping, active, paused, closing, closed |
 | `work` | feature, bug, chore, incident, research | active, blocked, paused, done, abandoned |
 | `decision` | none | proposed, active, superseded |
 | `reference` | doc, spec, code, post, thread, video, dashboard, sheet, slides | active, archived |
-| `source` | jira, github, slack, email, meeting, web, note | `tier`: pointer, snapshot · `triage`: pending, linked, dismissed, expired |
+| `source` | jira, github, slack, email, meeting, web, note | `triage`: pending, linked, dismissed |
 | `note` | none | none |
 
 **Common frontmatter**
 
 ```yaml
-id: 01J...            # ULID
+id: 01J...
 type: work
 kind: bug
 title: ...
 status: active
 created: 2026-10-10
 updated: 2026-10-10
-aliases: []           # names and nicknames used for lookup; key to anchor-first retrieval
-summary: ""           # 1-2 plain-language sentences
-keywords: []          # optional business and technical terms (low search weight)
-anchors: []           # [[links]]
-sources: []           # provenance; required on Claude-written notes
-confidence: verbatim  # verbatim | inferred; required on Claude-written notes
+aliases: []          # names and nicknames for lookup
+summary: ""          # 1-2 plain-language sentences
+keywords: []         # optional, low search weight
+anchors: []          # [[links]]
+sources: []          # provenance (required on Claude-written notes)
+confidence: verbatim # verbatim | inferred (required on Claude-written notes)
+review: needed       # present only while a note awaits human review
+review_reason: ""
 ```
 
 Type-specific fields:
 - **decision:** `decided_on`, `supersedes`, `superseded_by`, `project`
 - **work:** `project`, `ticket`, `last_checkpoint`
-- **source:** `source_id`, `dedupe_key`, `url`, `captured_at`, `captured_by` (watcher or manual), `why`, `refreshed_at`
+- **source:** `source_id`, `dedupe_key`, `url`, `captured_at`, `captured_by` (manual or watcher; only manual exists in v1), `why`, `linked_to`
 
-**Body sections** are fixed headings so section-level edits are safe:
-- anchor: Summary (dated current truth) · Facts · Known issues · Decisions · Open work
-- project: Goal · Status · History
-- work: Summary · Checkpoints · **Open items (listed verbatim)** · Outcome
-- decision: Context · Decision · Consequences
+**Body sections** are fixed headings, so edits can target a single section:
+- **anchor:** Summary (dated current truth) · Facts · Known issues · Decisions · Open work
+- **project:** Goal · Status · History
+- **work:** Summary · Checkpoints · Open items (listed verbatim) · Outcome
+- **decision:** Context · Decision · Consequences
+- **source:** the captured content
 
-## 5. API and write rules
+**Obsidian views** are shipped by `kiln init` as Bases files:
 
-The same operations are exposed over MCP and HTTP.
+| View | Shows |
+|---|---|
+| **Inbox** | sources with `triage: pending` |
+| **Needs review** | notes with `review: needed` |
+| **Active work** | work items by status |
+| **Decisions** | active, proposed and superseded decisions by anchor |
+
+## 5. MCP tools
 
 **Read**
-- **`resolve(name)`** maps a name or alias to an anchor plus its brief. It is the first step for most questions.
-- **`query(type, kind, status, anchors, project, dates…)`** runs structured filters.
-- **`search(q, variants[])`** runs field-weighted BM25 (title > aliases > summary > keywords > body) with type and status boosts (anchors and active decisions up, superseded down). Claude supplies 2-4 query variants. It searches within notes linked to resolved anchors first, then globally.
-- **`brief(id)`** returns a capped summary of an anchor or project: current truth, active decisions, open work.
-- **`get(id)`** returns the full note plus its revision (sha256 of the bytes).
-- **`inbox()`**, **`resume()`**, **`due_snapshots()`**.
 
-**Write**
-- **`capture(...)`** and **`put_snapshot(...)`** are the only ways to write `source` notes.
-- **`propose(changeset, dry_run)`** and **`apply(changeset)`** are the only way to write knowledge notes.
-- A changeset is an ordered set of operations: `create`, `update` (fields and named sections), `supersede`, `link`, `archive`, and `mark_source` (sets a source's `triage` state: linked or dismissed, so a capture's triage outcome lands in the same atomic changeset as the knowledge changes it caused). Each operation carries `if_revision` for existing notes.
+| Tool | Purpose |
+|---|---|
+| `resolve(name)` | Name or alias → anchor plus brief. The first step for most questions |
+| `query(type?, kind?, status?, anchors?, project?, review?, updated_after?)` | Structured filters |
+| `search(q, variants?[], scope_anchors?[])` | Field-weighted BM25 (title > aliases > summary > keywords > body) with type and status boosts (anchors and active decisions up, superseded down). Searches within `scope_anchors` first, then globally |
+| `brief(id)` | Capped summary of an anchor or project: current truth, active decisions, open work |
+| `get(id \| path)` | Full note plus `revision` (sha256 of the bytes) |
+| `inbox()` | Pending sources |
 
-**Rules**
-1. **Validated.** Every changeset is checked against the schema and rejected whole on error, with field-level messages and fix hints.
-2. **Duplicate-checked.** A matching `dedupe_key`, overlapping `sources` or a near-identical title of the same type returns a `conflict` naming the existing note.
-3. **Revision-guarded.** A stale `if_revision` returns a `conflict`, so a hand edit is never overwritten.
-4. **Atomic.** Files are written to a temp file and then renamed. A changeset applies fully or is rolled back.
-5. **Byte-preserving.**
-   - Frontmatter is edited as text: only the targeted keys change, in their existing style. The block is never re-serialised.
-   - Body edits target named sections.
+**Write.** These are the only way Claude writes notes; the write guard enforces it.
+
+| Tool | Purpose |
+|---|---|
+| `capture(kind, title, content, url?, source_id?, why?)` | Create a `source` note in the inbox. `dedupe_key` = `kind:source_id` when given. A repeat capture updates the existing source instead of duplicating it |
+| `create_note(type, kind?, fields, sections)` | Create a knowledge note in its conventional folder |
+| `update_note(id, if_revision, set?, sections?)` | Change fields and/or append to or replace named sections |
+| `supersede(old_id, if_revision, new_decision)` | Create the new decision, mark the old one `superseded` (both directions), and set `review: needed` on the new one. Two files under one lock: if the second write fails, the first is reverted |
+| `mark_source(id, if_revision, triage, linked_to?)` | Record the triage outcome on a capture |
+
+**Write rules**
+1. **Validated** against the schema. Errors name the field and how to fix it, and nothing is written.
+2. **Duplicate check on create.** A matching `dedupe_key`, overlapping `sources`, or a near-identical title of the same type returns a `conflict` naming the existing note. Claude updates that note instead, or retries with `new_reason`.
+3. **Revision guard.** A stale `if_revision` returns a `conflict`, so a hand edit is never overwritten.
+4. **Byte-preserving.**
+   - Frontmatter is patched as text: only the targeted keys change, in their existing style.
+   - Section edits touch only that section.
    - Line endings and untouched bytes are preserved.
-6. **No hard deletes.** Notes are only archived, and sources only dismissed or expired. Real deletion is a human action in the filesystem.
-7. **Logged at two levels.**
-   - **Knowledge changesets and captures** are logged in full (client, tool, notes touched, diff summary) to `.kiln/log/`.
-   - **Routine machine changes** (snapshot refreshes, `id` insertions, link repairs, reconciles) get one summary line per run.
-   - The log is operational data: it is not tracked by git or synced, it rotates monthly and keeps about 12 months (configurable).
-   - Resume's "what changed" reads only the knowledge-level entries.
-   - Git commits follow §3: one per knowledge changeset, plus an hourly maintenance commit.
+5. **Atomic per file.** Each write goes to a temp file and is then renamed into place. A locked file gets a short retry, then a clear error.
+6. **No deletes.** Notes are archived through `status`, and sources are dismissed.
+7. **Review flag policy.**
+   - Claude sets `review: needed` (with a reason) on anything it writes with medium or low confidence.
+   - `supersede` always sets it.
+   - Everything is written immediately; the flag is how you find what to check.
 
-**Apply policy for Claude's changesets**
-- Changesets where every item is rated `high` confidence are **applied automatically** and shown in Resume. They can be undone through git.
-- Anything rated `medium` or `low`, and **every decision supersession**, is **held for review**.
+**Admin:** `validate()` checks schema problems, broken links, notes missing a summary or aliases, and likely duplicates. It reports only and fixes nothing.
 
-## 6. Index and retrieval
+## 6. Retrieval
 
-**Index:** one SQLite database per base at `<base>/.kiln/index/`.
+The `recall` skill follows this order, which held up at 100k notes in spike B1:
+1. `resolve` names in the question to anchors, then `brief`.
+2. Structured follow-up on those anchors: active decisions, open work, recent changes.
+3. `search` with 2-4 rephrasings, scoped to those anchors first, then global.
+4. Read the top hits with `get`, falling back to grep only if needed.
+5. Live connector reads, only for current external status.
 
-| Table | Holds |
+The answer cites `[[links]]` to the notes it used.
+
+**Enrichment at write time:** notes Claude creates must include `summary` and `aliases`. This targets the remaining weakness at scale: questions that match no anchor name.
+
+**Index tables**
+
+| Table | Contents |
 |---|---|
 | `files` | path, size, mtime, hash, id |
 | `notes` | frontmatter columns |
 | `links` | frontmatter and body links |
 | `aliases` | titles and aliases |
-| `fts` | contentless FTS5 (porter unicode61) over title, aliases, summary, keywords and body; snippets are read from files |
+| `fts` | contentless FTS5 (porter unicode61) over title, aliases, summary, keywords and body; snippets are read from the files |
 
-- **Build:** parallel parsing feeds a single writer.
-- **Reconcile:** incremental, at startup, periodically, and on watcher hints.
-- **Full rebuild into a fresh database and swap** when more than about 30% of files have changed, or when the index schema changes.
-- **Reference figures** (spike, 100k notes): about 16 s cold build, about 300 MB, structured and backlink queries under 1 ms, ranked queries 14-300 ms.
+**Multiple bases:** one index per base. A search covers one base unless `base=all`.
 
-**Retrieval order** (implemented by skills, using the tools)
-1. Resolve names to anchors, then call `brief`.
-2. Structured follow-up on those anchors: active decisions, open work, recent changes.
-3. `search` with variants, scoped to the anchors first and then global.
-4. Claude reads the top hits with `get`, and greps only as a fallback.
-5. Live MCP reads, only for current external state.
+## 7. Claude Code plugin
 
-**Write-time enrichment.**
-- Claude-created notes must include `summary` and `aliases`; `keywords` are optional.
-- Existing notes are backfilled during migration (sub-project 5).
-
-**Upgrades held back until evidence calls for them**
-- **Vector search** (bge-small q8, ONNX in Node, 16 threads, curated notes first; about 1 h per 100k notes, then incremental) only if the regression set shows persistent vocabulary-mismatch misses.
-- **Performance work** (pre-filtering by type or anchor before ranking) if p95 exceeds about 300 ms.
-
-**Multiple bases:** one index per base. Searches cover one base unless `base=all`.
-
-## 7. Claude Code plugin: skills and hooks
-
-The plugin lives in this repo and is installed at user scope. It provides the `kiln mcp` registration, the skills, the hooks and the `kiln` CLI (`capture`, `resume`, `search`, `doctor`, `reindex`, `serve`).
+The plugin lives in this repo and is installed at user scope. It provides the `kiln mcp` registration, four skills and two hooks.
 
 | Skill | Behaviour |
 |---|---|
-| `capture` | Saves text, a link or the current session context as a `source` with a `why`. It can triage the capture immediately. |
-| `triage` | Works through the inbox in batches and decides one outcome per item: dismiss, link-to-anchor, update-work-item, new-work-item, new-decision/supersede, new-reference or duplicate-of. **It goes as deep as each item needs**: routing-only items stop there, and items that change knowledge are distilled immediately. Changesets follow the apply policy. |
-| `recall` | Runs the retrieval order in §6 and answers with `[[links]]` to the notes it used. |
-| `resume` | Shows open work and where each item stopped, changes since the last look, the review queue, stale snapshots and doctor findings. |
-| `review` | The weekly pass: approve held changesets, merge duplicates, act on lint findings, expire old watcher items. |
-| `distil` | On-demand distillation of a work item or project. Open items are carried over verbatim, with confidence and sources. |
-| `doctor` | Deterministic checks: schema, broken links (auto-repaired), likely duplicates, notes missing summary or aliases, anchors not verified recently. |
+| `capture` | Capture text or a link, or **an external item by reference**: a Jira key, a Slack thread link, a GitHub PR, an email or a meeting. Claude fetches the content through its existing connectors and calls `capture`. It can triage immediately |
+| `triage` | Works through the inbox in batches. For each item it decides: dismiss, link-to-anchor, update-work-item, new-work-item, new-decision/supersede, new-reference or duplicate-of. Then it **files it**: updates or creates notes (with summary, aliases, sources and confidence), supersedes decisions where needed, and records the outcome with `mark_source`. Uncertain items get `review: needed` |
+| `recall` | The retrieval order in §6; answers with `[[links]]` |
+| `review` | Walks the **Needs review** items (and suggested duplicate merges from `validate`). For each one you confirm, edit or revert, and the flag is cleared |
 
 **Hooks**
-1. **Write guard.** Blocks Claude's direct Write/Edit to files inside any configured base, so that all writes go through `propose`/`apply`. Human edits in Obsidian are unaffected.
-2. **Session orientation.** At session start, adds one short line, e.g. `kiln: base=work · inbox 14 · open work 9 · 3 held for review`.
+1. **Write guard:** blocks Claude's direct Write/Edit to files inside any configured base, so all writes go through kiln tools. Your own edits in Obsidian are unaffected.
+2. **Session orientation:** at session start, one line, e.g. `kiln: base=work · inbox 6 · needs review 3`.
 
-**Inbox expiry.** Watcher-captured sources left untriaged for **14 days** become `triage: expired`: hidden from the inbox and Resume, still searchable and revivable. Manual captures never expire.
-
-**Expected cost** (spike B3): about 2.7k tokens per routing-only capture and about 5.5k per capture that changes knowledge. That is roughly 30-65k tokens a day at about 12 captures. A budget setting can defer low-priority distillation to the weekly review if needed.
+**Expected cost** (spike B3): about 2.7k tokens per routing-only capture and about 5.5k per capture that changes knowledge.
 
 ## 8. Error handling
 
 | Situation | Behaviour |
 |---|---|
-| Validation failure | Whole changeset rejected with field-level errors and hints; nothing written |
-| Stale revision | `conflict`; Claude re-reads and redoes the change |
+| Validation failure | Error naming the field and the fix; nothing written |
+| Stale revision | `conflict`; Claude re-reads and redoes its change |
 | Possible duplicate | `conflict` naming the existing note |
-| Crash mid-changeset | Temp file + rename per file; roll back partial work |
-| File locked (Obsidian, Defender, sync) | Short retries, then a clear error; never a half-written file |
+| Another session is writing | Wait on the write lock (busy timeout), then a clear `busy` error |
+| File locked by Obsidian, Defender or sync | Short retries, then a clear error; never a half-written file |
+| Crash mid-write | Temp file + rename means the file is either old or new, never partial. A reverted second write in `supersede` keeps the pair consistent |
 | Index corrupt or schema changed | Automatic rebuild |
-| Watcher missed events | The periodic reconcile catches them |
-| Hand edit breaks the schema | Reported by `doctor` and Resume, never silently fixed (except `id` insertion and link repair) |
-| Server unavailable | Skills fall back to read-only grep over the vault and say so; no writes |
-| Git commit fails | The write stands (the event log records it); `doctor` flags it, and the change is included in the next successful commit |
+| Hand edit breaks the schema | Reported by `validate`; never auto-fixed |
+| kiln MCP unavailable | Skills fall back to read-only grep over the vault and say so; no writes |
 
 ## 9. Testing
 
-**Data policy:** **no real knowledge in the repo or tests.** Realistic material is **generated first** and then frozen as fixtures.
+**Data policy:** no real knowledge in the repo or tests. Realistic material is **generated** and then frozen.
 
-- **Generated fixtures** (`tests/fixtures/`):
-  - a fictional organisation with clients, people, services, projects, meetings, tickets and decisions written to resemble real work;
-  - a **golden question set** with answer keys across the five categories (exact-term, vocabulary-mismatch, decision/temporal, multi-hop, resume/status);
-  - a **simulated inbox week** with an answer key;
-  - the **100k synthetic-scale generator**, built on the generated corpus.
-- **Unit tests (TDD):**
-  - the byte-preserving frontmatter patcher, against tricky files (comments, flow and block lists, quoting styles, CRLF and LF), asserting that only the targeted lines change;
-  - schema validation, placement, duplicate detection, the revision guard, rename pairing and link repair.
-- **Integration tests:**
-  - the server against a temp vault;
-  - changeset apply and rollback;
-  - watcher and reconcile under bulk change (10k rewrites plus renames).
-- **Retrieval regression:** the golden set with per-category minimum recall@5 and MRR, plus the 100k scale test (build time, p95 query) before releases.
-- **Skill evaluation:**
-  - `triage` on the simulated week against its answer key, target ≥ 90% outcome accuracy;
-  - `recall` end to end on the golden set.
+**Generated fixtures** (`tests/fixtures/`):
+- about **100 notes** for a fictional organisation (clients, people, services, projects, meetings, tickets, decisions)
+- about **20 golden questions** with answer keys, across exact-term, vocabulary mismatch, decision/temporal, multi-hop and status
+- **one simulated day** of about 12 captures, with an answer key
 
-## 10. Acceptance criteria for sub-project 1
+**Unit tests (TDD)**
+- the byte-preserving frontmatter patcher, against tricky files: comments, flow and block lists, quoting styles, CRLF and LF. Each test asserts that only the targeted lines change.
+- section edits, schema validation, folder placement, duplicate detection, the revision guard, and `supersede` pairing with rollback
 
-1. A Claude session in any folder can capture, recall and resume against the right base without setup per session.
-2. All writes go through changesets, and the write guard blocks direct edits.
-3. Patcher tests prove that untouched bytes are preserved.
-4. Rename and move round-trips keep the index and links correct.
-5. On the generated golden set, recall@5 meets the agreed thresholds per category (set when the fixtures are frozen).
-6. At 100k generated notes: cold build under 60 s, reconcile with no changes under 2 s, p95 ranked query under 300 ms.
-7. `triage` scores ≥ 90% outcome accuracy on the simulated week.
+**Integration tests**
+- the MCP server against a temp base
+- two server processes writing concurrently: no corruption, stale writes rejected
+- re-check after external edits, moves and renames
 
-## 11. Future list (not in this sub-project)
+**Retrieval regression:** the golden set, with per-category minimum recall@5 and MRR set when the fixtures are frozen.
 
-- Docker hosting (polling watcher, index in a volume, path mapping) and a WSL hosting spike.
-- A daily scratchpad or todo page.
-- Roadmaps as views over product anchors and projects.
-- A vector search layer (see §6).
-- Optional derived layers for a curated subset (e.g. a Graphiti-style temporal decision graph).
-- Push of a base to a private git remote.
-- Ideas borrowed from prior art: standing queries as regenerated views (Hindsight), rolling thread summaries (Graphiti sagas), MCP resources as instructions (Backlog.md), a ready/next query (Beads).
+**Scale check** (manual, before releases): a generator expands the fixture corpus to 100k notes and measures index build, re-check time and query p95.
+
+**Skill check:** `triage` on the simulated day against its answer key.
+
+## 10. Acceptance criteria
+
+1. From any folder, a Claude session can capture (including Jira, Slack and GitHub items by reference), triage, recall and review against the correct base, with no setup per session.
+2. All Claude writes go through kiln tools; the write guard blocks direct edits.
+3. Patcher tests prove untouched bytes are preserved.
+4. Concurrent writes from two sessions never corrupt notes or the index, and stale writes are rejected.
+5. The golden set meets its per-category thresholds.
+6. At 100k generated notes: cold index build under 60 s, re-check under 2 s, p95 ranked query under 300 ms.
+7. `triage` scores ≥ 90% outcome accuracy on the simulated day.
+8. The Inbox, Needs review, Active work and Decisions views work in Obsidian on a fresh `kiln init` base.
+
+## 11. Deferred (future list)
+
+- **Feeders** (sub-project 2): n8n and watchers for automated capture, `captured_by: watcher`, inbox expiry for watcher captures after 14 days, snapshot refresh and staleness.
+- **An always-on server with an HTTP API** for n8n and Obsidian plugins. When it arrives: `@parcel/watcher` hint events plus periodic reconcile, start at logon, and bearer-token auth.
+- **Git integration**: one commit per knowledge change plus hourly maintenance commits; an operational event log in `.kiln/log/`, untracked and rotated monthly.
+- **Automatic `id` insertion and link repair** for notes moved outside Obsidian.
+- **A `resume` dashboard** and a separate `distil` skill (sub-project 3 workspace close-out).
+- **Obsidian cockpit plugins** (sub-project 4) and **migration** of the old vault (sub-project 5).
+- **Vector search** (bge-small q8, ONNX in Node, 16 threads), only if the golden set shows persistent vocabulary-mismatch misses.
+- **Hosting:** Docker and WSL.
+- **New page types:** a daily scratchpad page, and roadmap views.
+- **A temporal decision layer**, e.g. Graphiti-style.
+- **Ideas borrowed from prior art:** standing queries, rolling thread summaries, MCP resources as instructions, a ready/next query.
