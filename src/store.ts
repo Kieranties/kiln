@@ -1,0 +1,352 @@
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { parseFields, renderNote, splitNote } from './frontmatter.js';
+import type { Index } from './index/db.js';
+import type { NoteRef } from './index/read.js';
+import { sha256 } from './index/reconcile.js';
+import { patchFields } from './patch.js';
+import { newId, placeNote } from './place.js';
+import { TRIAGE_OUTCOMES, validateFields } from './schema.js';
+import { editSections, type SectionEdit } from './sections.js';
+import { jaccard, titleTokens } from './similarity.js';
+import { KilnError, type Base, type Fields, type NoteType, type ValidationIssue, type WriteResult } from './types.js';
+
+export type CaptureInput = { kind: string; title: string; content: string; url?: string; sourceId?: string; why?: string };
+
+export type CreateNoteInput = {
+  type: NoteType;
+  kind?: string;
+  fields: Fields;
+  sections: { heading: string; text: string }[];
+  newReason?: string;
+};
+
+export type UpdateNoteInput = { idOrPath: string; ifRevision: string; set?: Fields; unset?: string[]; sections?: SectionEdit[] };
+
+export type MarkSourceInput = {
+  idOrPath: string;
+  ifRevision: string;
+  triage: 'linked' | 'dismissed';
+  outcome: string;
+  linkedTo?: string[];
+};
+
+export type StoreIo = { rename?: typeof renameSync; now?: () => Date };
+
+/** File-lock retries: 5 attempts, 100 ms apart. */
+const RENAME_ATTEMPTS = 5;
+const RENAME_DELAY_MS = 100;
+const LOCK_CODES = new Set(['EPERM', 'EBUSY', 'EACCES']);
+
+const SAME_TITLE = 0.85;
+const SAME_SOURCES_TITLE = 0.5;
+
+const WIKILINK = /^\[\[[^\[\]]+\]\]$/;
+
+function sleepSync(ms: number): void {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function localDate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function invalid(issues: ValidationIssue[]): KilnError {
+  const detail = issues.map((i) => `${i.field}: ${i.message} (${i.hint})`).join('; ');
+  return new KilnError('validation', `Invalid note: ${detail}`, { issues });
+}
+
+function validate(fields: Fields, claudeWritten: boolean): void {
+  const issues = validateFields(fields, { claudeWritten });
+  if (issues.length > 0) throw invalid(issues);
+}
+
+/** Title similarity for duplicate detection: word-token Jaccard, with equal trimmed lowercase titles scoring 1. */
+function similarity(a: string, b: string): number {
+  if (a.trim().toLowerCase() === b.trim().toLowerCase()) return 1;
+  return jaccard(titleTokens(a), titleTokens(b));
+}
+
+/** A `sources` value as a lowercase set; a lone string counts as one entry. */
+function sourceSet(value: unknown): Set<string> {
+  const list = typeof value === 'string' ? [value] : Array.isArray(value) ? value : [];
+  return new Set(list.filter((s): s is string => typeof s === 'string').map((s) => s.trim().toLowerCase()));
+}
+
+function sameSet(a: Set<string>, b: Set<string>): boolean {
+  return a.size === b.size && [...a].every((x) => b.has(x));
+}
+
+type CandidateRow = NoteRef & { sources: string | null };
+
+function toRef(r: NoteRef): NoteRef {
+  return { id: r.id, path: r.path, title: r.title, type: r.type, kind: r.kind, status: r.status, updated: r.updated };
+}
+
+/**
+ * The only way kiln writes notes. Every write validates first, then runs inside `index.transaction()` (the
+ * cross-process write lock): re-read and check the revision where one is given, write `<file>.kiln-tmp`, rename it
+ * over the target (retrying while the file is locked), then index the new text.
+ */
+export class Store {
+  readonly base: Base;
+  readonly index: Index;
+  readonly #rename: typeof renameSync;
+  readonly #now: () => Date;
+
+  constructor(base: Base, index: Index, io: StoreIo = {}) {
+    this.base = base;
+    this.index = index;
+    this.#rename = io.rename ?? renameSync;
+    this.#now = io.now ?? (() => new Date());
+  }
+
+  /**
+   * Capture a source into the inbox. With a `sourceId`, `dedupe_key` is `kind:sourceId`, and a repeat capture of the
+   * same key replaces the existing source's body and bumps `captured_at` and `updated`, leaving everything else
+   * (triage included) as it is.
+   */
+  capture(i: CaptureInput): WriteResult {
+    const now = this.#now();
+    const today = localDate(now);
+    const capturedAt = now.toISOString();
+    const dedupeKey = i.sourceId !== undefined ? `${i.kind}:${i.sourceId}` : undefined;
+
+    const fields: Fields = {
+      type: 'source',
+      kind: i.kind,
+      title: i.title,
+      created: today,
+      updated: today,
+      captured_at: capturedAt,
+      captured_by: 'manual',
+      triage: 'pending',
+      url: i.url,
+      source_id: i.sourceId,
+      dedupe_key: dedupeKey,
+      why: i.why,
+    };
+    for (const k of Object.keys(fields)) if (fields[k] === undefined) delete fields[k];
+    validate(fields, false);
+
+    return this.index.transaction(() => {
+      const existing = dedupeKey === undefined ? undefined : this.#sourceByKey(dedupeKey);
+      if (existing !== undefined) return this.#recapture(existing, dedupeKey!, i.content, today, capturedAt);
+      const rel = placeNote(fields, (p) => existsSync(join(this.base.path, p)));
+      const text = renderNote(fields, []) + i.content.replace(/\r?\n/g, '\n');
+      return this.#write(rel, text, null, true);
+    });
+  }
+
+  /**
+   * Create a Claude-written knowledge note in its conventional folder. Validates with `claudeWritten: true`, then
+   * (unless `newReason` is given) raises `conflict` with `reason: 'duplicate'` when a matching note exists.
+   */
+  createNote(i: CreateNoteInput): WriteResult {
+    return this.#create(i, new Set());
+  }
+
+  /**
+   * Change fields and/or sections of a note, guarded by `ifRevision` (the sha256 of the bytes last read). Only the
+   * targeted keys and sections change, and `updated` is bumped. Merged fields are validated when they have a `type`.
+   */
+  updateNote(i: UpdateNoteInput): WriteResult {
+    return this.#update(i);
+  }
+
+  /** Record the triage outcome on a source: `triage`, `triage_outcome` and, when given, `linked_to`. */
+  markSource(i: MarkSourceInput): WriteResult {
+    const issues: ValidationIssue[] = [];
+    if (i.triage !== 'linked' && i.triage !== 'dismissed') {
+      issues.push({ field: 'triage', message: `triage ${JSON.stringify(i.triage)} is not a triage outcome`, hint: 'use one of: linked, dismissed' });
+    }
+    if (!TRIAGE_OUTCOMES.includes(i.outcome)) {
+      issues.push({ field: 'triage_outcome', message: `unknown triage outcome ${JSON.stringify(i.outcome)}`, hint: `use one of: ${TRIAGE_OUTCOMES.join(', ')}` });
+    }
+    if (i.linkedTo !== undefined && !(Array.isArray(i.linkedTo) && i.linkedTo.every((l) => typeof l === 'string' && WIKILINK.test(l)))) {
+      issues.push({ field: 'linked_to', message: 'linked_to must be a list of wikilinks', hint: 'use wikilinks like "[[Note title]]"' });
+    }
+    if (issues.length > 0) throw invalid(issues);
+
+    const set: Fields = { triage: i.triage, triage_outcome: i.outcome };
+    if (i.linkedTo !== undefined) set.linked_to = i.linkedTo;
+    return this.#update({ idOrPath: i.idOrPath, ifRevision: i.ifRevision, set }, (fields) => {
+      if (fields.type !== 'source') {
+        throw invalid([{ field: 'type', message: `only a source can be triaged; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call markSource on a source note' }]);
+      }
+    });
+  }
+
+  /** createNote, with `excludePaths` left out of the duplicate check (supersede excludes the decision it replaces). */
+  #create(i: CreateNoteInput, excludePaths: Set<string>): WriteResult {
+    const today = localDate(this.#now());
+    const fields: Fields = { ...i.fields, type: i.type };
+    if (i.kind !== undefined) fields.kind = i.kind;
+    fields.id = newId();
+    fields.created = today;
+    fields.updated = today;
+    validate(fields, true);
+
+    return this.index.transaction(() => {
+      if (i.newReason === undefined) {
+        const existing = this.#findDuplicate(fields, excludePaths);
+        if (existing) {
+          throw new KilnError(
+            'conflict',
+            `A similar ${existing.type} already exists: "${existing.title}" (${existing.path}). Update it instead, or retry with newReason`,
+            { reason: 'duplicate', existing },
+          );
+        }
+      }
+      const rel = placeNote(fields, (p) => existsSync(join(this.base.path, p)));
+      return this.#write(rel, renderNote(fields, i.sections), fields.id as string, true);
+    });
+  }
+
+  /**
+   * The best existing match for a new note, or null. A note matches on an equal `dedupe_key` (preferred), or when it
+   * has the same type and a title similarity of at least 0.85, or the same non-empty `sources` set and at least 0.5.
+   */
+  #findDuplicate(fields: Fields, excludePaths: Set<string>): NoteRef | null {
+    const cols = 'n.id, n.path, n.title, n.type, n.kind, n.status, n.updated';
+    const db = this.index.db;
+    const key = fields.dedupe_key;
+    if (typeof key === 'string' && key !== '') {
+      const rows = db
+        .prepare(`SELECT ${cols} FROM notes n WHERE json_extract(n.fields_json, '$.dedupe_key') = ? ORDER BY n.path`)
+        .all(key) as NoteRef[];
+      const hit = rows.find((r) => !excludePaths.has(r.path));
+      if (hit) return toRef(hit);
+    }
+
+    const title = fields.title as string;
+    const sources = sourceSet(fields.sources);
+    const rows = db
+      .prepare(`SELECT ${cols}, n.fields_json -> '$.sources' AS sources FROM notes n WHERE n.type = ? ORDER BY n.path`)
+      .all(fields.type as string) as CandidateRow[];
+    let best: { ref: NoteRef; score: number } | null = null;
+    for (const r of rows) {
+      if (excludePaths.has(r.path)) continue;
+      const score = similarity(title, r.title);
+      const matches =
+        score >= SAME_TITLE ||
+        (score >= SAME_SOURCES_TITLE && sources.size > 0 && r.sources !== null && sameSet(sources, sourceSet(JSON.parse(r.sources))));
+      if (matches && (best === null || score > best.score)) best = { ref: toRef(r), score };
+    }
+    return best?.ref ?? null;
+  }
+
+  /** The indexed source with this `dedupe_key`, if any. */
+  #sourceByKey(key: string): string | undefined {
+    const row = this.index.db
+      .prepare("SELECT path FROM notes WHERE type = 'source' AND json_extract(fields_json, '$.dedupe_key') = ? ORDER BY path LIMIT 1")
+      .get(key) as { path: string } | undefined;
+    return row?.path;
+  }
+
+  /** Replace a captured source's body (in the file's EOL) and bump `captured_at` and `updated`. */
+  #recapture(rel: string, key: string, content: string, today: string, capturedAt: string): WriteResult {
+    const text = this.#read(rel);
+    const split = splitNote(text);
+    const fields = parseFields(split.fmText);
+    if (fields.dedupe_key !== key) {
+      throw new KilnError('conflict', `"${rel}" changed on disk and no longer has dedupe_key ${key}; re-read it and try again`, {
+        reason: 'stale_revision',
+        current: sha256(Buffer.from(text, 'utf8')),
+      });
+    }
+    const head = text.slice(0, text.length - split.body.length);
+    const replaced = head + content.replace(/\r?\n/g, split.eol);
+    const id = typeof fields.id === 'string' && fields.id !== '' ? fields.id : null;
+    return this.#write(rel, patchFields(replaced, { captured_at: capturedAt, updated: today }), id, false);
+  }
+
+  /**
+   * The revision-guarded update path shared by updateNote and markSource. `check` sees the note's current fields
+   * (re-read inside the transaction) and may throw to refuse the update.
+   */
+  #update(i: UpdateNoteInput, check?: (fields: Fields) => void): WriteResult {
+    return this.index.transaction(() => {
+      const rel = this.index.get(i.idOrPath).path;
+      const bytes = this.#readBytes(rel);
+      const current = sha256(bytes);
+      if (current !== i.ifRevision) {
+        throw new KilnError('conflict', `"${rel}" has changed since revision ${i.ifRevision}; re-read it and redo the change`, {
+          reason: 'stale_revision',
+          current,
+        });
+      }
+      const text = bytes.toString('utf8');
+      const fields = parseFields(splitNote(text).fmText);
+      check?.(fields);
+
+      const updated = localDate(this.#now());
+      const unset = i.unset ?? [];
+      const set: Fields = { ...i.set, updated };
+      const merged: Fields = { ...fields, ...set };
+      for (const k of unset) if (k !== 'updated') delete merged[k];
+      if (merged.type !== undefined && merged.type !== null) validate(merged, false);
+
+      let next = patchFields(text, set, unset.filter((k) => k !== 'updated'));
+      if (i.sections && i.sections.length > 0) next = editSections(next, i.sections);
+      const id = typeof merged.id === 'string' && merged.id !== '' ? merged.id : null;
+      return this.#write(rel, next, id, false);
+    });
+  }
+
+  #readBytes(rel: string): Buffer {
+    try {
+      return readFileSync(join(this.base.path, rel));
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new KilnError('not_found', `Note file "${rel}" no longer exists`);
+      throw e;
+    }
+  }
+
+  #read(rel: string): string {
+    return this.#readBytes(rel).toString('utf8');
+  }
+
+  /**
+   * Write `text` to `rel` atomically and index it: write `<file>.kiln-tmp`, rename it over the target (retrying on
+   * EPERM/EBUSY/EACCES), then upsert the index. A rename that keeps failing removes the temp file and raises
+   * `locked_file`. The caller holds the transaction.
+   */
+  #write(rel: string, text: string, id: string | null, created: boolean): WriteResult {
+    const abs = join(this.base.path, rel);
+    const tmp = `${abs}.kiln-tmp`;
+    const bytes = Buffer.from(text, 'utf8');
+    mkdirSync(dirname(abs), { recursive: true });
+    try {
+      writeFileSync(tmp, bytes);
+    } catch (e) {
+      rmSync(tmp, { force: true });
+      throw e;
+    }
+
+    for (let attempt = 1; ; attempt++) {
+      try {
+        this.#rename(tmp, abs);
+        break;
+      } catch (e) {
+        const code = (e as NodeJS.ErrnoException).code ?? '';
+        const locked = LOCK_CODES.has(code);
+        if (locked && attempt < RENAME_ATTEMPTS) {
+          sleepSync(RENAME_DELAY_MS);
+          continue;
+        }
+        rmSync(tmp, { force: true });
+        if (!locked) throw e;
+        throw new KilnError(
+          'locked_file',
+          `"${rel}" is locked by another program (Obsidian, sync or antivirus); close it or wait, then try again`,
+          { path: rel },
+        );
+      }
+    }
+
+    this.index.upsertText(rel, text, statSync(abs));
+    return { id, path: rel, revision: sha256(bytes), created };
+  }
+}
