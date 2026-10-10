@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -21,6 +21,8 @@ type WriterReport = { writer: string; written: number; conflicts: number; busy: 
 type WriterRun = { code: number | null; stdout: string; stderr: string; report: WriterReport | null };
 
 let base: Base;
+/** Every writer child this test spawned, so `afterEach` can stop any still running after a failure or timeout. */
+let children: ChildProcess[] = [];
 
 beforeEach(() => {
   base = { name: 'concurrency', path: mkdtempSync(join(tmpdir(), 'kiln-concurrency-')) };
@@ -52,8 +54,17 @@ beforeEach(() => {
   ix.close();
 });
 
-afterEach(() => {
-  rmSync(base.path, { recursive: true, force: true });
+afterEach(async () => {
+  const running = children.filter((c) => c.exitCode === null && c.signalCode === null);
+  await Promise.all(
+    running.map((c) => {
+      const closed = new Promise((r) => c.once('close', r));
+      c.kill();
+      return closed;
+    }),
+  );
+  children = [];
+  rmSync(base.path, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
 /**
@@ -66,6 +77,7 @@ function startWriter(name: string, count: number): { started: Promise<void>; go:
     env: { ...process.env, KILN_WRITER_GATE: 'stdin' },
     stdio: ['pipe', 'pipe', 'pipe'],
   });
+  children.push(child);
   // A child that dies before reading `go` closes its stdin; the exit code and stderr report that, not EPIPE.
   child.stdin.on('error', () => {});
   let stdout = '';
@@ -138,6 +150,13 @@ function tempFiles(dir: string): string[] {
 
 describe('cross-process concurrency', () => {
   it('two processes appending checkpoints to the same note both land, file stays valid YAML, index matches file hash', async () => {
+    const before = Index.open(base);
+    try {
+      expect(before.search({ q: 'wa wb' })).toEqual([]);
+    } finally {
+      before.close();
+    }
+
     const runs = await runWriters(50);
     const reports = expectSucceeded(runs, 50);
 
@@ -160,12 +179,21 @@ describe('cross-process concurrency', () => {
     // Stale writes are rejected. Both writers read the note before the gate opens, so whichever writes second
     // starts from a revision that is already stale: at least one stale_revision conflict is certain, not timing luck.
     expect(reports.reduce((n, r) => n + r.conflicts, 0)).toBeGreaterThan(0);
+    // The writers really overlapped: their lines interleave in file order. A serial run has one switch; measured
+    // runs have 19 to 30, so 5 leaves wide headroom.
+    const authors = lines.map((l) => CHECKPOINT.exec(l)![1]);
+    const switches = authors.filter((a, i) => i > 0 && a !== authors[i - 1]).length;
+    expect(switches).toBeGreaterThanOrEqual(5);
 
     // A fresh index sees nothing to change: the indexed hash matches the bytes on disk.
     const fresh = Index.open(base);
     try {
       expect(fresh.reconcile().changed).toBe(0);
       expect(fresh.get(NOTE).revision).toBe(sha256(readFileSync(join(base.path, NOTE))));
+      // The index file itself is sound, and its full-text rows carry the last write's body (neither writer's name was
+      // in the note before the run).
+      expect(fresh.db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+      expect(fresh.search({ q: lines.at(-1)! }).map((h) => h.path)).toEqual([NOTE]);
     } finally {
       fresh.close();
     }
@@ -207,6 +235,8 @@ describe('cross-process concurrency', () => {
 
       expect(failures.slice(0, 10)).toEqual([]);
       expect(reads).toBeGreaterThan(0);
+      // The readers saw the note change under them, not just its first and last states (61 revisions measured).
+      expect(seen.size).toBeGreaterThanOrEqual(5);
       // Every revision get() reported is the hash of a complete version of the file: the original or one a writer
       // wrote. A torn or half-renamed read would hash to something else.
       const written = new Set([initial, ...reports.flatMap((r) => r.revisions)]);
