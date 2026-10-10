@@ -36,10 +36,14 @@ Never clear a flag the user has not confirmed. Skipping an item leaves it flagge
 kiln never deletes. Revert by restoring what was there and retiring what was added through `status`:
 - **A field or section Claude changed:** `update_note` it back to the previous content (from the user, or from the source), and unset the review flags.
 - **A note Claude created that should not exist:** retire it through its status (anchor or reference `archived`, work `abandoned`, project `closed`) and unset the review flags. A plain `note` has no status: tell the user, who can remove it in Obsidian.
-- **A supersede** (the new decision has `supersedes`; the old one is `superseded`):
-  1. `get` the old decision, then `update_note` it: `set: { status: "active" }`, `unset: ["superseded_by"]`. This restores the old decision's status.
-  2. `get` the new decision, then `update_note` it: `set: { status: "superseded", superseded_by: ["[[<old decision title>]]"] }`, `unset: ["supersedes", "review", "review_reason"]`. This retires the new one and points readers back at the decision in force.
+- **A supersede** (the new decision has `supersedes`; the old one is `superseded`). First ask the user which branch applies: is the new decision **rejected**, or still **pending** (proposed but not decided)? Then make two `update_note` calls, each with its own `if_revision`, **old decision first**:
+  1. `get` the old decision, then `update_note` it: `set: { status: "active" }`, `unset: ["superseded_by"]`. This always restores the old decision.
+  2. `get` the new decision, then `update_note` it with `unset: ["supersedes", "review", "review_reason"]` and:
+     - **rejected:** `set: { status: "superseded", superseded_by: ["[[<old decision title>]]"] }`, which retires it and points readers back at the decision in force;
+     - **pending:** `set: { status: "proposed" }`, which keeps it as a proposal without replacing the old decision.
   3. Tell the user both notes changed.
+
+  **This is not atomic.** If the second call fails, `get` the new decision again and retry it. Until it succeeds, both decisions are active, which is the safer partial state; tell the user if you cannot finish it.
 
 ## Possible duplicates
 
@@ -63,7 +67,10 @@ At the end: counts of confirmed, edited, reverted, merged and skipped items, and
 
 Flagged: `2026-10-08 Patch turnstile firmware before reverting`, which supersedes `2026-09-30 Revert turnstile firmware on matchdays`, with `review_reason: "Superseded by a decision recorded from a Slack thread"`.
 - Show both decisions' `Decision` sections and the Slack source.
-- User: "Revert. The patch was only proposed." Restore the September decision to `active`; set the October one to `superseded` with `superseded_by: ["[[2026-09-30 Revert turnstile firmware on matchdays]]"]` and clear its flags.
+- User: "Revert. The patch was only proposed." That is the **pending** branch.
+  1. `update_note` the September decision: `set: { status: "active" }`, `unset: ["superseded_by"]`.
+  2. `update_note` the October decision: `set: { status: "proposed" }`, `unset: ["supersedes", "review", "review_reason"]`.
+- Had the user said "Revert. We decided against the patch", take the **rejected** branch instead: the October decision gets `status: "superseded"` with `superseded_by: ["[[2026-09-30 Revert turnstile firmware on matchdays]]"]`, and the same unsets.
 
 ## If the kiln tools are unavailable
 
