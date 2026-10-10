@@ -32,6 +32,8 @@ export function safeFileName(title: string): string {
     // Do not leave half of a surrogate pair at the cut.
     if (/[\ud800-\udbff]$/.test(name)) name = name.slice(0, -1);
     name = name.replace(/[. ]+$/, '');
+    // The cut can leave only dots and spaces, which the re-trim removes.
+    if (name === '') return 'untitled';
   }
   return reserved ? `${name}_` : name;
 }

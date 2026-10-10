@@ -33,6 +33,12 @@ describe('safeFileName', () => {
     expect(out).not.toMatch(/[\ud800-\udfff]/);
   });
 
+  it('returns untitled when truncation leaves only dots and spaces', () => {
+    expect(safeFileName('.'.repeat(130) + 'a')).toBe('untitled');
+    expect(safeFileName('. '.repeat(70) + 'a')).toBe('untitled');
+    expect(placeNote({ type: 'note', title: '.'.repeat(130) + 'a' }, never)).toBe('notes/untitled.md');
+  });
+
   it('retrims after truncating', () => {
     expect(safeFileName('a'.repeat(119) + ' b')).toBe('a'.repeat(119));
   });
