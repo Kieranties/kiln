@@ -1,6 +1,6 @@
 # kiln vision
 
-Status: agreed 2026-10-10. This document is the written record.
+Status: **current direction, still exploring** (2026-10-10). Nothing here is final. This document is the written record.
 
 ## Problem
 
