@@ -112,7 +112,7 @@ Writes out (comment on a ticket, transition it, reply to a thread) are explicit 
 - **The KB server is the engine.** Headless and always available. It owns the schema, placement and links, so every write is correct regardless of client. Registered at user scope so it is present in every Claude session. The index is rebuildable from the Markdown.
 - **Skills** sit on top for judgement-heavy workflows: triage, distil, start.
 - **n8n** handles intake from external systems (integrations, credentials, schedules, per-source flags) and posts pointers to the server. The server itself runs the snapshot sweep.
-- **Obsidian is the cockpit, never required.** Bases views over frontmatter, plus a custom plugin on the same server API: inbox triage, resume dashboard, start workspace, approvals queue, distil review.
+- **Obsidian is the viewer and cockpit (current direction, 2026-10-10: chosen for familiarity; kiln-specific plugins built as needed). It is never required for kiln to work.** Bases views over frontmatter, plus custom kiln plugins on the same server API (TypeScript, sharing kiln's schema). Vault layout works around Obsidian's scale limits: one vault per base, high-volume sources excluded or kept outside the vault: inbox triage, resume dashboard, start workspace, approvals queue, distil review.
 - Rejected: Obsidian as the engine (CLI or Local REST API). It needs the desktop app running, which makes it the gate again and breaks P1.
 
 Retrieval order: anchors (current truth), then links (projects, work items, decisions), then full-text search, then live MCP reads of external systems. **Start** is `context_pack(work item)`: the relevant anchor summaries, the work item, its snapshots and recent decisions, assembled into the workspace as it opens.
