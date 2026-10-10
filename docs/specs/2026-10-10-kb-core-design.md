@@ -57,7 +57,10 @@ It also provides the storage, write and query surface the later sub-projects bui
   - A **stat-scan reconcile** runs at startup and every few minutes. It costs about 0.5 s per 100k notes and is the source of truth.
   - Node `fs.watch` and chokidar are not used. In the spike they lost events silently or collapsed.
 - **Renames** arrive as delete + create and are paired by note `id`.
-- **Git is optional per base.** If the base is a repo, each applied changeset becomes one commit. kiln never pushes.
+- **Git is optional per base.** If the base is a repo:
+  - each applied **knowledge changeset** becomes one commit, so each change can be reverted on its own;
+  - **routine machine changes** (snapshot refreshes, `id` insertions, link repairs) are batched into **at most one maintenance commit per hour**, e.g. `kiln: maintenance (snapshots 112, links 37)`;
+  - kiln never pushes.
 - **Optional background job:** embeddings are off by default (see §6).
 
 ## 4. Knowledge-base layout and note types
@@ -70,7 +73,7 @@ It also provides the storage, write and query surface the later sub-projects bui
   decisions/<year>/
   references/   notes/   attachments/
   sources/{jira,github,slack,email,meeting,web,note}/   inbox + snapshots (may be hidden from Obsidian search)
-  .kiln/events.jsonl                    append-only log of every kiln write (tracked)
+  .kiln/log/events-YYYY-MM.jsonl        operational event log (ignored by git and sync; rotated monthly, ~12 months kept)
   .kiln/index/                          SQLite index (ignored by git and sync; per machine)
 ```
 
@@ -148,7 +151,12 @@ The same operations are exposed over MCP and HTTP.
    - Body edits target named sections.
    - Line endings and untouched bytes are preserved.
 6. **No hard deletes.** Notes are only archived, and sources only dismissed or expired. Real deletion is a human action in the filesystem.
-7. **Logged.** Every applied changeset is appended to `.kiln/events.jsonl` and committed if git is enabled.
+7. **Logged at two levels.**
+   - **Knowledge changesets and captures** are logged in full (client, tool, notes touched, diff summary) to `.kiln/log/`.
+   - **Routine machine changes** (snapshot refreshes, `id` insertions, link repairs, reconciles) get one summary line per run.
+   - The log is operational data: it is not tracked by git or synced, it rotates monthly and keeps about 12 months (configurable).
+   - Resume's "what changed" reads only the knowledge-level entries.
+   - Git commits follow §3: one per knowledge changeset, plus an hourly maintenance commit.
 
 **Apply policy for Claude's changesets**
 - Changesets where every item is rated `high` confidence are **applied automatically** and shown in Resume. They can be undone through git.
@@ -223,7 +231,7 @@ The plugin lives in this repo and is installed at user scope. It provides the `k
 | Watcher missed events | The periodic reconcile catches them |
 | Hand edit breaks the schema | Reported by `doctor` and Resume, never silently fixed (except `id` insertion and link repair) |
 | Server unavailable | Skills fall back to read-only grep over the vault and say so; no writes |
-| Git commit fails | The write stands (the event log is the record); `doctor` flags it |
+| Git commit fails | The write stands (the event log records it); `doctor` flags it, and the change is included in the next successful commit |
 
 ## 9. Testing
 
