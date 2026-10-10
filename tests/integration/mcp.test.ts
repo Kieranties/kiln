@@ -195,6 +195,26 @@ describe('kiln mcp', () => {
     }
   });
 
+  it('validate filters by kinds and caps findings at limit (default 100, max 1000), reporting total and truncated', async () => {
+    // ops: 205 shift logs missing summary and aliases, and a rota missing aliases.
+    const all = await ok(client, 'validate', { base: 'ops' });
+    expect(all).toMatchObject({ total: 206, truncated: true });
+    expect(all.findings).toHaveLength(100);
+    expect(all.findings[0]).toMatchObject({ kind: 'missing_enrichment', path: 'notes/Shift log 001.md' });
+
+    const five = await ok(client, 'validate', { base: 'ops', kinds: ['missing_enrichment'], limit: 5 });
+    expect(five).toMatchObject({ total: 206, truncated: true });
+    expect(five.findings).toEqual(all.findings.slice(0, 5));
+
+    const clamped = await ok(client, 'validate', { base: 'ops', limit: 5000 });
+    expect(clamped).toMatchObject({ total: 206, truncated: false });
+    expect(clamped.findings).toHaveLength(206);
+
+    expect(await ok(client, 'validate', { base: 'ops', kinds: ['possible_duplicate', 'schema'] })).toEqual({ total: 0, truncated: false, findings: [] });
+    expect(await fail(client, 'validate', { base: 'ops', kinds: ['typo'] })).toMatch(/validation/i);
+    expect(await fail(client, 'validate', { base: 'ops', limit: 0 })).toMatch(/validation/i);
+  });
+
   it('capture → inbox → create_note → mark_source flow works end to end', async () => {
     const captured = await ok(client, 'capture', {
       kind: 'jira',

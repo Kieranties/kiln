@@ -12,7 +12,7 @@ Claude writes knowledge immediately and flags what it was unsure of with `review
 ## Gather
 
 1. `query({ review: true })`: every note flagged `review: needed`, newest first.
-2. `validate()`: keep only the `possible_duplicate` findings. These are suggested merges to review too.
+2. `validate({ kinds: ["possible_duplicate"] })`: suggested merges to review too. The result is `{ total, truncated, findings }`; when `truncated` is true, say how many there are in all (`total`) and work through the ones returned. A finding is either one pair of near-identical titles or one group of notes sharing a title (its message lists the other paths).
 3. Tell the user how many of each there are, then start with the flagged notes.
 
 ## For each flagged note
@@ -49,7 +49,7 @@ kiln never deletes. Revert by restoring what was there and retiring what was add
 
 ## Possible duplicates
 
-For each `possible_duplicate` finding, `get` both notes and show them side by side: title, `summary`, `aliases`, `sources`, `updated`. Ask: **merge or keep both?**
+For each `possible_duplicate` finding, `get` the notes it names (both of a pair, or every note of a group) and show them side by side: title, `summary`, `aliases`, `sources`, `updated`. Ask: **merge or keep both?**
 - **Merge:** pick the note to keep with the user. `update_note` it to add the other's `aliases` and `sources`, and append any content it lacks. Then retire the other, by its type:
   - anchor or reference: `status: "archived"`; work: `status: "abandoned"`; project: `status: "closed"`; each with a link to the kept note in its body;
   - decision: `update_note` with `set: { status: "superseded", superseded_by: ["[[<kept note basename>|<kept note title>]]"] }`;

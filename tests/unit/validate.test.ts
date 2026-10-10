@@ -128,10 +128,13 @@ describe('validateBase', () => {
     // Same title but a different type is not a duplicate.
     write('decisions/2026/E.md', good('decision', 'Replace turnstile controller firmware at north stand gates', ['decided_on: 2026-10-01']));
     const dups = of(run(), 'possible_duplicate');
-    expect(dups.map((f) => f.path)).toEqual(['work/2026/A.md', 'work/2026/A.md', 'work/2026/B.md']);
-    expect(dups[0]!.message).toContain('work/2026/B.md');
-    expect(dups[1]!.message).toContain('work/2026/C.md');
-    expect(dups[2]!.message).toContain('work/2026/C.md');
+    // A and B share a title (one group finding on A). C differs only by the stopword "at", so it is a near duplicate of
+    // each (one pair finding apiece, scoring 1.00 on word tokens).
+    expect(dups.map((f) => [f.path, f.message])).toEqual([
+      ['work/2026/A.md', 'possible duplicate of work/2026/C.md ("Replace turnstile controller firmware north stand gates"), title similarity 1.00'],
+      ['work/2026/A.md', 'same title as 1 other note: work/2026/B.md'],
+      ['work/2026/B.md', 'possible duplicate of work/2026/C.md ("Replace turnstile controller firmware north stand gates"), title similarity 1.00'],
+    ]);
     expect(dups.some((f) => f.message.includes('work/2026/D.md') || f.message.includes('decisions/2026/E.md'))).toBe(false);
   });
 
@@ -142,6 +145,35 @@ describe('validateBase', () => {
     expect(dups).toHaveLength(1);
     expect(dups[0]).toMatchObject({ path: 'notes/One.md' });
     expect(dups[0]!.message).toContain('notes/Two.md');
+  });
+
+  it('possible_duplicate: a group of identical titles is one finding on the smallest path', () => {
+    for (const n of [5, 3, 1, 4, 2]) write(`notes/Gate rota ${n}.md`, good('note', 'Gate rota'));
+    const dups = of(run(), 'possible_duplicate');
+    expect(dups).toEqual([
+      {
+        path: 'notes/Gate rota 1.md',
+        kind: 'possible_duplicate',
+        message: 'same title as 4 other notes: notes/Gate rota 2.md, notes/Gate rota 3.md, notes/Gate rota 4.md, notes/Gate rota 5.md',
+      },
+    ]);
+  });
+
+  it('possible_duplicate: a large identical group lists at most 10 other paths', () => {
+    for (let n = 10; n <= 22; n++) write(`notes/Shift ${n}.md`, good('note', 'Shift log'));
+    const dups = of(run(), 'possible_duplicate');
+    expect(dups).toHaveLength(1);
+    expect(dups[0]!.path).toBe('notes/Shift 10.md');
+    const shown = Array.from({ length: 10 }, (_, i) => `notes/Shift ${i + 11}.md`).join(', ');
+    expect(dups[0]!.message).toBe(`same title as 12 other notes: ${shown} … and 2 more`);
+  });
+
+  it('possible_duplicate: sources are left out (dedupe_key already deduplicates them)', () => {
+    const source = (d: string) => note(['type: source', 'kind: jira', 'title: NWA-142 Turnstile outage', 'triage: pending', `captured_at: ${d}`]);
+    write('sources/jira/2026-10-01 NWA-142 Turnstile outage.md', source('2026-10-01'));
+    write('sources/jira/2026-10-02 NWA-142 Turnstile outage.md', source('2026-10-02'));
+    write('sources/jira/2026-10-03 NWA-142 Turnstile outages.md', source('2026-10-03'));
+    expect(of(run(), 'possible_duplicate')).toEqual([]);
   });
 
   it('possible_duplicate: agrees with a brute-force comparison over many generated titles', () => {
@@ -158,20 +190,55 @@ describe('validateBase', () => {
     }
     titles.forEach((t, i) => write(`notes/n${String(i).padStart(3, '0')}.md`, good('note', t)));
 
+    const path = (i: number): string => `notes/n${String(i).padStart(3, '0')}.md`;
+    const norm = (t: string): string => t.trim().toLowerCase();
+    // Near pairs (titles not identical) one finding each; identical titles one finding per group.
     const expected: string[] = [];
+    const groups = new Map<string, string[]>();
     for (let i = 0; i < titles.length; i++) {
+      groups.set(norm(titles[i]!), [...(groups.get(norm(titles[i]!)) ?? []), path(i)]);
       for (let j = i + 1; j < titles.length; j++) {
         const a = titles[i]!;
         const b = titles[j]!;
-        const same = a.trim().toLowerCase() === b.trim().toLowerCase();
-        if (same || jaccard(titleTokens(a), titleTokens(b)) >= 0.85) {
-          expected.push(`notes/n${String(i).padStart(3, '0')}.md|notes/n${String(j).padStart(3, '0')}.md`);
-        }
+        if (norm(a) !== norm(b) && jaccard(titleTokens(a), titleTokens(b)) >= 0.85) expected.push(`${path(i)}|${path(j)}`);
       }
     }
-    const actual = of(run(), 'possible_duplicate').map((f) => `${f.path}|${/duplicate of (\S+) /.exec(f.message)![1]}`);
+    for (const [first, ...others] of groups.values()) if (others.length > 0) expected.push(`${first}|${others.join(', ')}`);
+
+    const actual = of(run(), 'possible_duplicate').map((f) => {
+      const pair = /duplicate of (\S+) /.exec(f.message);
+      return `${f.path}|${pair ? pair[1] : /^same title as \d+ other notes?: (.*)$/.exec(f.message)![1]}`;
+    });
     expect(expected.length).toBeGreaterThan(0);
     expect(actual.sort()).toEqual(expected.sort());
+  });
+
+  it('schema: reports supersession recorded on one side only, resolving links by title, alias, stem or path', () => {
+    const decision = (title: string, extra: string[]) => good('decision', title, ['decided_on: 2026-10-01', ...extra]);
+    // Linked both ways (piped stem link one way, title link the other): no finding.
+    write('decisions/2026/2026-03-02 Paper tickets.md', decision('Paper tickets', ['status: superseded', 'superseded_by: ["[[2026-10-01 Mobile tickets|Mobile tickets]]"]']));
+    write('decisions/2026/2026-10-01 Mobile tickets.md', decision('Mobile tickets', ['status: active', 'supersedes: ["[[Paper tickets]]"]']));
+    // A kill between supersede's two renames: the new decision landed, the old one was never patched.
+    write('decisions/2026/2026-04-01 Cash kiosks.md', decision('Cash kiosks', ['status: active']));
+    write('decisions/2026/2026-10-02 Card-only kiosks.md', decision('Card-only kiosks', ['status: active', 'supersedes: ["[[2026-04-01 Cash kiosks|Cash kiosks]]"]']));
+    // The reverse: superseded_by points at a decision (by path) that does not say it supersedes this one.
+    write('decisions/2026/2026-05-01 Paper rota.md', decision('Paper rota', ['status: superseded', 'superseded_by: ["[[decisions/2026/2026-10-03 Rota app]]"]']));
+    write('decisions/2026/2026-10-03 Rota app.md', decision('Rota app', ['status: active']));
+    // An unresolved target is a broken_link only.
+    write('decisions/2026/2026-06-01 Ghost policy.md', decision('Ghost policy', ['status: active', 'supersedes: ["[[Nowhere policy]]"]']));
+
+    const found = run();
+    expect(of(found, 'schema').map((f) => [f.path, f.message])).toEqual([
+      [
+        'decisions/2026/2026-05-01 Paper rota.md',
+        'superseded_by: [[decisions/2026/2026-10-03 Rota app]] does not list this decision in its supersedes (add the back-link there, or correct this link)',
+      ],
+      [
+        'decisions/2026/2026-10-02 Card-only kiosks.md',
+        'supersedes: [[2026-04-01 Cash kiosks|Cash kiosks]] does not list this decision in its superseded_by (add the back-link there, or correct this link)',
+      ],
+    ]);
+    expect(of(found, 'broken_link').map((f) => f.path)).toEqual(['decisions/2026/2026-06-01 Ghost policy.md']);
   });
 
   it('sorts findings by path, then kind, then message', () => {

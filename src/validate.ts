@@ -2,16 +2,21 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { parseFields, splitNote } from './frontmatter.js';
 import type { Index } from './index/db.js';
+import { extractLinks } from './links.js';
 import { validateFields } from './schema.js';
 import { jaccard, titleTokens } from './similarity.js';
 import { KilnError, type Fields } from './types.js';
 
-export type FindingKind = 'schema' | 'broken_link' | 'missing_enrichment' | 'possible_duplicate';
+export const FINDING_KINDS = ['schema', 'broken_link', 'missing_enrichment', 'possible_duplicate'] as const;
+
+export type FindingKind = (typeof FINDING_KINDS)[number];
 
 export type Finding = { path: string; kind: FindingKind; message: string };
 
 /** Titles at or above this word-token Jaccard similarity (within one type) are reported as possible duplicates. */
 const DUPLICATE_THRESHOLD = { num: 85, den: 100 };
+/** How many other paths a group of identical titles lists before "… and N more". */
+const GROUP_SHOWN = 10;
 
 type NoteRow = { path: string; type: string | null; title: string; fields_json: string };
 
@@ -71,19 +76,37 @@ function schemaFindings(notes: NoteRow[], index: Index, out: Finding[]): void {
   }
 }
 
-function brokenLinkFindings(notes: NoteRow[], index: Index, out: Finding[]): void {
-  const names = new Set<string>();
-  for (const row of index.db.prepare('SELECT DISTINCT name_lc FROM aliases').all() as { name_lc: string }[]) names.add(row.name_lc);
-  for (const n of notes) {
-    names.add(stemOf(n.path));
-    names.add(n.path.replace(/\.md$/i, '').toLowerCase());
-  }
+/** Lowercased note names (titles, aliases, file stems and base-relative paths without `.md`) to the notes' paths. */
+type Names = Map<string, Set<string>>;
 
+function noteNames(notes: NoteRow[], index: Index): Names {
+  const names: Names = new Map();
+  const add = (name: string, path: string): void => {
+    const paths = names.get(name);
+    if (paths) paths.add(path);
+    else names.set(name, new Set([path]));
+  };
+  for (const row of index.db.prepare('SELECT name_lc, path FROM aliases').all() as { name_lc: string; path: string }[]) add(row.name_lc, row.path);
+  for (const n of notes) {
+    add(stemOf(n.path), n.path);
+    add(n.path.replace(/\.md$/i, '').toLowerCase(), n.path);
+  }
+  return names;
+}
+
+const NO_PATHS: ReadonlySet<string> = new Set();
+
+/** The paths of the notes a link target names (by title, alias, file stem or path); empty when it names none. */
+function notesNamed(names: Names, target: string): ReadonlySet<string> {
+  const lc = target.toLowerCase();
+  return names.get(lc) ?? (lc.endsWith('.md') ? names.get(lc.slice(0, -3)) : undefined) ?? NO_PATHS;
+}
+
+function brokenLinkFindings(names: Names, index: Index, out: Finding[]): void {
   let attachments: Set<string> | undefined;
   const resolves = (target: string): boolean => {
     const lc = target.toLowerCase();
-    if (names.has(lc)) return true;
-    if (lc.endsWith('.md') && names.has(lc.slice(0, -3))) return true;
+    if (notesNamed(names, lc).size > 0) return true;
     const ext = extname(lc);
     if (ext !== '' && ext !== '.md') return (attachments ??= attachmentNames(index.base.path)).has(lc);
     return false;
@@ -105,6 +128,49 @@ function brokenLinkFindings(notes: NoteRow[], index: Index, out: Finding[]): voi
   }
 }
 
+/** The string entries of a list field, as written. */
+function entries(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+}
+
+/** The link target of one `[[...]]` entry, label and heading dropped. */
+function targetOf(entry: string): string | undefined {
+  return extractLinks({ entry }, '')[0];
+}
+
+const BACK_LINK = { superseded_by: 'supersedes', supersedes: 'superseded_by' } as const;
+
+/**
+ * Supersession recorded on one side only: a decision whose `superseded_by` (or `supersedes`) names a note whose
+ * `supersedes` (or `superseded_by`) does not name it back. This also catches a supersede cut off between its two
+ * writes. Targets are resolved as `broken_link` resolves them; a target that names no note is left to `broken_link`.
+ */
+function supersessionFindings(notes: NoteRow[], names: Names, out: Finding[]): void {
+  const fieldsByPath = new Map(notes.map((n) => [n.path, JSON.parse(n.fields_json) as Fields]));
+  const linksBack = (path: string, field: 'supersedes' | 'superseded_by', to: string): boolean =>
+    entries(fieldsByPath.get(path)?.[field]).some((e) => {
+      const t = targetOf(e);
+      return t !== undefined && notesNamed(names, t).has(to);
+    });
+  for (const n of notes) {
+    if (n.type !== 'decision') continue;
+    const fields = fieldsByPath.get(n.path)!;
+    for (const field of ['superseded_by', 'supersedes'] as const) {
+      const back = BACK_LINK[field];
+      for (const entry of entries(fields[field])) {
+        const t = targetOf(entry);
+        const linked = t === undefined ? NO_PATHS : notesNamed(names, t);
+        if (linked.size === 0 || [...linked].some((p) => linksBack(p, back, n.path))) continue;
+        out.push({
+          path: n.path,
+          kind: 'schema',
+          message: `${field}: ${entry} does not list this decision in its ${back} (add the back-link there, or correct this link)`,
+        });
+      }
+    }
+  }
+}
+
 function enrichmentFindings(notes: NoteRow[], out: Finding[]): void {
   for (const n of notes) {
     if (n.type === null || n.type === 'source') continue;
@@ -116,27 +182,22 @@ function enrichmentFindings(notes: NoteRow[], out: Finding[]): void {
   }
 }
 
+const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 type Titled = { path: string; title: string; norm: string; tokens: string[] };
 
-/** Pairs of same-type notes whose titles score at or above the threshold, as [a, b] with a.path < b.path. */
+/**
+ * Pairs of same-type notes whose titles are not identical (trimmed, lowercased) but score at or above the threshold,
+ * as [a, b] with a.path < b.path. Identical titles are reported as groups instead (`identicalGroups`).
+ */
 function similarPairs(group: Titled[]): [Titled, Titled, number][] {
   const { num, den } = DUPLICATE_THRESHOLD;
   const pairs = new Map<string, [Titled, Titled, number]>();
   const record = (x: Titled, y: Titled, score: number): void => {
+    if (x.norm === y.norm) return;
     const [a, b] = x.path < y.path ? [x, y] : [y, x];
     pairs.set(`${a.path}\0${b.path}`, [a, b, score]);
   };
-
-  // Equal titles always match, including titles made only of stopwords (which have no tokens to index).
-  const byNorm = new Map<string, Titled[]>();
-  for (const t of group) {
-    const same = byNorm.get(t.norm);
-    if (same) same.push(t);
-    else byNorm.set(t.norm, [t]);
-  }
-  for (const same of byNorm.values()) {
-    for (let i = 0; i < same.length; i++) for (let j = i + 1; j < same.length; j++) record(same[i]!, same[j]!, 1);
-  }
 
   // Prefix filtering: order each token set rarest-first; two sets with Jaccard >= t must share a token within the
   // first |s| - ceil(t|s|) + 1 tokens of each. Probing only those prefixes keeps common tokens from forcing all-pairs.
@@ -170,16 +231,41 @@ function similarPairs(group: Titled[]): [Titled, Titled, number][] {
   return [...pairs.values()];
 }
 
+/** Groups of notes whose titles are identical once trimmed and lowercased (stopword-only titles included), by path. */
+function identicalGroups(group: Titled[]): Titled[][] {
+  const byNorm = new Map<string, Titled[]>();
+  for (const t of group) {
+    const same = byNorm.get(t.norm);
+    if (same) same.push(t);
+    else byNorm.set(t.norm, [t]);
+  }
+  return [...byNorm.values()].filter((same) => same.length > 1).map((same) => same.sort((a, b) => cmp(a.path, b.path)));
+}
+
+/**
+ * Likely duplicates among same-type notes, sources aside (`dedupe_key` already deduplicates them). A group of identical
+ * titles is one finding on its smallest path, listing at most GROUP_SHOWN of the others; each near-identical pair is one
+ * finding on the smaller path. This keeps the output linear in the number of notes for large identical groups.
+ */
 function duplicateFindings(notes: NoteRow[], out: Finding[]): void {
   const byType = new Map<string, Titled[]>();
   for (const n of notes) {
-    if (n.type === null) continue;
+    if (n.type === null || n.type === 'source') continue;
     const entry: Titled = { path: n.path, title: n.title, norm: n.title.trim().toLowerCase(), tokens: [...titleTokens(n.title)] };
     const list = byType.get(n.type);
     if (list) list.push(entry);
     else byType.set(n.type, [entry]);
   }
   for (const group of byType.values()) {
+    for (const [first, ...others] of identicalGroups(group)) {
+      const shown = others.slice(0, GROUP_SHOWN).map((o) => o.path).join(', ');
+      const more = others.length > GROUP_SHOWN ? ` … and ${others.length - GROUP_SHOWN} more` : '';
+      out.push({
+        path: first!.path,
+        kind: 'possible_duplicate',
+        message: `same title as ${others.length} other note${others.length === 1 ? '' : 's'}: ${shown}${more}`,
+      });
+    }
     for (const [a, b, score] of similarPairs(group)) {
       out.push({
         path: a.path,
@@ -190,10 +276,9 @@ function duplicateFindings(notes: NoteRow[], out: Finding[]): void {
   }
 }
 
-const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
-
 /**
- * Read-only check of a base: schema problems (including frontmatter that is not valid YAML), broken links,
+ * Read-only check of a base: schema problems (including frontmatter that is not valid YAML, and supersession recorded
+ * on one side only), broken links,
  * knowledge notes missing a summary or aliases, and likely duplicate titles. Uses the index as it stands (callers
  * decide whether to `ensureFresh` first), reads note files only to diagnose typeless notes, and writes nothing.
  * Findings are sorted by path, then kind, then message.
@@ -201,8 +286,10 @@ const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 export function validateBase(index: Index): Finding[] {
   const notes = index.db.prepare('SELECT path, type, title, fields_json FROM notes').all() as NoteRow[];
   const out: Finding[] = [];
+  const names = noteNames(notes, index);
   schemaFindings(notes, index, out);
-  brokenLinkFindings(notes, index, out);
+  supersessionFindings(notes, names, out);
+  brokenLinkFindings(names, index, out);
   enrichmentFindings(notes, out);
   duplicateFindings(notes, out);
   return out.sort((a, b) => cmp(a.path, b.path) || cmp(a.kind, b.kind) || cmp(a.message, b.message));

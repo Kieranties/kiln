@@ -9,12 +9,15 @@ import type { SearchHit } from '../index/read.js';
 import { KINDS, TRIAGE, TRIAGE_OUTCOMES } from '../schema.js';
 import { Store } from '../store.js';
 import { KilnError, type Base, type NoteType } from '../types.js';
-import { validateBase } from '../validate.js';
+import { FINDING_KINDS, validateBase, type FindingKind } from '../validate.js';
 
-/** Highest `limit` any tool honours; larger values are clamped. */
+/** Highest `limit` the listing tools (query, search, inbox) honour; larger values are clamped. */
 const MAX_LIMIT = 200;
 /** The `base` value that makes `search` cover every configured base. */
 const ALL = 'all';
+/** validate's default and highest finding limits. */
+const VALIDATE_LIMIT = 100;
+const VALIDATE_MAX = 1000;
 
 const INSTRUCTIONS = [
   "kiln holds the user's knowledge vault: markdown notes about their organisations, products, people, projects, work and decisions.",
@@ -338,10 +341,20 @@ function register(server: McpServer, bases: Bases): void {
   server.registerTool(
     'validate',
     {
-      description: 'Check a base for schema problems, broken links, notes missing a summary or aliases, and likely duplicates. Reports only; fixes nothing.',
-      inputSchema: { base },
+      description: `Check a base for schema problems (including supersession recorded on one side only), broken links, notes missing a summary or aliases, and likely duplicates. Reports only; fixes nothing. kinds keeps only those finding kinds. Returns { total, truncated, findings }: the first limit findings (default ${VALIDATE_LIMIT}, max ${VALIDATE_MAX}) of total, sorted by path.`,
+      inputSchema: {
+        kinds: z.array(z.enum(FINDING_KINDS)).optional().describe('Finding kinds to report; all when omitted'),
+        limit: z.number().int().min(1).optional().describe(`Maximum findings (default ${VALIDATE_LIMIT}; larger than ${VALIDATE_MAX} is clamped)`),
+        base,
+      },
     },
-    (a) => run(() => validateBase(reading(a.base).index)),
+    (a) =>
+      run(() => {
+        const kinds = a.kinds === undefined ? undefined : new Set<FindingKind>(a.kinds);
+        const found = validateBase(reading(a.base).index).filter((f) => kinds === undefined || kinds.has(f.kind));
+        const max = Math.min(a.limit ?? VALIDATE_LIMIT, VALIDATE_MAX);
+        return { total: found.length, truncated: found.length > max, findings: found.slice(0, max) };
+      }),
   );
 }
 
