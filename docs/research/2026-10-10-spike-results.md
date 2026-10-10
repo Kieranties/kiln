@@ -135,6 +135,35 @@ Setup: the 189 raw notes and 219 distilled notes were mixed into the 100k synthe
   - Ranked OR-queries averaged ~300 ms at 100k, against 14 ms for spike 1's simpler queries, so this is worth optimising.
   - A blind judge was skipped because path prefixes would reveal which variant is which.
 
+## Follow-up B3: weekly inbox cost (triage and distillation)
+
+**Setup**
+- An agent wrote a plausible simulated week (Mon 5 - Fri 9 Oct) of 60 captures continuing the real work. The mix: Jira 20, Slack 12, meetings 8, GitHub 6, email 6, ad-hoc 8.
+- Deliberate test cases: 7 supersessions, 4 duplicates, 7 new work items, 15 pieces of noise, 4 new people.
+- A hidden answer key held the expected outcomes.
+- Two runs processed the week:
+  - **triage-only**: decide an outcome and targets, no edits;
+  - **full**: triage, then apply the changes to a copy of the 219-note distilled base.
+
+| | Triage only | Triage + distil |
+|---|---|---|
+| Outcome matches answer key | 58/60 (97%) | 58/60 (97%) |
+| Expected target notes touched (mean coverage) | 65% | 75% |
+| Tokens (whole week) | ~160k | ~332k |
+| **Tokens per capture** | **~2.7k** | **~5.5k** |
+| Wall time | ~4 min | ~19 min |
+| Knowledge changes | none | 28 notes created, 46 modified, 10 decisions superseded, 9 anchors and 3 projects rewritten to current truth |
+| Edit footprint on modified notes | n/a | median 6 lines rewritten, max 12 (small, local edits) |
+
+**Findings**
+- Accuracy is high, and both runs flagged the right things for human review: borderline dismissals, partial supersessions, and the existing duplicate notes that should be merged.
+- Incremental distillation costs **about 5.5k tokens per capture**: ~330k a week at 60 captures, or ~65k a day.
+- Triage-only is half that. It is a natural "light" mode that defers distillation to the weekly review.
+
+**Caveats**
+- The same model family wrote the scenario and the key, so the signals in the captures are probably cleaner than real life.
+- The full run once diffed a single original file (an isolation slip). It is unlikely to have mattered.
+
 ## Implications (for discussion, not decided)
 
 1. **Build a small, purpose-built index:**
