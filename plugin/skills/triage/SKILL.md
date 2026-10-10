@@ -24,16 +24,18 @@ Turn captured sources into knowledge: decide what each one means, file it, recor
 
 | Outcome | Use when | File it with |
 |---|---|---|
-| `dismiss` | No lasting value: noise, chatter, an FYI already known, or out of scope | nothing; `mark_source` with `triage: "dismissed"` |
+| `dismiss` | No lasting value, and nothing in the base it duplicates: noise, chatter, out of scope | nothing; `mark_source` with `triage: "dismissed"`, no `linked_to` |
 | `link-to-anchor` | A fact, issue or change about an organisation, product, service, person or topic, not tied to a piece of work | `update_note` on the anchor: append to `Facts` or `Known issues`; replace `Summary` with dated current truth when the truth changed |
 | `update-work-item` | Progress, a blocker, a status change or new open items on existing work | `update_note` on the work note (see below) |
-| `new-work-item` | A new ticket, bug, feature, chore, incident or research thread with no work note yet | `create_note` with `type: "work"` and a `kind` (feature, bug, chore, incident, research) |
-| `new-decision` | Something was decided and no active decision on the same question exists | `create_note` with `type: "decision"`, `decided_on`, and sections `Context`, `Decision`, `Consequences` |
+| `new-work-item` | A new ticket, bug, feature, chore, incident or research thread with no work note yet | `create_note` with `type: "work"`, a `kind` (feature, bug, chore, incident, research) and `status: "active"` (or `blocked`/`paused` when the source says so) |
+| `new-decision` | Something was decided and no active decision on the same question exists | `create_note` with `type: "decision"`, `status: "active"` (`"proposed"` when the source shows it is not final yet), `decided_on`, and sections `Context`, `Decision`, `Consequences` |
 | `supersede` | A decision replaces an existing active decision on the same question | `supersede` the old decision (it flags the new one for review) |
-| `new-reference` | A doc, spec, code location, post, thread, video, dashboard, sheet or slides worth finding again | `create_note` with `type: "reference"` and its `kind` |
-| `duplicate-of` | The source repeats something already filed, with nothing new | nothing; `mark_source` with `triage: "dismissed"` and `linked_to` the existing note |
+| `new-reference` | A doc, spec, code location, post, thread, video, dashboard, sheet or slides worth finding again | `create_note` with `type: "reference"`, its `kind` and `status: "active"` |
+| `duplicate-of` | The source repeats a specific note already in the base, with nothing new. Use it whenever you can name that note | nothing; `mark_source` with `triage: "dismissed"` and `linked_to` that note |
 
-Superseding: `get` the old decision, then `supersede({ old_id_or_path, if_revision: <the OLD decision's revision>, new_decision: { fields: { title, decided_on, summary, aliases, sources, confidence, anchors, ... }, sections: [{ heading: "Context", text }, { heading: "Decision", text }, { heading: "Consequences", text }] } })`.
+Tie-break: if an existing note already covers the source, use `duplicate-of`, not `dismiss`.
+
+Superseding: `get` the old decision, then `supersede({ old_id_or_path, if_revision: <the OLD decision's revision>, new_decision: { fields: { title, status: "active" /* or "proposed" if not final */, decided_on, summary, aliases, sources, confidence, anchors, ... }, sections: [{ heading: "Context", text }, { heading: "Decision", text }, { heading: "Consequences", text }] } })`.
 
 If a source carries two things (a decision and a work update), file both, use the outcome for the main one, and list every note touched in `linked_to`.
 
@@ -55,6 +57,7 @@ Every note you create must carry these fields. When you update a note, add the s
 - `aliases`: at least one other name it will be looked up by (ticket key, nickname, short name).
 - `sources`: wikilinks to the source notes it came from, e.g. `[[NWA-142 Turnstiles reject mobile tickets at North Stand]]`.
 - `confidence`: `verbatim` when the content is taken directly from the source, `inferred` when you concluded it.
+- `status`: kiln sets no default, and a note without one is missed by status queries and briefs. Decision `active` (`proposed` when not final); work `active`; anchor and reference `active`; project `shaping` or `active`.
 - Links to anchors in `anchors`, and to the project in `project`, as `[[Note title]]`.
 
 **Review flag.** Rate your own confidence in each filing (the outcome chosen, the target, the content). When it is **medium or low**, also set `review: "needed"` and a `review_reason` that says what to check, e.g. `"Inferred that the Thursday patch covers gate 4 as well as gate 3"`. `supersede` sets the flag itself.
