@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { saveConfig } from '../../src/config.js';
@@ -95,6 +96,13 @@ describe('kiln hook write-guard', () => {
     }
   });
 
+  it.skipIf(process.platform !== 'win32')('write-guard blocks an MSYS-style /x/... path into a base on win32', () => {
+    const msys = (p: string): string => p.replace(/^([A-Za-z]):[\\/]/, (_, d: string) => `/${d.toLowerCase()}/`).replaceAll('\\', '/');
+    const r = hook('write-guard', writeInput(msys(join(base, 'notes', 'Gate Staffing.md')), { cwd: msys(repos) }));
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toBe(GUARD_MESSAGE);
+  });
+
   it('write-guard resolves a relative file_path against the stdin cwd', () => {
     const inside = hook('write-guard', writeInput(join('notes', 'Gate Staffing.md'), { cwd: base }));
     expect(inside.code).toBe(2);
@@ -133,6 +141,9 @@ describe('kiln hook usage errors', () => {
 
 describe('kiln hook session-start', () => {
   it('session-start prints the orientation line for a matching cwd and nothing otherwise', () => {
+    // The hook never builds the index, so build it the way a user would after kiln init.
+    const reindex = spawnSync(process.execPath, [CLI, 'reindex', '--base', 'northwind'], { env: { ...process.env, KILN_CONFIG: cfgPath }, encoding: 'utf8' });
+    expect(reindex.status, reindex.stderr).toBe(0);
     const cwd = join(repos, 'turnstile-firmware');
     const match = hook('session-start', JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', cwd }));
     expect(match.code, match.stderr).toBe(0);
@@ -144,6 +155,42 @@ describe('kiln hook session-start', () => {
     expect(none.code).toBe(0);
     expect(none.stdout).toBe('');
     expect(none.stderr).toBe('');
+  });
+
+  it('session-start never builds the index: a missing or outdated index prints a reindex hint and is left alone', () => {
+    const fresh = join(root, 'fresh');
+    const project = join(root, 'fresh-project', 'repo');
+    mkdirSync(fresh, { recursive: true });
+    mkdirSync(project, { recursive: true });
+    const freshCfg = join(root, 'fresh.yaml');
+    saveConfig({ bases: [{ name: 'fresh', path: fresh }], rules: [{ path: `${join(root, 'fresh-project')}/**`, base: 'fresh' }] }, freshCfg);
+    const start = (): Run => {
+      const r = spawnSync(process.execPath, [CLI, 'hook', 'session-start'], {
+        cwd: root,
+        env: { ...process.env, KILN_CONFIG: freshCfg },
+        input: JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', cwd: project }),
+        encoding: 'utf8',
+      });
+      return { code: r.status, stdout: r.stdout, stderr: r.stderr };
+    };
+    const file = join(fresh, '.kiln', 'index', 'kiln.sqlite');
+
+    const missing = start();
+    expect(missing.code, missing.stderr).toBe(0);
+    expect(missing.stdout).toBe('kiln: base=fresh · index not built: run kiln reindex\n');
+    expect(existsSync(file)).toBe(false);
+
+    // An index from an older schema would be rebuilt by Index.open; the hook leaves it for kiln reindex.
+    mkdirSync(dirname(file), { recursive: true });
+    const old = new DatabaseSync(file);
+    old.exec('PRAGMA user_version = 1');
+    old.close();
+    const outdated = start();
+    expect(outdated.code, outdated.stderr).toBe(0);
+    expect(outdated.stdout).toBe('kiln: base=fresh · index not built: run kiln reindex\n');
+    const after = new DatabaseSync(file, { readOnly: true });
+    expect((after.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(1);
+    after.close();
   });
 
   it('session-start exits 0 with nothing on stdout for malformed stdin', () => {

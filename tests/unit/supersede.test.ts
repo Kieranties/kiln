@@ -172,6 +172,25 @@ describe('supersede', () => {
     expect(read(work.path)).toBe(before);
   });
 
+  it('a decision that is not active or proposed cannot be superseded, so its successor link is never overwritten', () => {
+    const s = store();
+    const old = oldDecision(s);
+    clock = new Date('2026-10-10T12:00:00.000Z');
+    s.supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) });
+    const before = read(OLD_PATH);
+    const files = readdirSync(abs('decisions/2026')).sort();
+
+    const e = kilnError(() =>
+      s.supersede({ oldIdOrPath: old.id!, ifRevision: rev(OLD_PATH), newDecision: decision('Season card entry for away fans', { decided_on: '2026-10-10' }) }),
+    );
+
+    expect(e.code).toBe('validation');
+    expect(e.message).toContain('superseded');
+    expect(read(OLD_PATH)).toBe(before);
+    expect(fieldsOf(OLD_PATH).superseded_by).toEqual([NEW_LINK]);
+    expect(readdirSync(abs('decisions/2026')).sort()).toEqual(files);
+  });
+
   it('stale revision on old decision raises conflict and creates nothing', () => {
     const s = store();
     const old = oldDecision(s);

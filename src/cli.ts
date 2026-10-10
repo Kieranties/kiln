@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { baseContaining, loadConfig, resolveBase } from './config.js';
+import { baseContaining, fromMsys, loadConfig, resolveBase } from './config.js';
 import type { IndexStatus } from './index/read.js';
 import { KilnError, type Base } from './types.js';
 
@@ -119,6 +119,16 @@ function orientationLine({ status }: BaseStatus): string {
   return `kiln: base=${status.base} · inbox ${status.inbox} · needs review ${status.needsReview}`;
 }
 
+/** The base matched from `cwd`, or null when none matches. */
+function baseFor(cwd: string): Base | null {
+  try {
+    return resolveBase(loadConfig(), { cwd });
+  } catch (e) {
+    if (e instanceof KilnError && e.code === 'no_base') return null;
+    throw e;
+  }
+}
+
 async function cmdStatus(args: string[]): Promise<void> {
   const { values } = parse(args, { line: { type: 'boolean' }, cwd: { type: 'string' }, base: { type: 'string' } }, 0);
   const found = await baseStatus(str(values.cwd) ?? process.cwd(), str(values.base));
@@ -166,7 +176,8 @@ async function hookWriteGuard(): Promise<void> {
   const { file_path, notebook_path } = toolInput as Record<string, unknown>;
   const target = text(file_path) ?? text(notebook_path);
   if (target === undefined) return;
-  const base = baseContaining(loadConfig(), resolve(text(input!.cwd) ?? process.cwd(), target));
+  // Map MSYS /x/... paths before resolving: on win32, resolve() would read them as root-relative on the cwd's drive.
+  const base = baseContaining(loadConfig(), resolve(fromMsys(text(input!.cwd) ?? process.cwd()), fromMsys(target)));
   if (!base) return;
   process.stderr.write(
     `kiln: notes in base '${base.name}' are written through kiln tools (capture, create_note, update_note, supersede, mark_source), not directly.\n`,
@@ -174,12 +185,32 @@ async function hookWriteGuard(): Promise<void> {
   process.exitCode = 2;
 }
 
-/** SessionStart orientation: the `status --line` text for the session's cwd, or nothing. Never fails the session. */
+/**
+ * SessionStart orientation: the `status --line` text for the session's cwd, or nothing when no base matches. It never
+ * builds the index, which could outlast the hook's timeout: a missing or outdated index gets a `kiln reindex` hint, and
+ * a busy one the line without counts. Never fails the session.
+ */
 async function hookSessionStart(): Promise<void> {
   try {
     const input = await hookInput();
-    const found = await baseStatus(text(input?.cwd) ?? process.cwd());
-    if (found) print(orientationLine(found));
+    const cwd = text(input?.cwd) ?? process.cwd();
+    const base = baseFor(cwd);
+    if (!base) return;
+    const { Index, isBusy } = await import('./index/db.js');
+    try {
+      if (!Index.isBuilt(base)) {
+        print(`kiln: base=${base.name} · index not built: run kiln reindex`);
+        return;
+      }
+      const status = await withIndex(base, (index) => {
+        index.ensureFresh();
+        return index.status();
+      });
+      print(orientationLine({ base, cwd, status }));
+    } catch (e) {
+      if (!(isBusy(e) || (e instanceof KilnError && e.code === 'busy'))) throw e;
+      print(`kiln: base=${base.name}`);
+    }
   } catch (e) {
     process.stderr.write(`kiln hook session-start: ${e instanceof Error ? e.message : String(e)}\n`);
   }

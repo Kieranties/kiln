@@ -214,12 +214,13 @@ export class Store {
 
   /**
    * Replace a decision with a new one, under one lock. Both writes are planned and validated before either is made:
-   * the old note's revision and type; the new decision (validated and duplicate-checked, the old decision aside) with
-   * `supersedes`, `review: needed` and `review_reason`; then the old note's patch to `status: superseded` with
-   * `superseded_by`. Both links are `[[<file stem>|<title>]]` (see `linkTo`), so Obsidian resolves the date-prefixed
-   * file names. Then the new file is written, then the old one. If a write fails while the old file is still unpatched on disk,
-   * the new file is moved to `.kiln/trash/`; the index rolls back and the original error is rethrown. If both files
-   * landed (the failure came after the old file's rename), both stay: they agree, and the next reconcile indexes them.
+   * the old note's revision, type and status (it must be active or proposed); the new decision (validated and
+   * duplicate-checked, the old decision aside) with `supersedes`, `review: needed` and `review_reason`; then the old
+   * note's patch to `status: superseded` with `superseded_by`. Both links are `[[<file stem>|<title>]]` (see `linkTo`),
+   * so Obsidian resolves the date-prefixed file names. Then the new file is written, then the old one. If a write fails
+   * while the old file is still unpatched on disk, the new file is moved to `.kiln/trash/`; the index rolls back and the
+   * original error is rethrown. If both files landed (the failure came after the old file's rename), both stay: they
+   * agree, and the next reconcile indexes them.
    */
   supersede(i: SupersedeInput): SupersedeResult {
     this.index.ensureFresh();
@@ -228,6 +229,16 @@ export class Store {
         if (fields.type !== 'decision') {
           throw invalid([
             { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call supersede on a decision note' },
+          ]);
+        }
+        // Superseding a decision that is no longer current would overwrite superseded_by and lose its successor.
+        if (fields.status !== 'active' && fields.status !== 'proposed') {
+          throw invalid([
+            {
+              field: 'status',
+              message: `only an active or proposed decision can be superseded; this decision's status is ${JSON.stringify(fields.status ?? null)}`,
+              hint: 'supersede the decision that is current now (follow superseded_by)',
+            },
           ]);
         }
       });

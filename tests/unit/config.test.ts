@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { baseContaining, loadConfig, resolveBase, saveConfig, type KilnConfig } from '../../src/config.js';
@@ -73,6 +73,37 @@ describe('baseContaining', () => {
   it.runIf(process.platform === 'win32')('is case-insensitive on win32', () => {
     const c: KilnConfig = { bases: [{ name: 'kb', path: 'Z:/KB' }], rules: [] };
     expect(baseContaining(c, win('z:/kb/a.md'))?.name).toBe('kb');
+  });
+
+  it.runIf(process.platform === 'win32')('reads MSYS-style /x/... paths as drive paths on win32', () => {
+    const c: KilnConfig = { bases: [{ name: 'live', path: win('D:/tmp/kiln-live') }], rules: [] };
+    expect(baseContaining(c, '/d/tmp/kiln-live/a.md')?.name).toBe('live');
+    expect(baseContaining(c, '/D/tmp/kiln-live')?.name).toBe('live');
+    expect(baseContaining(c, '/d/tmp/kiln-other/a.md')).toBeNull();
+    expect(baseContaining(c, '/zz/scrap/kiln-live/a.md')).toBeNull();
+  });
+
+  it('sees through a junction (or symlink) on either side', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'kiln-guard-'));
+    try {
+      const real = join(dir, 'real-base');
+      const alias = join(dir, 'alias');
+      mkdirSync(join(real, 'notes'), { recursive: true });
+      try {
+        symlinkSync(real, alias, 'junction');
+      } catch (e) {
+        console.warn(`skipped: cannot create a junction here (${(e as Error).message})`);
+        return;
+      }
+      const byReal: KilnConfig = { bases: [{ name: 'kb', path: real }], rules: [] };
+      expect(baseContaining(byReal, join(alias, 'notes', 'a.md'))?.name).toBe('kb');
+      expect(baseContaining(byReal, join(alias, 'new-folder', 'deeper', 'a.md'))?.name).toBe('kb');
+      const byAlias: KilnConfig = { bases: [{ name: 'kb', path: alias }], rules: [] };
+      expect(baseContaining(byAlias, join(real, 'notes', 'a.md'))?.name).toBe('kb');
+      expect(baseContaining(byReal, join(dir, 'elsewhere', 'a.md'))).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

@@ -1,4 +1,4 @@
-import { mkdirSync, renameSync } from 'node:fs';
+import { existsSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { KilnError, type Base } from '../types.js';
@@ -71,8 +71,13 @@ function recreateSchema(db: DatabaseSync): void {
   db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 }
 
+/** The base's index file. */
+function indexFile(base: Base): string {
+  return join(base.path, '.kiln', 'index', 'kiln.sqlite');
+}
+
 /** SQLITE_BUSY (5) or SQLITE_LOCKED (6), including their extended codes. */
-function isBusy(e: unknown): boolean {
+export function isBusy(e: unknown): boolean {
   const code = (e as { errcode?: unknown }).errcode;
   return typeof code === 'number' && ((code & 0xff) === 5 || (code & 0xff) === 6);
 }
@@ -128,9 +133,8 @@ export class Index {
    * A corrupt index file is renamed aside (never deleted) and rebuilt; this is retried once only.
    */
   static open(base: Base, opts: { now?: () => number } = {}): Index {
-    const dir = join(base.path, '.kiln', 'index');
-    mkdirSync(dir, { recursive: true });
-    const file = join(dir, 'kiln.sqlite');
+    const file = indexFile(base);
+    mkdirSync(join(file, '..'), { recursive: true });
     const now = opts.now ?? Date.now;
     try {
       return Index.#openAt(base, file, now);
@@ -138,6 +142,22 @@ export class Index {
       if (!isCorrupt(e)) throw e;
       setAside(file);
       return Index.#openAt(base, file, now);
+    }
+  }
+
+  /**
+   * Whether the base's index file exists with the current schema version. Checked read-only, so unlike `open` it never
+   * creates or builds anything; SQLite errors (busy, corrupt) are thrown to the caller.
+   */
+  static isBuilt(base: Base): boolean {
+    const file = indexFile(base);
+    if (!existsSync(file)) return false;
+    const db = new DatabaseSync(file, { readOnly: true });
+    try {
+      db.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
+      return schemaVersion(db) === SCHEMA_VERSION;
+    } finally {
+      db.close();
     }
   }
 
