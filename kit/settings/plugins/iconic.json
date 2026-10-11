@@ -1,4 +1,61 @@
 {
+  "showAllFileIcons": true,
+  "showAllFolderIcons": true,
+  "minimalFolderIcons": true,
+  "fileIcons": {
+    "_kiln": {
+      "icon": "lucide-settings",
+      "color": "#6272a4"
+    },
+    "Organisations": {
+      "icon": "lucide-building",
+      "color": "#6272a4"
+    },
+    "People": {
+      "icon": "lucide-user",
+      "color": "#50fa7b"
+    },
+    "Products": {
+      "icon": "lucide-box",
+      "color": "#69c8db"
+    },
+    "Topics": {
+      "icon": "lucide-book-open",
+      "color": "#f1fa8c"
+    },
+    "Projects": {
+      "icon": "lucide-rocket",
+      "color": "#a371f9"
+    },
+    "Work": {
+      "icon": "lucide-square-check",
+      "color": "#8be9fd"
+    },
+    "Research": {
+      "icon": "lucide-flask-conical",
+      "color": "#bd93f9"
+    },
+    "Decisions": {
+      "icon": "lucide-gavel",
+      "color": "#ffb86c"
+    },
+    "Meetings": {
+      "icon": "lucide-users",
+      "color": "#50fa7b"
+    },
+    "Daily": {
+      "icon": "lucide-sun",
+      "color": "#f1fa8c"
+    },
+    "References": {
+      "icon": "lucide-bookmark",
+      "color": "#6272a4"
+    },
+    "Inbox": {
+      "icon": "lucide-inbox",
+      "color": "#ffb86c"
+    }
+  },
   "fileRules": [
     {
       "id": "kiln-organisation-client",

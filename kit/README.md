@@ -46,7 +46,7 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
    | `community-plugins.json` | `community-plugins.json` | Add the four ids that are missing |
    | `snippets/kiln.css` | `snippets/kiln.css` | Copy the file. It shows property names, values and board columns with capitals; notes stay lowercase |
    | `appearance.json` | `appearance.json` | Add `kiln` to `enabledCssSnippets` |
-   | `plugins/iconic.json` | `plugins/iconic/data.json` | Remove `fileRules` entries whose `id` starts with `kiln-`, then put the kit's rules first, so they win over older rules |
+   | `plugins/iconic.json` | `plugins/iconic/data.json` | Set `showAllFileIcons`, `showAllFolderIcons` and `minimalFolderIcons` (folder icons replace the folder arrows). Set the `fileIcons` entries for the kit's folders and `_kiln`, keeping the rest. Remove `fileRules` entries whose `id` starts with `kiln-`, then put the kit's rules first, so they win over older rules |
    | `plugins/templater.json` | `plugins/templater-obsidian/data.json` | Set `templates_folder` and `trigger_on_file_creation_mode`; replace `folder_templates` entries for the kit's folders and keep the rest |
    | `plugins/quickadd.json` | `plugins/quickadd/data.json` | Remove `choices` entries whose `id` starts with `kiln-`, then add the kit's |
    | `plugins/homepage.json` | `plugins/homepage/data.json` | Set `homepages["Main Homepage"]` and `version` |

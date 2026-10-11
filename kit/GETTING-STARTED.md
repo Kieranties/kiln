@@ -47,7 +47,7 @@ Report each file you wrote and each setting you merged.
 Open Obsidian.
 
 - [ ] Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review, all empty.
-- [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the kit.
+- [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the kit. Each folder shows its type's icon and colour in place of the `>` arrow.
 
 ## 5. Your first notes
 
@@ -56,7 +56,7 @@ Each step is something you'll do every day. Check the result as you go.
 **Capture something**
 
 - [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A note appears in `Inbox` with an inbox icon, and Home's Inbox lists it.
-- [ ] Open it: there is no properties block in the text. Properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open), filled in once, with `type: capture` and `status: inbox`.
+- [ ] Open it: there is no properties block in the text. Properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open), filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase.
 - [ ] Create a note with **New note**: it lands in `Inbox` as a capture too.
 
 **Log your day**
@@ -69,7 +69,7 @@ Each step is something you'll do every day. Check the result as you go.
 
 - [ ] Create a note in `Projects`: it gets the project's properties and the sections Goal, Current state, Scope and Done when, with a rocket icon. Set its `status` to `active`: Home's Active projects lists it.
 - [ ] Create a note in `Work`: Templater asks for its kind. Choose **task**, and in its `projects` property link your project.
-- [ ] The project's Board shows the task in **backlog**. Drag it to another column: its `status` changes. If the column you want isn't there yet, set the task's `status` in the properties view instead; a column appears once something has that status.
+- [ ] The project's Board shows the task in **Backlog**, with every column (Backlog, Active, Blocked, Review, Done) there even when empty. Drag the task to **Active**: its `status` changes to `active`.
 - [ ] Open the **Board** from Home: it shows the task. A task with no project shows here too.
 
 **Flag something for review**

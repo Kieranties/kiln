@@ -59,7 +59,7 @@ Open Obsidian. Work through the list; each line is one thing to look at.
 - [ ] Open *Season Ticket Renewals 2027*. In the properties view, dates show a date picker and `organisations`, `products` and `people` show as lists of links.
 - [ ] At the bottom, its views list its work, decision, meeting, research and reference.
 - [ ] Its Board shows three cards: *Fix renewal date rollover* (active), *Add a grace period setting* (review) and *Send renewal reminder emails* (done). Drag the bug to **review**: its `status` changes to `review`.
-- [ ] Open the **Board** from Home. It shows those three and *Book the stadium walkthrough* in backlog. Columns run in status order (backlog, active, review, done); if they don't, set the order with the Group menu and tell Claude, so the order can be saved into the kit.
+- [ ] Open the **Board** from Home. It shows those three and *Book the stadium walkthrough* in Backlog. Every column is there, in order (Backlog, Active, Blocked, Review, Done), including the empty Blocked column.
 
 **Other pages**
 

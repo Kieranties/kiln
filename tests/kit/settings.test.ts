@@ -63,6 +63,23 @@ describe('Iconic rules', () => {
     for (const e of expected) expect(kindRules.find((r) => r.id === e.id)).toMatchObject(e);
   });
 
+  it("every type folder shows its type's icon in place of the arrow", () => {
+    const iconic = loadJson<{
+      minimalFolderIcons: boolean;
+      showAllFolderIcons: boolean;
+      showAllFileIcons: boolean;
+      fileIcons: Record<string, { icon: string; color: string }>;
+    }>('settings/plugins/iconic.json');
+    expect(iconic).toMatchObject({ minimalFolderIcons: true, showAllFolderIcons: true, showAllFileIcons: true });
+    for (const d of defs) expect(iconic.fileIcons[d.folder], d.folder).toEqual({ icon: d.icon, color: d.color });
+    expect(iconic.fileIcons._kiln?.icon).toMatch(/^lucide-/);
+  });
+
+  it('the apply procedure merges folder icons and switches on minimal folder icons', () => {
+    const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
+    for (const part of ['fileIcons', 'minimalFolderIcons']) expect(readme, part).toContain(part);
+  });
+
   it('rules have the shape Iconic writes', () => {
     for (const r of rules()) {
       expect(r, r.id).toMatchObject({ category: 'rule', iconDefault: 'lucide-file', match: 'all', enabled: true });
