@@ -68,9 +68,11 @@ kiln status
 ## 3. Install the Claude Code plugin
 
 ```bash
-claude plugin marketplace add Kieranties/kiln
+claude plugin marketplace add Kieranties/kiln --sparse .claude-plugin plugin
 claude plugin install kiln@kiln
 ```
+
+`--sparse` checks out only the marketplace and plugin folders, not the whole repo. Without it, adding the marketplace can fail on Windows with `EPERM: operation not permitted, rename`.
 
 **Turn on auto-update.** Claude Code updates the plugin whenever `main` moves, but only if auto-update is on for the marketplace, and it is off by default for marketplaces outside Anthropic's own. In a Claude Code session, run `/plugin`, open **Marketplaces**, choose **kiln** and enable auto-update. Updates then install when a session starts. Without auto-update, update by hand (section 9).
 
@@ -216,6 +218,7 @@ From a release tarball instead, repeat the download and install in section 2.
 | `conflict: … duplicate` | A similar note already exists. Claude should update that note instead, or retry with a reason. |
 | `busy: …` | Another session is writing. Retry in a moment. |
 | `claude mcp list` doesn't show kiln as connected | Check that `kiln` is on your PATH (`kiln status`). Reinstall the command (section 2). |
+| `claude plugin marketplace add` fails with `EPERM: operation not permitted, rename` | Add the marketplace with `--sparse .claude-plugin plugin` (section 3). |
 | Hooks fail, or every Write and Edit is blocked, after an update | The plugin and the command are out of step. Update both (section 9). |
 | `npm install` fails with `401` or `E401` from `npm.pkg.github.com` | The token is missing or lacks `read:packages`. Rerun the three commands at the start of section 2. |
 | `npm install` fails with `404` for `@kieranties/kiln` | The `@kieranties:registry` line is missing, so npm looked on the public registry. Rerun the `npm config set @kieranties:registry …` command. |

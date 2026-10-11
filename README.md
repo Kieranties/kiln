@@ -20,7 +20,7 @@ Markdown files in a folder (a *base*) are the truth. kiln keeps a rebuildable SQ
 Requires Node 24 or later (kiln uses `node:sqlite`). kiln ships as two parts that must stay in step:
 
 - **The `kiln` command**: the `@kieranties/kiln` package on GitHub Packages, also attached as a `.tgz` to each [GitHub Release](https://github.com/Kieranties/kiln/releases).
-- **The Claude Code plugin**: the `kiln` plugin in this repo's marketplace (`claude plugin marketplace add Kieranties/kiln`).
+- **The Claude Code plugin**: the `kiln` plugin in this repo's marketplace (`claude plugin marketplace add Kieranties/kiln --sparse .claude-plugin plugin`).
 
 The plugin in `plugin/` registers the `kiln mcp` server, the capture, triage, recall and review skills, and two hooks: the write guard and a session orientation line. Both the hooks and the MCP server run the `kiln` command on your PATH.
 
@@ -117,11 +117,11 @@ run=$(gh run list --repo Kieranties/kiln --branch <branch> --limit 1 --json data
 gh run download "$run" --repo Kieranties/kiln --name package --dir /tmp/kiln-pr
 npm install -g /tmp/kiln-pr/kieranties-kiln-*.tgz --registry https://registry.npmjs.org/
 claude plugin marketplace remove kiln
-claude plugin marketplace add Kieranties/kiln#<branch>
+claude plugin marketplace add Kieranties/kiln#<branch> --sparse .claude-plugin plugin
 claude plugin install kiln@kiln
 ```
 
-To go back, reinstall the release (`npm install -g @kieranties/kiln@latest --registry https://registry.npmjs.org/`) and re-add the marketplace as `Kieranties/kiln`.
+To go back, reinstall the release (`npm install -g @kieranties/kiln@latest --registry https://registry.npmjs.org/`) and re-add the marketplace as `Kieranties/kiln --sparse .claude-plugin plugin`.
 
 ### Versioning and releases
 
