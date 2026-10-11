@@ -87,7 +87,7 @@ describe('checkNote errors', () => {
 
   it('a note with Windows line endings and a byte-order mark checks the same', () => {
     const lf = readFileSync(join(dir, 'Work', 'Fix renewal date rollover.md'), 'utf8');
-    writeFileSync(join(dir, 'Work', 'Crlf copy.md'), '﻿' + lf.replace(/\n/g, '\r\n'));
+    writeFileSync(join(dir, 'Work', 'Crlf copy.md'), '\uFEFF' + lf.replace(/\n/g, '\r\n'));
     expect(checkNote(vault, 'Work/Crlf copy.md').findings).toEqual([]);
   });
 
