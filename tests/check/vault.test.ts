@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { findVault, openVault } from '../../src/check/vault.js';
 import { makeVault } from './fixture.js';
@@ -32,6 +32,11 @@ describe('openVault', () => {
     expect(v.notes).toHaveLength(16);
     expect(v.notes).toContain('People/Priya Raman.md');
     expect(v.notes.some((n) => n.startsWith('_kiln/') || n.startsWith('.obsidian/'))).toBe(false);
+  });
+  it('lists the same notes for a root with a trailing separator or a relative root', () => {
+    const expected = openVault(vault).notes;
+    expect(openVault(vault + sep).notes).toEqual(expected);
+    expect(openVault(relative(process.cwd(), vault)).notes).toEqual(expected);
   });
   it('indexes file names for links, case-insensitively', () => {
     const v = openVault(vault);

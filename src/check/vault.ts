@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { basename, dirname, join, sep } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { readBlueprint, type Blueprint } from '../blueprint/load.js';
 
 export type Vault = {
@@ -23,16 +23,12 @@ export function findVault(path: string): string | undefined {
 }
 
 /** Reads the blueprint and lists the vault's files. Throws whatever `readBlueprint` throws. */
-export function openVault(root: string, blueprintDir: string = join(root, '_kiln')): Vault {
-  const blueprint = readBlueprint(blueprintDir);
+export function openVault(path: string, blueprintDir?: string): Vault {
+  const root = resolve(path);
+  const blueprint = readBlueprint(blueprintDir ?? join(root, '_kiln'));
   const files = readdirSync(root, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
-    .map((entry) =>
-      join(entry.parentPath, entry.name)
-        .slice(root.length + 1)
-        .split(sep)
-        .join('/'),
-    )
+    .map((entry) => relative(root, join(entry.parentPath, entry.name)).split(sep).join('/'))
     .filter((path) => !path.split('/').some((segment) => segment.startsWith('.')));
 
   const notes = files.filter((path) => path.endsWith('.md') && !path.startsWith('_kiln/')).sort();
