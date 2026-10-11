@@ -1,0 +1,8 @@
+{
+  "name": "kiln",
+  "description": "The kiln kit for Obsidian, and a skill that sets up a vault from it or applies a changed type to one.",
+  "author": { "name": "Kieranties" },
+  "homepage": "https://github.com/Kieranties/kiln/blob/main/kit/README.md",
+  "repository": "https://github.com/Kieranties/kiln",
+  "license": "MIT"
+}

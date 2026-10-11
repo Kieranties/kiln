@@ -1,0 +1,12 @@
+{
+  "name": "kiln",
+  "description": "kiln: a personal knowledge and work process built on Obsidian.",
+  "owner": { "name": "Kieranties" },
+  "plugins": [
+    {
+      "name": "kiln",
+      "source": "./kit",
+      "description": "The kiln kit for Obsidian, and a skill that sets up a vault from it or applies a changed type to one."
+    }
+  ]
+}
