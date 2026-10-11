@@ -1,7 +1,7 @@
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { checkNote, type CheckOptions } from '../../src/check/check-note.js';
+import { checkNote, NoteReadError, type CheckOptions } from '../../src/check/check-note.js';
 import { formatResult } from '../../src/check/format.js';
 import { openVault } from '../../src/check/vault.js';
 import { makeVault } from './fixture.js';
@@ -142,5 +142,11 @@ describe('checkNote warnings and output', () => {
     const extra = '\nSee [[club console|the console]], [[Club Console#Facts]], ![[missing.base]] and `[[Nowhere]]`.\n';
     writeFileSync(join(dir, 'Topics', 'Renewal payments copy.md'), note + extra);
     expect(checkNote(vault, 'Topics/Renewal payments copy.md').findings).toEqual([]);
+  });
+});
+
+describe("checkNote when the file can't be read", () => {
+  it('throws NoteReadError, so callers can tell it from a bug', () => {
+    expect(() => checkNote(vault, 'Work/Gone.md')).toThrow(NoteReadError);
   });
 });

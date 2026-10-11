@@ -9,6 +9,9 @@ import type { Vault } from './vault.js';
 export type Level = 'error' | 'warn';
 export type Finding = { level: Level; message: string };
 export type NoteResult = { path: string; findings: Finding[]; skipped?: boolean };
+/** Thrown by checkNote when the note's file can't be read. */
+export class NoteReadError extends Error {}
+
 export type CheckOptions = { isNew?: boolean; skipUntyped?: boolean };
 
 const isMap = (value: unknown): value is Record<string, unknown> =>
@@ -30,9 +33,14 @@ function namingError(definition: Definition, name: string): string | undefined {
   }
 }
 
-/** Checks one note against the vault's blueprint. `path` is vault-relative with `/`. Never writes. Throws when the file can't be read. */
+/** Checks one note against the vault's blueprint. `path` is vault-relative with `/`. Never writes. Throws NoteReadError when the file can't be read. */
 export function checkNote(vault: Vault, path: string, options: CheckOptions = {}): NoteResult {
-  const text = readFileSync(join(vault.root, path), 'utf8');
+  let text: string;
+  try {
+    text = readFileSync(join(vault.root, path), 'utf8');
+  } catch (e) {
+    throw new NoteReadError(e instanceof Error ? e.message : String(e));
+  }
   const result = (findings: Finding[]): NoteResult => ({ path, findings });
   const error = (message: string): Finding => ({ level: 'error', message });
   const { definitions, properties } = vault.blueprint;

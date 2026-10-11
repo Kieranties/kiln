@@ -89,6 +89,17 @@ describe('runCheck', () => {
     });
   });
 
+  it('checks only the notes under a sub-folder argument', () => {
+    const count = readdirSync(join(sample, 'Work')).filter((f) => f.endsWith('.md')).length;
+    expect(runCheck([join(sample, 'Work')]).output).toBe(`Checked ${count} notes: no problems.`);
+  });
+
+  it('checks a note named twice (as a file and via its folder) once', () => {
+    const count = readdirSync(join(sample, 'Work')).filter((f) => f.endsWith('.md')).length;
+    const note = join(sample, 'Work', 'Fix renewal date rollover.md');
+    expect(runCheck([note, join(sample, 'Work')]).output).toBe(`Checked ${count} notes: no problems.`);
+  });
+
   it('never writes to the vault', () => {
     const before = fingerprint(broken);
     runCheck(['--new', broken]);

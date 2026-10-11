@@ -1,7 +1,7 @@
 import { statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import { parseArgs } from 'node:util';
-import { checkNote, type NoteResult } from './check-note.js';
+import { checkNote, NoteReadError, type NoteResult } from './check-note.js';
 import { formatResult, summarise } from './format.js';
 import { findVault, openVault, type Vault } from './vault.js';
 
@@ -84,11 +84,22 @@ export function runCheck(argv: string[], options: RunOptions = {}): { output: st
       const key = `${root}\0${note}`;
       if (seen.has(key)) continue;
       seen.add(key);
+      const display = stats.isFile() ? typed : note;
+      if (values.today) {
+        let modified: number;
+        try {
+          modified = statSync(resolve(root, note)).mtimeMs;
+        } catch (e) {
+          results.push(failure(display, `can't read the note: ${message(e)}`));
+          continue;
+        }
+        if (modified < midnight) continue;
+      }
       try {
-        if (values.today && statSync(resolve(root, note)).mtimeMs < midnight) continue;
         results.push(checkNote(vault, note, { isNew: values.new === true, skipUntyped: stats.isDirectory() }));
       } catch (e) {
-        results.push(failure(stats.isFile() ? typed : note, `can't read the note: ${message(e)}`));
+        if (!(e instanceof NoteReadError)) throw e;
+        results.push(failure(display, `can't read the note: ${e.message}`));
       }
     }
   }
