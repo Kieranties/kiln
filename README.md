@@ -13,6 +13,8 @@ kiln v1 is a knowledge base you can reach from any Claude Code session. Through 
 
 Markdown files in a folder (a *base*) are the truth. kiln keeps a rebuildable SQLite index beside them. Obsidian is the viewer; open the base folder as a vault.
 
+**New here? Follow [Getting started](docs/getting-started.md)** for setup from scratch, a first session, updating, troubleshooting and uninstalling. The sections below are the reference.
+
 ## Install
 
 Requires Node 24 or later (kiln uses `node:sqlite`).
@@ -25,7 +27,7 @@ Requires Node 24 or later (kiln uses `node:sqlite`).
    registry=https://registry.npmjs.org/
    ```
 
-   The owner must add this file by hand: a permission rule blocks agents from writing it.
+   Add this file by hand, because a permission rule blocks agents from writing it ([#56](https://github.com/Kieranties/kiln/issues/56)).
 
 2. Build, link and install the plugin:
 
@@ -209,6 +211,8 @@ Principles: knowledge is reachable from any session; one inbox has many feeders;
 
 ## Docs
 
+- [Getting started](docs/getting-started.md): from nothing to a working setup
+- [Open issues](https://github.com/Kieranties/kiln/issues): decisions to verify, follow-ups and checks still to run
 - [Vision](docs/vision.md): the model, architecture and flow (current direction)
 - [KB core spec (lean v1)](docs/specs/2026-10-10-kb-core-design.md) and [implementation plan](docs/plans/2026-10-10-kb-core-v1.md)
 - [Decision log](docs/context/2026-10-10-decision-log.md) and [research](docs/research/)
