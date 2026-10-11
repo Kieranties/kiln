@@ -37,7 +37,10 @@ describe('related views', () => {
   it('each Base has one view, named after its heading', () => {
     for (const v of related) {
       const base = loadBase(`views/${v.file}`);
-      expect(base.views.map((view) => view.name), v.file).toEqual([v.heading]);
+      expect(
+        base.views.map((view) => view.name),
+        v.file,
+      ).toEqual([v.heading]);
     }
   });
 

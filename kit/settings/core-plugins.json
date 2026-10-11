@@ -1,0 +1,11 @@
+{
+  "bases": true,
+  "daily-notes": true,
+  "properties": true,
+  "backlink": true,
+  "switcher": true,
+  "global-search": true,
+  "file-explorer": true,
+  "command-palette": true,
+  "templates": false
+}

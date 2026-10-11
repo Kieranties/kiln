@@ -70,6 +70,11 @@ export function loadDefinitions(): Definition[] {
     });
 }
 
+/** A JSON file in the kit, parsed. `path` is relative to kit/, e.g. 'settings/app.json'. */
+export function loadJson<T = Record<string, unknown>>(path: string): T {
+  return JSON.parse(readFileSync(join(KIT, path), 'utf8')) as T;
+}
+
 export type BaseView = { type: string; name: string; order?: string[]; groupBy?: { property: string } };
 export type BaseFile = { filters?: { and?: unknown[] }; views: BaseView[] };
 

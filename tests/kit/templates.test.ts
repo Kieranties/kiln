@@ -50,7 +50,8 @@ describe('templates', () => {
     for (const d of defs) {
       const t = templateOf(d);
       const lists = ['aliases', 'keywords', 'tags'];
-      for (const [prop, type] of Object.entries(d.properties)) if (type === 'links' || type === 'list') lists.push(prop);
+      for (const [prop, type] of Object.entries(d.properties))
+        if (type === 'links' || type === 'list') lists.push(prop);
       for (const prop of lists) expect(valueOf(t, prop), `${d.name}.${prop}`).toBe('[]');
     }
   });
