@@ -1,7 +1,15 @@
 {
-  "name": "kiln",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@kieranties/kiln",
+  "version": "0.0.0-placeholder",
+  "description": "A personal knowledge base for Claude Code: markdown files are the truth, with a rebuildable SQLite index, an MCP server and hooks.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kieranties/kiln.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -9,9 +17,16 @@
   "bin": {
     "kiln": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
-    "test": "vitest run"
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "oxlint --type-aware",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
@@ -23,6 +38,10 @@
   "devDependencies": {
     "@types/node": "^24",
     "@types/picomatch": "^4.0.3",
+    "nerdbank-gitversioning": "^3.10.94",
+    "oxlint": "^1.87.0",
+    "oxlint-tsgolint": "^7.0.2004",
+    "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"

@@ -156,7 +156,7 @@ function strings(v: unknown): string[] {
 
 function sectionsOf(body: string): Section[] | null {
   const lines = body.split('\n');
-  if (!lines.some((l) => /^## /.test(l))) return null;
+  if (!lines.some((l) => l.startsWith('## '))) return null;
   const out: Section[] = [];
   let current: { heading: string; lines: string[] } | null = null;
   for (const line of lines) {

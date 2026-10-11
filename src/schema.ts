@@ -38,7 +38,7 @@ const ROLES = ['client', 'vendor', 'partner', 'self'];
 const CONFIDENCE = ['verbatim', 'inferred'];
 const CAPTURED_BY = ['manual', 'watcher'];
 
-const WIKILINK = /^\[\[[^\[\]]+\]\]$/;
+const WIKILINK = /^\[\[[^[\]]+\]\]$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DATETIME = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))$/;
 

@@ -83,7 +83,9 @@ const RESERVED = /^(true|false|null|~|yes|no|y|n|on|off)$/i;
 /** True when `s`, written unquoted, parses back to exactly `s` as a mapping value and as a block-list item. */
 function survivesPlain(s: string): boolean {
   try {
-    return parse(`k: ${s}\n`)?.k === s && parse(`k:\n  - ${s}\n`)?.k?.[0] === s;
+    const value = parse(`k: ${s}\n`) as { k?: unknown } | null;
+    const item = parse(`k:\n  - ${s}\n`) as { k?: unknown[] } | null;
+    return value?.k === s && item?.k?.[0] === s;
   } catch {
     return false;
   }

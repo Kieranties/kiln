@@ -206,7 +206,6 @@ describe('cross-process concurrency', () => {
     const ix = Index.open(base);
     const seen = new Set<string>();
     let reads = 0;
-    let busy = 0;
     const failures: string[] = [];
     let lastCount = 0;
 
@@ -227,8 +226,8 @@ describe('cross-process concurrency', () => {
           const refs = ix.query({ type: 'work' });
           if (refs.length !== 1 || refs[0]!.path !== NOTE) failures.push(`query: expected the one note, got ${refs.length}`);
         } catch (e) {
-          if (isBusy(e)) busy++;
-          else failures.push(`threw: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
+          // A busy reader is allowed; anything else is a failure.
+          if (!isBusy(e)) failures.push(`threw: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
         }
       });
       const reports = expectSucceeded(runs, 30);

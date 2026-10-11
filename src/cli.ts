@@ -26,7 +26,7 @@ type Parsed = { values: Record<string, string | boolean | undefined>; positional
 function parse(args: string[], options: Record<string, { type: 'string' | 'boolean' }>, positionals: number): Parsed {
   let parsed: Parsed;
   try {
-    parsed = parseArgs({ args, options, allowPositionals: true, strict: true }) as Parsed;
+    parsed = parseArgs({ args, options, allowPositionals: true, strict: true });
   } catch (e) {
     throw new UsageError((e as Error).message);
   }

@@ -39,14 +39,14 @@ function scanHeadings(lines: Line[]): (Heading | null)[] {
       return null;
     }
     const open = FENCE_OPEN.exec(content);
-    if (open && !(open[1][0] === '`' && open[2].includes('`'))) {
-      fence = { char: open[1][0], length: open[1].length };
+    if (open && !(open[1]![0] === '`' && open[2]!.includes('`'))) {
+      fence = { char: open[1]![0]!, length: open[1]!.length };
       return null;
     }
     const m = ATX.exec(content);
     if (!m) return null;
     const text = (m[2] ?? '').replace(/(?:^|[ \t]+)#+[ \t]*$/, '').trim();
-    return { level: m[1].length, text };
+    return { level: m[1]!.length, text };
   });
 }
 
@@ -60,7 +60,7 @@ function createSection(body: string, heading: string, text: string, eol: Eol, bl
   const block = `## ${heading}${eol}${text}`;
   if (body === '') return (blankAfterFence ? eol : '') + block;
   const lines = toLines(body);
-  const last = lines[lines.length - 1];
+  const last = lines[lines.length - 1]!;
   const terminated = body + (last.term === '' ? eol : '');
   return terminated + (isBlank(last) ? '' : eol) + block;
 }
@@ -78,7 +78,7 @@ function locateSection(lines: Line[], heading: string): { start: number; content
   while (end < lines.length && !(headings[end] !== null && headings[end]!.level <= 2)) end++;
   // The section's trailing blank lines are the separator before the next heading; edits stay above them.
   let contentEnd = end;
-  while (contentEnd > start + 1 && isBlank(lines[contentEnd - 1])) contentEnd--;
+  while (contentEnd > start + 1 && isBlank(lines[contentEnd - 1]!)) contentEnd--;
   return { start, contentEnd };
 }
 
@@ -94,13 +94,13 @@ function applyEdit(body: string, edit: SectionEdit, eol: Eol, blankAfterFence: b
   const { start, contentEnd } = found;
 
   if (edit.mode === 'replace') {
-    const headingLine = lines[start];
+    const headingLine = lines[start]!;
     const headingEol = headingLine.term === '' && text !== '' ? eol : '';
     return join(lines.slice(0, start)) + headingLine.content + headingLine.term + headingEol + text + join(lines.slice(contentEnd));
   }
 
   if (text === '') return body;
-  const prev = lines[contentEnd - 1];
+  const prev = lines[contentEnd - 1]!;
   return join(lines.slice(0, contentEnd)) + (prev.term === '' ? eol : '') + text + join(lines.slice(contentEnd));
 }
 

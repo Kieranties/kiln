@@ -50,7 +50,7 @@ export function patchFields(text: string, set: Fields, unset: string[] = []): st
 
   if (split.fmText === null) {
     if (toSet.length === 0) return text;
-    const bom = text.charCodeAt(0) === 0xfeff ? text[0] : '';
+    const bom = text.charCodeAt(0) === 0xfeff ? text[0]! : '';
     return bom + renderNote(Object.fromEntries(toSet), [], eol) + text.slice(bom.length);
   }
 
@@ -72,7 +72,7 @@ export function patchFields(text: string, set: Fields, unset: string[] = []): st
       continue;
     }
     const texts = replacement(key, analyse(r.rest, lines.slice(r.start + 1, r.end)), value);
-    const lastEol = lines[r.end - 1].eol || eol;
+    const lastEol = lines[r.end - 1]!.eol || eol;
     edits.push({
       start: r.start,
       end: r.end,
@@ -170,18 +170,18 @@ function keyRanges(lines: Line[]): Map<string, Range> {
   const ranges = new Map<string, Range>();
   let i = 0;
   while (i < lines.length) {
-    const m = KEY_LINE.exec(lines[i].text);
+    const m = KEY_LINE.exec(lines[i]!.text);
     if (!m) {
       i++;
       continue;
     }
     let end = i + 1;
     for (let j = i + 1; j < lines.length; j++) {
-      const t = lines[j].text;
+      const t = lines[j]!.text;
       if (isContinuation(t)) end = j + 1;
       else if (!BLANK.test(t) && !t.startsWith('#')) break;
     }
-    if (!ranges.has(m[1])) ranges.set(m[1], { start: i, end, rest: m[2] });
+    if (!ranges.has(m[1]!)) ranges.set(m[1]!, { start: i, end, rest: m[2]! });
     i = end;
   }
   return ranges;
@@ -197,7 +197,7 @@ function analyse(rest: string, continuation: Line[]): Original {
     const first = continuation.find((l) => !BLANK.test(l.text) && !COMMENT.test(l.text));
     if (!first) return result(continuation.length === 0 ? 'empty' : 'other', rest);
     const item = /^([ \t]*)-([ \t]*)/.exec(first.text);
-    if (item && ITEM.test(first.text.slice(item[1].length))) {
+    if (item && ITEM.test(first.text.slice(item[1]!.length))) {
       return result('block', rest, `${item[1]}-${item[2] || ' '}`);
     }
     return result('other', rest);
@@ -212,11 +212,11 @@ function analyse(rest: string, continuation: Line[]): Original {
     if (v[0] === "'") return result('single', after);
     return result(BLANK.test(v.slice(1, quotedEnd - 1)) ? 'empty' : 'flow', after);
   }
-  if ('{|>&*!%@`'.includes(v[0])) return result('other', '');
+  if ('{|>&*!%@`'.includes(v[0]!)) return result('other', '');
 
   const plain = /^(.*?)([ \t]+#.*|[ \t]*)$/s.exec(v);
   if (!plain) return result('other', '');
-  return result(NULL_WORD.test(plain[1]) ? 'empty' : 'plain', plain[2]);
+  return result(NULL_WORD.test(plain[1]!) ? 'empty' : 'plain', plain[2]!);
 }
 
 /** Index just past the closing quote of a double-quoted scalar starting at `from`, or -1. */
@@ -258,7 +258,7 @@ function scanFlow(s: string): number {
       atItemStart = false;
     } else if (c === ',' || c === ':') {
       atItemStart = true;
-    } else if (c === '#' && /[ \t]/.test(s[i - 1])) {
+    } else if (c === '#' && /[ \t]/.test(s[i - 1]!)) {
       return -1;
     } else if (c !== ' ' && c !== '\t') {
       atItemStart = false;

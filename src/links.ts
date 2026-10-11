@@ -1,7 +1,7 @@
 import type { Fields } from './types.js';
 
 /** `[[target]]`, `[[target|alias]]`, `[[target#heading]]`, and embeds `![[target]]` (the `!` is not part of the match). */
-const WIKILINK = /\[\[([^\[\]]+)\]\]/g;
+const WIKILINK = /\[\[([^[\]]+)\]\]/g;
 
 function targetsIn(text: string, into: Map<string, string>): void {
   for (const m of text.matchAll(WIKILINK)) {

@@ -294,6 +294,7 @@ export function matchAnchors(ix: Index, text: string): string[] {
      WHERE n.type IN ('anchor', 'project') ORDER BY n.path`,
   );
   for (const { name_lc: name, title } of rows) {
+    // oxlint-disable-next-line typescript/no-misused-spread -- counts code points on purpose
     if (name !== title.toLowerCase() && [...name].length <= 2) continue;
     const first = new RegExp(WORD.source, 'u').exec(name);
     if (!first) continue;

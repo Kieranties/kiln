@@ -11,6 +11,7 @@ export function newId(): string {
 }
 
 const MAX_NAME_LENGTH = 120;
+// oxlint-disable-next-line no-control-regex -- control characters are illegal in Windows file names
 const ILLEGAL_CHARS = /[<>:"/\\|?*\u0000-\u001f\u007f]/g;
 const RESERVED_DEVICE_NAME = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
 

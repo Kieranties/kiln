@@ -50,7 +50,7 @@ const LOCK_CODES = new Set(['EPERM', 'EBUSY', 'EACCES']);
 const SAME_TITLE = 0.85;
 const SAME_SOURCES_TITLE = 0.5;
 
-const WIKILINK = /^\[\[[^\[\]]+\]\]$/;
+const WIKILINK = /^\[\[[^[\]]+\]\]$/;
 
 /** Fields kiln assigns itself; updates may not set or unset them. */
 const KILN_OWNED = ['id', 'created'];

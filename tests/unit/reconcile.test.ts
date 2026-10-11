@@ -81,7 +81,7 @@ describe('Index reconcile', () => {
 
     const notes = rows(ix, 'select * from notes order by path');
     expect(notes).toHaveLength(2);
-    const [person, scratch] = notes as Record<string, unknown>[];
+    const [person, scratch] = notes;
     expect(person).toMatchObject({
       path: 'anchors/person/Emmanuel Park.md',
       id: '01J9ZK3Q7V2M8N4P6R0S1T2U3V',

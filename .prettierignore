@@ -1,0 +1,6 @@
+# Prose and skills are hand-wrapped; fixtures must stay byte-identical.
+*.md
+tests/fixtures/
+package-lock.json
+dist/
+node_modules/

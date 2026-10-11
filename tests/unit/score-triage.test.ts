@@ -87,7 +87,7 @@ describe('score-triage', () => {
     expect(isEntry(file.replaceAll('\\', '/'), url)).toBe(true);
     expect(isEntry(file.replace(/\.ts$/, ''), url)).toBe(true);
     if (process.platform === 'win32') {
-      const flipped = file[0] === file[0]!.toUpperCase() ? file[0]!.toLowerCase() + file.slice(1) : file[0]!.toUpperCase() + file.slice(1);
+      const flipped = file[0] === file[0]!.toUpperCase() ? file[0].toLowerCase() + file.slice(1) : file[0]!.toUpperCase() + file.slice(1);
       expect(isEntry(flipped, url)).toBe(true);
       expect(isEntry(file.toUpperCase(), url)).toBe(true);
     }
