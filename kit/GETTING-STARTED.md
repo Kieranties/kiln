@@ -1,8 +1,10 @@
 # Getting started with the kiln kit
 
-This guide takes you from an empty folder to a working vault built from the kiln kit, then checks it. It takes about fifteen minutes. Claude does the copying and settings; you do the parts in Obsidian.
+This guide sets up your vault with the kiln kit, from an empty folder, then walks you through your first notes. It takes about fifteen minutes. Claude does the copying and settings; you do the parts in Obsidian.
 
 The commands work in both Bash and PowerShell.
+
+Want to look around before adding anything of your own? [Try the sample](TRY-THE-SAMPLE.md) loads a fictional project into a trial vault.
 
 ## 1. What you need
 
@@ -14,9 +16,9 @@ The commands work in both Bash and PowerShell.
   git clone https://github.com/Kieranties/kiln.git
   ```
 
-## 2. Make an empty vault
+## 2. Make your vault
 
-1. Create an empty folder, for example `D:\tmp\kiln-layer1`.
+1. Create an empty folder for your vault, for example `D:\notes`.
 2. In Obsidian, choose **Open folder as vault** and pick the folder.
 3. Go to Settings → Community plugins and select **Turn on community plugins**.
 4. Select **Browse** and install and enable each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**.
@@ -36,70 +38,53 @@ Give it this prompt, with your folder filled in:
 
 ```text
 Set up the kiln kit in <vault folder> by following "Setting up a vault" in kit/README.md exactly.
-Then copy the Northwind Arena examples from tests/fixtures/layer1 into it.
 Report each file you wrote and each setting you merged.
 ```
 
-The examples are a fictional project with one note of every type. Leave out the second line for an empty kit.
-
 ## 4. Check it
 
-Open Obsidian. Work through the list; each line is one thing to look at.
+Open Obsidian.
 
-**Home and icons**
+- [ ] Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review, all empty.
+- [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the kit.
 
-- [ ] Obsidian opens on **Home**. Inbox lists the capture *Ask Priya about grace periods*; Active projects lists *Season Ticket Renewals 2027*.
-- [ ] Every note in the file explorer has its type's icon and colour: a rocket for the project, a book for the topic, a sun for the daily note.
-- [ ] Kinds show their own icon: *Vale Rovers* (client) and *Fix renewal date rollover* (bug, in red).
-- [ ] *Renewal payments* (a topic, which has no kinds) shows the topic icon.
+## 5. Your first notes
 
-**Notes**
+Each step is something you'll do every day. Check the result as you go.
 
-- [ ] Open *Season Ticket Renewals 2027*. There is no title heading in the text, and no properties block: properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open).
-- [ ] In the sidebar, dates show a date picker and `projects`, `people` and the other relationships show as lists of links.
-- [ ] At the bottom, the project's views list its work, decisions, meetings, research and references.
+**Capture something**
 
-**Boards**
+- [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A note appears in `Inbox` with an inbox icon, and Home's Inbox lists it.
+- [ ] Open it: there is no properties block in the text. Properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open), filled in once, with `type: capture` and `status: inbox`.
+- [ ] Create a note with **New note**: it lands in `Inbox` as a capture too.
 
-- [ ] The project's Board shows three cards: *Fix renewal date rollover* (active), *Add a grace period setting* (review) and *Send renewal reminder emails* (done). Drag the bug to **review**: its `status` property changes to `review`.
-- [ ] Open the **Board** from Home. It shows those three and *Book the stadium walkthrough* in backlog, a personal task with no project. Columns run in status order (backlog, active, review, done); if they don't, set the order with the Group menu and tell Claude, so the order can be saved into the kit.
-- [ ] Neither Board nor Home's Inbox lists anything from `_kiln` (the kit's templates).
+**Log your day**
 
-**Other pages**
+- [ ] Run **QuickAdd: Log to daily** and type a line. Today's daily note is created in `Daily` from the template, with yesterday and tomorrow links, and your line is the last line of the file as `- HH:mm your text`.
+- [ ] Run it again: the second line goes below the first. Home's Today lists the daily note.
+- [ ] Click **tomorrow →**: it creates tomorrow's daily note in `Daily`, not a capture.
 
-- [ ] *Priya Raman* lists the project and the standup (through their properties), and the bug and the decision (because their text links to her).
-- [ ] *Club Console* lists the project, the bug and the *Renewal payments* topic.
-- [ ] *Renewal payments* lists the research. *2026-10-02 How do card retries affect renewals* lists the decision that cites it.
-- [ ] The bug's References view lists *northwind-arena-club-console 88 Renewal date rolls over a year early*, and the link opens it.
-- [ ] The daily note *2026-10-06* shows the capture under Captures. Its Log is the last section.
+**Start a project**
 
-**Creating notes**
+- [ ] Create a note in `Projects`: it gets the project's properties and the sections Goal, Current state, Scope and Done when, with a rocket icon. Set its `status` to `active`: Home's Active projects lists it.
+- [ ] Create a note in `Work`: Templater asks for its kind. Choose **task**, and in its `projects` property link your project.
+- [ ] The project's Board shows the task in **backlog**. Drag it to another column: its `status` changes. If the column you want isn't there yet, set the task's `status` in the properties view instead; a column appears once something has that status.
+- [ ] Open the **Board** from Home: it shows the task. A task with no project shows here too.
 
-- [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A capture appears in `Inbox` with its properties filled in once (not twice), and Home's Inbox lists it.
-- [ ] Run **QuickAdd: Log to daily** and type a line. Today's daily note is created from the template, with yesterday and tomorrow links, and your line is the last line of the file as `- HH:mm your text`. Run it again: the second line goes below the first.
-- [ ] Create a new note in `Projects`: it gets the project's properties and sections.
-- [ ] Create a new note in `Work`: Templater asks for its kind.
-- [ ] Create a note with **New note**: it lands in `Inbox` as a capture.
-- [ ] Mark a note for review by typing a reason in its `review` property: it appears under Needs review on Home. Clear the reason and it disappears.
+**Flag something for review**
+
+- [ ] Type a reason in any note's `review` property: it appears under Needs review on Home. Clear the reason and it disappears.
 
 Tell Claude about anything that doesn't match, with the line it failed on.
 
-## 5. Try the flows
+## 6. Next steps
 
-- **Capture a thought:** QuickAdd: Capture to inbox.
-- **Log your day:** QuickAdd: Log to daily, as often as you like. Use the Scratch section for anything longer.
-- **Start a project:** a new note in `Projects`, then work items in `Work` that list it in `projects`. Watch them appear on its Board.
-- **Move work:** drag cards on the Board.
+- **Try the sample:** [Try the sample](TRY-THE-SAMPLE.md) shows every type and view with a fictional project, in a separate trial vault.
+- **Add a type:** give Claude a prompt like this:
 
-## 6. Add a type
+  ```text
+  Add a "runbook" type to the kiln kit: a how-to for operating a product, with sections Purpose, Steps and Rollback, linked to products.
+  Follow "Adding or changing a type" in kit/README.md, then apply it to <vault folder>.
+  ```
 
-Give Claude a prompt like this:
-
-```text
-Add a "runbook" type to the kiln kit: a how-to for operating a product, with sections Purpose, Steps and Rollback, linked to products.
-Follow "Adding or changing a type" in kit/README.md, then apply it to <vault folder>.
-```
-
-## 7. Start again
-
-Close Obsidian and delete the vault folder. Nothing outside it was changed.
+- **How the kit works:** [The kiln kit](README.md) covers the types, conventions and how the kit is applied.

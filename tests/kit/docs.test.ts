@@ -1,7 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { KIT } from './load.js';
+
+const SAMPLE = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
 
 const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
 const guide = readFileSync(join(KIT, 'GETTING-STARTED.md'), 'utf8');
@@ -18,6 +21,23 @@ describe('kit docs', () => {
   it("both docs say to turn on Templater's per-device trigger", () => {
     // Templater keeps this switch in Obsidian's local storage, so no settings file can set it.
     for (const doc of [readme, guide]) expect(doc).toContain('Trigger Templater on new file creation');
+  });
+
+  it('getting started sets up your own vault and links the sample as an extension', () => {
+    expect(guide).not.toContain('tests/fixtures');
+    expect(guide).toContain('](TRY-THE-SAMPLE.md)');
+  });
+
+  it('the sample page names every sample note', () => {
+    const sample = readFileSync(join(KIT, 'TRY-THE-SAMPLE.md'), 'utf8');
+    expect(sample).toContain('tests/fixtures/layer1');
+    const notes = readdirSync(SAMPLE, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
+    for (const note of notes) expect(sample, note.name).toContain(basename(note.name, '.md'));
+  });
+
+  it('setting up a vault copies all three kit docs', () => {
+    const steps = section(readme, 'Setting up a vault');
+    for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);
   });
 
   it('adding a type names every place that must change', () => {

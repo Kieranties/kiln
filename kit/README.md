@@ -1,6 +1,6 @@
 # The kiln kit
 
-**New here? Follow [Getting started](GETTING-STARTED.md)** to build a vault from an empty folder and check it.
+**New here? Follow [Getting started](GETTING-STARTED.md)** to set up your vault from an empty folder. To see the whole kit working first, [try the sample](TRY-THE-SAMPLE.md) in a trial vault.
 
 The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how each one looks, and how they link. It is configuration, not code. The design is in [Layer 1: structure](../docs/specs/2026-10-11-layer-1-structure-design.md).
 
@@ -34,7 +34,7 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
 
 1. **Check the plugins are installed and Obsidian is closed.** `<vault>/.obsidian/plugins/` has `iconic`, `templater-obsidian`, `quickadd` and `homepage`. Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up. Confirm with the owner that they turned on **Trigger Templater on new file creation** in Templater's settings: Templater keeps that switch per device in Obsidian's local storage, so no settings file can set it, and without it no folder template runs.
 2. **Create the type folders** in `<vault>`: the `folder` of every definition in `types/`.
-3. **Copy the kit in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with this README and `GETTING-STARTED.md`. Everything in `root/` goes to `<vault>/`.
+3. **Copy the kit in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The sample notes in `tests/fixtures/layer1` are copied only when asked for (see `TRY-THE-SAMPLE.md`).
 4. **Merge each settings fragment.** Keep every setting the vault already has unless the rule says otherwise. When a target file is missing, write the fragment as it is.
 
    | Fragment | Target in `<vault>/.obsidian/` | Rule |

@@ -356,11 +356,11 @@ Sections:
 
 ### Task 8: Apply to a test vault and check in Obsidian
 
-This task needs the owner at Obsidian. It runs `kit/GETTING-STARTED.md` from an empty folder, so it also tests the guide. Claude prepares; the owner checks.
+This task needs the owner at Obsidian. It runs both guides from empty folders, so it also tests them: `kit/GETTING-STARTED.md` in the owner's own vault, then `kit/TRY-THE-SAMPLE.md` in a trial vault. Claude prepares; the owner checks.
 
-- [ ] **Step 1 (owner):** Section 2 of the guide.
-- [ ] **Step 2 (Claude):** Section 3 of the guide, with the examples.
-- [ ] **Step 3 (owner):** Section 4 of the guide: open the vault and work through the checklist, which covers:
+- [ ] **Step 1 (owner):** Getting started section 2, then Try the sample section 1 for a second, trial folder.
+- [ ] **Step 2 (Claude):** Apply the kit to both folders, and the sample to the trial folder only.
+- [ ] **Step 3 (owner):** Getting started sections 4 and 5 in the own vault, and Try the sample section 3 in the trial vault. Between them they cover:
   - Home opens on start-up; Today, Inbox, Active projects and Needs review show the example notes.
   - Every note shows its type's icon and colour in the file explorer and tabs; the bug and the client show their kind icons; a note with no kind shows the type icon.
   - Properties are hidden in notes and visible in the right sidebar with the right widgets (dates, lists).
