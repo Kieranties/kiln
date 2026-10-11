@@ -7418,30 +7418,53 @@ function linkTargets(body) {
 function frontmatterLinkTarget(value) {
   return linkTargets(value)[0];
 }
+var MAX_DISTANCE = 2;
 function distance(a, b) {
-  let previous = Array.from({ length: b.length + 1 }, (_, j) => j);
+  const over = MAX_DISTANCE + 1;
+  if (Math.abs(a.length - b.length) > MAX_DISTANCE) return over;
+  let previous = new Uint8Array(b.length + 1).fill(over);
+  let current = new Uint8Array(b.length + 1).fill(over);
+  for (let j = 0; j <= Math.min(b.length, MAX_DISTANCE); j++) previous[j] = j;
   for (let i = 1; i <= a.length; i++) {
-    const current = [i];
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      current[j] = Math.min((previous[j] ?? 0) + 1, (current[j - 1] ?? 0) + 1, (previous[j - 1] ?? 0) + cost);
+    const from = Math.max(1, i - MAX_DISTANCE);
+    const to = Math.min(b.length, i + MAX_DISTANCE);
+    const ai = a.charCodeAt(i - 1);
+    let left = from === 1 ? Math.min(i, over) : over;
+    current[from - 1] = left;
+    let rowMin = left;
+    for (let j = from; j <= to; j++) {
+      const cost = ai === b.charCodeAt(j - 1) ? 0 : 1;
+      const d = Math.min((previous[j] ?? over) + 1, left + 1, (previous[j - 1] ?? over) + cost, over);
+      current[j] = d;
+      left = d;
+      if (d < rowMin) rowMin = d;
     }
+    if (rowMin > MAX_DISTANCE) return over;
+    const row = previous;
     previous = current;
+    current = row;
   }
-  return previous[b.length] ?? 0;
+  return previous[b.length] ?? over;
 }
-function nearest(name, candidates) {
-  const lower = name.toLowerCase();
-  let best;
-  let bestDistance = 3;
-  for (const candidate of [...candidates].sort()) {
-    const d = distance(lower, candidate.toLowerCase());
-    if (d < bestDistance) {
-      best = candidate;
-      bestDistance = d;
+function nearestOf(candidates) {
+  const sorted = [...new Set(candidates)].sort().map((candidate) => ({ candidate, lower: candidate.toLowerCase() }));
+  const answers = /* @__PURE__ */ new Map();
+  return (name) => {
+    const lower = name.toLowerCase();
+    if (answers.has(lower)) return answers.get(lower);
+    let best;
+    let bestDistance = MAX_DISTANCE + 1;
+    for (const { candidate, lower: other } of sorted) {
+      const d = distance(lower, other);
+      if (d < bestDistance) {
+        best = candidate;
+        bestDistance = d;
+        if (d === 0) break;
+      }
     }
-  }
-  return best;
+    answers.set(lower, best);
+    return best;
+  };
 }
 
 // src/check/check-note.ts
@@ -7462,6 +7485,15 @@ function namingError(definition, name) {
     case "source-title":
       return void 0;
   }
+}
+var nearestNotes = /* @__PURE__ */ new WeakMap();
+function nearestNote(vault, target) {
+  let lookup = nearestNotes.get(vault);
+  if (!lookup) {
+    lookup = nearestOf(vault.notes.map((note) => basename(note).replace(/\.md$/, "")));
+    nearestNotes.set(vault, lookup);
+  }
+  return lookup(target);
 }
 function checkNote(vault, path, options = {}) {
   let text2;
@@ -7567,16 +7599,13 @@ function checkNote(vault, path, options = {}) {
     }
   }
   for (const target of linkTargets(body)) targets.add(target);
-  const candidates = [...new Set(vault.notes.map((note) => basename(note).replace(/\.md$/, "")))];
   for (const target of targets) {
     if (vault.names.has(target.toLowerCase())) continue;
-    const near = nearest(target, candidates);
+    const near = nearestNote(vault, target);
     const hint = near === void 0 ? "" : `; did you mean [[${near}]]?`;
     findings.push({ level: "warn", message: `[[${target}]] doesn't exist yet${hint}` });
   }
-  const sameName = vault.notes.filter(
-    (other) => other !== path && basename(other).replace(/\.md$/, "").toLowerCase() === name.toLowerCase()
-  );
+  const sameName = (vault.names.get(name.toLowerCase()) ?? []).filter((other) => other !== path && other.endsWith(".md") && !other.startsWith("_kiln/")).sort();
   if (sameName.length > 0) findings.push({ level: "warn", message: `file name also used by ${sameName.join(", ")}` });
   return result(findings.sort((a, b) => Number(b.level === "error") - Number(a.level === "error")));
 }

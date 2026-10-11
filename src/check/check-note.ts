@@ -3,7 +3,7 @@ import { basename, join } from 'node:path';
 import { parse } from 'yaml';
 import type { Definition } from '../blueprint/load.js';
 import { sectionsOf, splitFrontmatter } from '../blueprint/markdown.js';
-import { frontmatterLinkTarget, linkTargets, nearest } from './links.js';
+import { frontmatterLinkTarget, linkTargets, nearestOf } from './links.js';
 import type { Vault } from './vault.js';
 
 export type Level = 'error' | 'warn';
@@ -31,6 +31,18 @@ function namingError(definition: Definition, name: string): string | undefined {
     case 'source-title':
       return undefined;
   }
+}
+
+const nearestNotes = new WeakMap<Vault, (name: string) => string | undefined>();
+
+/** The note name nearest `target`, built once per vault so a whole-vault run stays fast. */
+function nearestNote(vault: Vault, target: string): string | undefined {
+  let lookup = nearestNotes.get(vault);
+  if (!lookup) {
+    lookup = nearestOf(vault.notes.map((note) => basename(note).replace(/\.md$/, '')));
+    nearestNotes.set(vault, lookup);
+  }
+  return lookup(target);
 }
 
 /** Checks one note against the vault's blueprint. `path` is vault-relative with `/`. Never writes. Throws NoteReadError when the file can't be read. */
@@ -159,17 +171,16 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
     }
   }
   for (const target of linkTargets(body)) targets.add(target);
-  const candidates = [...new Set(vault.notes.map((note) => basename(note).replace(/\.md$/, '')))];
   for (const target of targets) {
     if (vault.names.has(target.toLowerCase())) continue;
-    const near = nearest(target, candidates);
+    const near = nearestNote(vault, target);
     const hint = near === undefined ? '' : `; did you mean [[${near}]]?`;
     findings.push({ level: 'warn', message: `[[${target}]] doesn't exist yet${hint}` });
   }
 
-  const sameName = vault.notes.filter(
-    (other) => other !== path && basename(other).replace(/\.md$/, '').toLowerCase() === name.toLowerCase(),
-  );
+  const sameName = (vault.names.get(name.toLowerCase()) ?? [])
+    .filter((other) => other !== path && other.endsWith('.md') && !other.startsWith('_kiln/'))
+    .sort();
   if (sameName.length > 0) findings.push({ level: 'warn', message: `file name also used by ${sameName.join(', ')}` });
 
   return result(findings.sort((a, b) => Number(b.level === 'error') - Number(a.level === 'error')));
