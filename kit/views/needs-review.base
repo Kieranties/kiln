@@ -1,0 +1,10 @@
+filters:
+  not:
+    - review.isEmpty()
+views:
+  - type: table
+    name: Needs review
+    order:
+      - file.name
+      - type
+      - review

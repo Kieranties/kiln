@@ -1,0 +1,10 @@
+filters:
+  and:
+    - type == "project"
+    - status == "active"
+views:
+  - type: table
+    name: Active projects
+    order:
+      - file.name
+      - summary

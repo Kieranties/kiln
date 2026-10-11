@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadBase, loadDefinitions, viewFile, viewFiles } from './load.js';
+import { KIT, loadBase, loadDefinitions, sectionsOf, viewFile, viewFiles } from './load.js';
 
 const defs = loadDefinitions();
 const STANDALONE = ['inbox.base', 'needs-review.base', 'active-projects.base', 'today.base'];
@@ -58,9 +60,58 @@ describe('related views', () => {
     expect(view?.groupBy?.property).toBe('status');
   });
 
-  it('every other related view is a table', () => {
+  it('every related view is a table except the project board', () => {
     for (const v of related.filter((r) => r.file !== 'project-board.base')) {
       expect(loadBase(`views/${v.file}`).views[0]?.type, v.file).toBe('table');
     }
+  });
+});
+
+describe('Home, Board and the standalone views', () => {
+  it('board shows all live work as a kanban by status', () => {
+    const board = loadBase('root/Board.base');
+    expect(board.filters).toEqual({
+      and: ['type == "work"', 'status != "abandoned"', { or: ['status != "done"', 'file.mtime > now() - "14 days"'] }],
+    });
+    const view = board.views[0];
+    expect(view?.type).toBe('kanban');
+    expect(view?.groupBy?.property).toBe('status');
+    expect(view?.order).toContain('projects');
+  });
+
+  it('board does not need a project, so personal tasks show', () => {
+    expect(JSON.stringify(loadBase('root/Board.base').filters)).not.toContain('projects');
+  });
+
+  it('inbox lists captures waiting for triage', () => {
+    expect(loadBase('views/inbox.base').filters).toEqual({ and: ['type == "capture"', 'status == "inbox"'] });
+  });
+
+  it('needs review lists any note with a reason', () => {
+    const base = loadBase('views/needs-review.base');
+    expect(base.filters).toEqual({ not: ['review.isEmpty()'] });
+    expect(base.views[0]?.order).toContain('review');
+  });
+
+  it('active projects', () => {
+    expect(loadBase('views/active-projects.base').filters).toEqual({
+      and: ['type == "project"', 'status == "active"'],
+    });
+  });
+
+  it("today finds today's daily note", () => {
+    expect(loadBase('views/today.base').filters).toEqual({ and: ['type == "daily"', 'date == today()'] });
+  });
+
+  it('home embeds today, inbox, active projects and needs review, and links the board', () => {
+    const home = readFileSync(join(KIT, 'root', 'Home.md'), 'utf8');
+    const sections = sectionsOf(home);
+    expect([...sections.keys()]).toEqual(['Today', 'Inbox', 'Active projects', 'Needs review']);
+    expect(sections.get('Today')).toBe('![[today.base]]');
+    expect(sections.get('Inbox')).toBe('![[inbox.base]]');
+    expect(sections.get('Active projects')).toBe('![[active-projects.base]]');
+    expect(sections.get('Needs review')).toBe('![[needs-review.base]]');
+    expect(home).toContain('[[Board.base|Board]]');
+    expect(home).not.toMatch(/^# /m);
   });
 });

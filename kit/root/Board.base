@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "work"
+    - status != "abandoned"
+    - or:
+        - status != "done"
+        - file.mtime > now() - "14 days"
+views:
+  - type: kanban
+    name: Board
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - projects
+      - priority

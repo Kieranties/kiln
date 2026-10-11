@@ -1,0 +1,9 @@
+filters:
+  and:
+    - type == "daily"
+    - date == today()
+views:
+  - type: table
+    name: Today
+    order:
+      - file.name
