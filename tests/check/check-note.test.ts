@@ -137,9 +137,14 @@ describe('checkNote warnings and output', () => {
     ]);
   });
 
-  it('links in any letter case, with aliases, headings, embeds and code, raise nothing', () => {
+  it('links in any letter case, with aliases, headings, embeds, code, tables and .md, raise nothing', () => {
     const note = readFileSync(join(dir, 'Topics', 'Renewal payments.md'), 'utf8');
-    const extra = '\nSee [[club console|the console]], [[Club Console#Facts]], ![[missing.base]] and `[[Nowhere]]`.\n';
+    const extra = [
+      '\nSee [[club console|the console]], [[Club Console#Facts]], ![[missing.base]] and `[[Nowhere]]`.',
+      '| Who | Product |',
+      '|---|---|',
+      '| [[Priya Raman\\|Priya]] | [[Club Console.md]] |\n',
+    ].join('\n');
     writeFileSync(join(dir, 'Topics', 'Renewal payments copy.md'), note + extra);
     expect(checkNote(vault, 'Topics/Renewal payments copy.md').findings).toEqual([]);
   });

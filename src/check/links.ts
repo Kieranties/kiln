@@ -2,13 +2,15 @@ const FENCED = /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[^\n]*$/gm;
 const CODE_SPAN = /`[^`\n]*`/g;
 const LINK = /(?<!!)\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g;
 
+// In a table the pipe before an alias is escaped, `[[Name\|alias]]`, which leaves a `\` on the target.
+// A target may also be written with its `.md`, which Obsidian ignores.
 const keep = (target: string): string | undefined => {
-  const t = target.trim();
+  const t = target.trim().replace(/\\$/, '').replace(/\.md$/i, '').trim();
   return t === '' || t.includes('/') ? undefined : t;
 };
 
 /**
- * Wikilink targets in a note body, in order, without the `|alias` or `#heading`.
+ * Wikilink targets in a note body, in order, without the `|alias`, `#heading` or `.md`.
  * Skips embeds, links in fenced code or code spans, and folder-qualified targets.
  */
 export function linkTargets(body: string): string[] {

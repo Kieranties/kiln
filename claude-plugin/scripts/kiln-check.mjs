@@ -7408,7 +7408,7 @@ var FENCED = /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[^\n]*$/gm;
 var CODE_SPAN = /`[^`\n]*`/g;
 var LINK = /(?<!!)\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g;
 var keep = (target) => {
-  const t = target.trim();
+  const t = target.trim().replace(/\\$/, "").replace(/\.md$/i, "").trim();
   return t === "" || t.includes("/") ? void 0 : t;
 };
 function linkTargets(body) {

@@ -13,6 +13,14 @@ describe('links', () => {
     ].join('\n');
     expect(linkTargets(body)).toEqual(['Club Console', 'Renewal payments']);
   });
+  it('reads a link in a table, whose pipe is escaped, and a link written with .md', () => {
+    const body = [
+      '| Who | Notes |',
+      '|---|---|',
+      '| [[Priya Raman\\|Priya]] | [[Club Console.md]], [[Vale Rovers.MD#Facts\\|Vale]] |',
+    ];
+    expect(linkTargets(body.join('\n'))).toEqual(['Priya Raman', 'Club Console', 'Vale Rovers']);
+  });
   it('reads a relationship value', () => {
     expect(frontmatterLinkTarget('[[Season Ticket Renewals 2027|Renewals]]')).toBe('Season Ticket Renewals 2027');
   });
