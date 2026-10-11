@@ -1,5 +1,7 @@
 # The kiln kit
 
+**New here? Follow [Getting started](GETTING-STARTED.md)** to build a vault from an empty folder and check it.
+
 The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how each one looks, and how they link. It is configuration, not code. The design is in [Layer 1: structure](../docs/specs/2026-10-11-layer-1-structure-design.md).
 
 ## What the kit is

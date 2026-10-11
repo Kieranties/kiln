@@ -17,7 +17,7 @@ supersedes: []
 ---
 ## Context
 
-Retries beyond three days recovered almost nothing.
+Proposed by [[Priya Raman]]: retries beyond three days recovered almost nothing.
 
 ## Decision
 

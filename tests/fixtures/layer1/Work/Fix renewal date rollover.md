@@ -21,7 +21,7 @@ products:
 ---
 ## Context
 
-Found from a supporter complaint during the renewals window.
+Found by [[Priya Raman]] from a supporter complaint during the renewals window.
 
 ## Checkpoints
 
