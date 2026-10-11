@@ -10,7 +10,9 @@ const DENYLIST = fileURLToPath(new URL('../fixtures/denylist.txt', import.meta.u
 const REPO = fileURLToPath(new URL('../../', import.meta.url));
 const DOCS = join(REPO, 'docs');
 const PLUGIN = join(REPO, 'claude-plugin');
-const TOP_LEVEL = ['README.md', 'CLAUDE.md', 'tests/fixtures/README.md'].map((f) => join(REPO, f));
+const TOP_LEVEL = ['README.md', 'CLAUDE.md', 'tests/fixtures/README.md', '.claude-plugin/marketplace.json'].map((f) =>
+  join(REPO, f),
+);
 const DATE_FIRST = ['research', 'decision', 'meeting', 'daily', 'capture'];
 
 type Note = { path: string; folder: string; name: string; data: Record<string, unknown>; body: string };
