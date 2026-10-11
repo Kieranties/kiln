@@ -7,6 +7,15 @@ filters:
         - file.mtime > now() - "14 days"
     - not:
         - file.inFolder("_kiln")
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  projects:
+    displayName: Projects
+  priority:
+    displayName: Priority
 views:
   - type: kanban
     name: Board
@@ -18,3 +27,9 @@ views:
       - kind
       - projects
       - priority
+    groupOrder:
+      - backlog
+      - active
+      - blocked
+      - review
+      - done

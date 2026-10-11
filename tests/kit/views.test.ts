@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { KIT, loadBase, loadDefinitions, sectionsOf, viewFile, viewFiles } from './load.js';
+import { allBases, columnLabel, KIT, loadBase, loadDefinitions, sectionsOf, viewFile, viewFiles } from './load.js';
 
 const defs = loadDefinitions();
 const STANDALONE = ['inbox.base', 'needs-review.base', 'active-projects.base', 'today.base'];
@@ -66,6 +66,24 @@ describe('related views', () => {
   it('every related view is a table except the project board', () => {
     for (const v of related.filter((r) => r.file !== 'project-board.base')) {
       expect(loadBase(`views/${v.file}`).views[0]?.type, v.file).toBe('table');
+    }
+  });
+});
+
+describe('readable views', () => {
+  it('boards keep a column for every live status, in order, even when empty', () => {
+    const live = (defs.find((d) => d.name === 'work')?.statuses ?? []).filter((s) => s !== 'abandoned');
+    for (const path of ['root/Board.base', 'views/project-board.base']) {
+      expect(loadBase(path).views[0]?.groupOrder, path).toEqual(live);
+    }
+  });
+
+  it('every view column has a readable header', () => {
+    for (const path of allBases()) {
+      const base = loadBase(path);
+      for (const column of base.views[0]?.order ?? []) {
+        expect(base.properties?.[column]?.displayName, `${path}: ${column}`).toBe(columnLabel(column));
+      }
     }
   });
 });

@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadDefinitions, loadJson, SHARED_PROPERTIES } from './load.js';
+import { KIT, loadDefinitions, loadJson, SHARED_PROPERTIES } from './load.js';
 
 const defs = loadDefinitions();
 
@@ -132,6 +134,15 @@ describe('Obsidian settings', () => {
       'command-palette': true,
       templates: false,
     });
+  });
+
+  it('the kiln snippet shows property names, values and board columns with capitals, and is switched on', () => {
+    expect(loadJson('settings/appearance.json')).toEqual({ enabledCssSnippets: ['kiln'] });
+    const css = readFileSync(join(KIT, 'settings', 'snippets', 'kiln.css'), 'utf8');
+    for (const selector of ['.metadata-property-key', '.metadata-property-value', 'kanban']) {
+      expect(css, selector).toContain(selector);
+    }
+    expect(css).toContain('text-transform: capitalize');
   });
 
   it('community plugins are the four', () => {

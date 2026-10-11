@@ -35,6 +35,11 @@ describe('kit docs', () => {
     for (const note of notes) expect(sample, note.name).toContain(basename(note.name, '.md'));
   });
 
+  it('setting up a vault applies the kiln snippet', () => {
+    const steps = section(readme, 'Setting up a vault');
+    for (const part of ['snippets/kiln.css', 'appearance.json']) expect(steps, part).toContain(part);
+  });
+
   it('setting up a vault copies all three kit docs', () => {
     const steps = section(readme, 'Setting up a vault');
     for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);

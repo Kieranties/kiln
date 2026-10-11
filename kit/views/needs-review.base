@@ -1,6 +1,13 @@
 filters:
   not:
     - review.isEmpty()
+properties:
+  file.name:
+    displayName: Name
+  type:
+    displayName: Type
+  review:
+    displayName: Review
 views:
   - type: table
     name: Needs review

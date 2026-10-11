@@ -2,6 +2,13 @@ filters:
   and:
     - type == "decision"
     - list(supersedes).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
 views:
   - type: table
     name: Superseded by

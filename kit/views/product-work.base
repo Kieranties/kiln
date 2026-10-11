@@ -2,6 +2,15 @@ filters:
   and:
     - type == "work"
     - list(products).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
 views:
   - type: table
     name: Work

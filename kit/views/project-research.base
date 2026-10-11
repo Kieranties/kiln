@@ -2,6 +2,13 @@ filters:
   and:
     - type == "research"
     - list(projects).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
 views:
   - type: table
     name: Research

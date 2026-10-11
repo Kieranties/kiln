@@ -2,6 +2,11 @@ filters:
   and:
     - type == "project"
     - status == "active"
+properties:
+  file.name:
+    displayName: Name
+  summary:
+    displayName: Summary
 views:
   - type: table
     name: Active projects

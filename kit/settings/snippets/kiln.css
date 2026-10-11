@@ -1,0 +1,22 @@
+/*
+ * kiln: show property names, values and board columns with capitals.
+ * Notes keep lowercase names and values (status: review); this only changes how they look.
+ */
+
+/* Property names in the properties view. */
+.metadata-property-key,
+.metadata-property-key-input {
+  text-transform: capitalize;
+}
+
+/* Text and list values in the properties view. */
+.metadata-property-value .metadata-input-longtext,
+.metadata-property-value .multi-select-pill-content {
+  text-transform: capitalize;
+}
+
+/* Column headings on Bases kanban boards. */
+.bases-view [class*='kanban'] [class*='column-header'],
+.bases-view [class*='kanban'] [class*='group-title'] {
+  text-transform: capitalize;
+}

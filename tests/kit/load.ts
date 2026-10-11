@@ -75,8 +75,29 @@ export function loadJson<T = Record<string, unknown>>(path: string): T {
   return JSON.parse(readFileSync(join(KIT, path), 'utf8')) as T;
 }
 
-export type BaseView = { type: string; name: string; order?: string[]; groupBy?: { property: string } };
-export type BaseFile = { filters?: { and?: unknown[] }; views: BaseView[] };
+export type BaseView = {
+  type: string;
+  name: string;
+  order?: string[];
+  groupBy?: { property: string };
+  groupOrder?: string[];
+};
+export type BaseFile = {
+  filters?: { and?: unknown[] };
+  properties?: Record<string, { displayName?: string }>;
+  views: BaseView[];
+};
+
+/** Every Base in the kit, as paths relative to kit/. */
+export function allBases(): string[] {
+  return [...viewFiles().map((f) => `views/${f}`), 'root/Board.base'];
+}
+
+/** The header a view column shows: 'file.name' reads 'Name', 'summary' reads 'Summary'. */
+export function columnLabel(property: string): string {
+  const name = property === 'file.name' ? 'name' : property;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 /** A Bases file, parsed. `path` is relative to kit/, e.g. 'views/inbox.base'. */
 export function loadBase(path: string): BaseFile {
