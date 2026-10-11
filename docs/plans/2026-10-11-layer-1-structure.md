@@ -316,7 +316,7 @@ Bodies are short prose under the type's sections, with the view headings and emb
 - `moments are named date first`.
 - `the daily note ends with its log`.
 - `a personal task needs no project` (Review Focus 5): the task has `projects: []`.
-- `examples and kit contain no denylisted names`: same check as `tests/unit/fixtures.test.ts`, over `kit/` and `tests/fixtures/layer1/`, skipped with the same message when `tests/fixtures/denylist.txt` is absent.
+- `the kit, the sample and the docs contain no real names from the owner's organisation`: a case-insensitive substring check of each term in the local-only `tests/fixtures/denylist.txt` over `kit/`, `tests/fixtures/layer1/`, `docs/`, `README.md`, `CLAUDE.md` and `tests/fixtures/README.md`, skipped with a message when the file is absent (see `tests/fixtures/README.md`).
 - [ ] **Step 2: Run, expect FAIL.** **Step 3: Write the notes.** **Step 4: Run, expect PASS.**
 - [ ] **Step 5: Run everything** — `npm run format:check && npm run lint && npm run typecheck && npm test`, all pass.
 - [ ] **Step 6: Commit** — `git commit -m "test(kit): add a Northwind Arena example vault"`
