@@ -47,6 +47,14 @@ describe('kit docs', () => {
     expect(section(readme, 'Adding or changing a type')).toContain('properties.md');
   });
 
+  it('setting up a vault opens file properties in the right sidebar', () => {
+    const steps = section(readme, 'Setting up a vault');
+    for (const part of ['workspace-file-properties.json', 'workspace.json', 'currentTab']) {
+      expect(steps, part).toContain(part);
+    }
+    expect(guide).not.toContain('Run **Show file properties**');
+  });
+
   it('setting up a vault copies all three kit docs', () => {
     const steps = section(readme, 'Setting up a vault');
     for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);

@@ -46,15 +46,8 @@ Report each file you wrote and each setting you merged.
 
 Open Obsidian.
 
-**Show properties in the right sidebar.** Notes keep their properties out of the text, so you read and edit them in the sidebar instead:
-
-1. Open the command palette (Ctrl+P, or Cmd+P on a Mac) and search for **properties**.
-2. Run **Show file properties**. The file properties view opens in the right sidebar.
-3. It stays there, showing the properties of whichever note is open. Once opened, Obsidian remembers it for this vault.
-
-Then check:
-
 - [ ] Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review, all empty.
+- [ ] The right sidebar shows **File properties**. Notes keep their properties out of the text, so this is where you read and edit them; it follows whichever note is open. If it isn't there, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
 - [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the kit. Each folder shows its type's icon and colour in place of the `>` arrow.
 
 ## 5. Your first notes

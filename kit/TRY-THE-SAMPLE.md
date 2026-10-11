@@ -22,7 +22,7 @@ Use a separate trial vault, so the sample never mixes with your own notes.
    Report each file you wrote and each setting you merged.
    ```
 
-4. Open Obsidian on the trial vault. Open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and run **Show file properties**, so the file properties view sits in the right sidebar. Then carry on with section 3 below.
+4. Open Obsidian on the trial vault and carry on with section 3 below. The right sidebar shows **File properties**; if it doesn't, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
 
 ## 2. What's in it
 

@@ -52,8 +52,13 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
    | `plugins/quickadd.json` | `plugins/quickadd/data.json` | Remove `choices` entries whose `id` starts with `kiln-`, then add the kit's |
    | `plugins/homepage.json` | `plugins/homepage/data.json` | Set `homepages["Main Homepage"]` and `version` |
 
-5. **Report** each file copied and each setting changed.
-6. **Open Obsidian and check** with the list in [Getting started](GETTING-STARTED.md).
+5. **Put file properties in the right sidebar.** Notes keep properties out of the text, so the file properties view must be open. In `<vault>/.obsidian/workspace.json`:
+   - If any leaf under `right` already has `state.type` `file-properties`, make it the visible tab: set its `tabs` group's `currentTab` to its index.
+   - Otherwise add the leaf in `settings/workspace-file-properties.json` to the end of the first `tabs` group under `right`, and set that group's `currentTab` to its index. If `right` has no `tabs` group, add `{ "id": <16 hex digits>, "type": "tabs", "children": [<the leaf>], "currentTab": 0 }` to `right.children`.
+   - If `right` has `"collapsed": true`, set it to `false`. Change nothing else; Obsidian owns the rest of this file.
+   - If `workspace.json` does not exist yet, skip this step. Obsidian creates it on first start, and Getting started has the fallback.
+6. **Report** each file copied and each setting changed.
+7. **Open Obsidian and check** with the list in [Getting started](GETTING-STARTED.md).
 
 ## Adding or changing a type
 

@@ -195,6 +195,14 @@ describe('Obsidian settings', () => {
     expect(css).toContain('text-transform: capitalize');
   });
 
+  it('the right sidebar gets a file properties view', () => {
+    expect(loadJson('settings/workspace-file-properties.json')).toEqual({
+      id: expect.stringMatching(/^[0-9a-f]{16}$/),
+      type: 'leaf',
+      state: { type: 'file-properties', state: {}, icon: 'lucide-info', title: 'File properties' },
+    });
+  });
+
   it('community plugins are the four', () => {
     expect(loadJson<string[]>('settings/community-plugins.json')).toEqual([
       'iconic',
