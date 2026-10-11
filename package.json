@@ -2,7 +2,7 @@
   "name": "kiln",
   "version": "0.0.0-placeholder",
   "private": true,
-  "description": "kiln: a personal knowledge and work process built on Obsidian. The blueprint is the vault structure; this package only runs its checks.",
+  "description": "kiln: a personal knowledge and work process built on Obsidian. This package builds and tests kiln's scripts; the plugin is claude-plugin/.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -13,6 +13,8 @@
     "node": ">=24"
   },
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:check": "node scripts/build.mjs --check",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint --type-aware",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^24",
+    "esbuild": "0.28.2",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2004",
     "prettier": "^3.9.10",
