@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "decision"
-    - supersedes.contains(this)
+    - list(supersedes).contains(this)
 views:
   - type: table
     name: Superseded by

@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "reference"
-    - topics.contains(this)
+    - list(topics).contains(this)
 views:
   - type: table
     name: References

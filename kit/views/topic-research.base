@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "research"
-    - topics.contains(this)
+    - list(topics).contains(this)
 views:
   - type: table
     name: Research

@@ -2,6 +2,8 @@ filters:
   and:
     - type == "capture"
     - status == "inbox"
+    - not:
+        - file.inFolder("_kiln")
 views:
   - type: table
     name: Inbox

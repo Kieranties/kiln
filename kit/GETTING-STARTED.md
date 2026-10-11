@@ -20,7 +20,8 @@ The commands work in both Bash and PowerShell.
 2. In Obsidian, choose **Open folder as vault** and pick the folder.
 3. Go to Settings → Community plugins and select **Turn on community plugins**.
 4. Select **Browse** and install and enable each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**.
-5. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the kit must be applied while it is closed.
+5. In Settings → Templater, turn on **Trigger Templater on new file creation**. Templater keeps this switch on your device rather than in the vault, so the kit can't set it for you. Without it, new notes get no template.
+6. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the kit must be applied while it is closed.
 
 ## 3. Apply the kit
 
@@ -60,8 +61,9 @@ Open Obsidian. Work through the list; each line is one thing to look at.
 
 **Boards**
 
-- [ ] The project's Board shows *Fix renewal date rollover*. Drag it to **review**: its `status` property changes to `review`.
-- [ ] Open the **Board** from Home. It shows *Fix renewal date rollover* and *Book the stadium walkthrough*, a personal task with no project. Columns run in status order (backlog, active, blocked, review, done); if they don't, set the order with the Group menu.
+- [ ] The project's Board shows three cards: *Fix renewal date rollover* (active), *Add a grace period setting* (review) and *Send renewal reminder emails* (done). Drag the bug to **review**: its `status` property changes to `review`.
+- [ ] Open the **Board** from Home. It shows those three and *Book the stadium walkthrough* in backlog, a personal task with no project. Columns run in status order (backlog, active, review, done); if they don't, set the order with the Group menu and tell Claude, so the order can be saved into the kit.
+- [ ] Neither Board nor Home's Inbox lists anything from `_kiln` (the kit's templates).
 
 **Other pages**
 

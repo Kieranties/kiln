@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "project"
-    - people.contains(this)
+    - list(people).contains(this)
 views:
   - type: table
     name: Projects

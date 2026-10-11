@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "topic"
-    - topics.contains(this)
+    - list(topics).contains(this)
 views:
   - type: table
     name: Sub-topics

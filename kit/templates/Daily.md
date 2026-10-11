@@ -14,7 +14,7 @@ tags: []
 review:
 date: <% tp.file.title %>
 ---
-[[<% yesterday %>|← yesterday]] · [[<% tomorrow %>|tomorrow →]]
+[[Daily/<% yesterday %>|← yesterday]] · [[Daily/<% tomorrow %>|tomorrow →]]
 
 ## Schedule
 

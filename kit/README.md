@@ -32,7 +32,7 @@ The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how e
 
 The steps for whoever applies the kit, usually Claude. `<vault>` is the vault folder. For the owner's walk-through, see [Getting started](GETTING-STARTED.md).
 
-1. **Check the plugins are installed and Obsidian is closed.** `<vault>/.obsidian/plugins/` has `iconic`, `templater-obsidian`, `quickadd` and `homepage`. Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up.
+1. **Check the plugins are installed and Obsidian is closed.** `<vault>/.obsidian/plugins/` has `iconic`, `templater-obsidian`, `quickadd` and `homepage`. Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up. Confirm with the owner that they turned on **Trigger Templater on new file creation** in Templater's settings: Templater keeps that switch per device in Obsidian's local storage, so no settings file can set it, and without it no folder template runs.
 2. **Create the type folders** in `<vault>`: the `folder` of every definition in `types/`.
 3. **Copy the kit in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with this README and `GETTING-STARTED.md`. Everything in `root/` goes to `<vault>/`.
 4. **Merge each settings fragment.** Keep every setting the vault already has unless the rule says otherwise. When a target file is missing, write the fragment as it is.
@@ -55,6 +55,14 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
 ## Adding or changing a type
 
 1. Add or edit the definition in `types/`. Its body says what the type is for and when to use it.
-2. Update what is written from it: the template in `templates/`, a Base in `views/` for each view (`<type>-<view>.base`), the type's Iconic rules in `settings/plugins/iconic.json`, its folder in `settings/plugins/templater.json`, and its properties in `settings/types.json`.
-3. Run `npx vitest run tests/kit` until it passes. The tests name anything that is out of step.
-4. Copy the changed files into the vault and merge the changed settings, as in "Setting up a vault". Iconic and Templater pick up their settings with Obsidian open; templates and views are plain files. Only QuickAdd and Homepage changes need Obsidian closed.
+2. Update what is written from it:
+   - the template in `templates/`;
+   - a Base in `views/` for each view (`<type>-<view>.base`);
+   - the type's Iconic rules in `settings/plugins/iconic.json`, kind rules before the type rule;
+   - its folder and template in `settings/plugins/templater.json`;
+   - its properties in `settings/types.json`.
+3. Update the tests, which pin the starting set:
+   - `tests/kit/definitions.test.ts`: the type list and the folder, status, kind, property and section tables;
+   - `tests/fixtures/layer1`: add an example note of the new type in its folder, since every type needs one.
+4. Run `npx vitest run tests/kit` until it passes. The tests name anything that is out of step.
+5. In the vault, create the type's folder, copy the changed files in and merge the changed settings, as in "Setting up a vault". Iconic and Templater pick up their settings with Obsidian open; templates and views are plain files. Only QuickAdd and Homepage changes need Obsidian closed.

@@ -5,6 +5,8 @@ filters:
     - or:
         - status != "done"
         - file.mtime > now() - "14 days"
+    - not:
+        - file.inFolder("_kiln")
 views:
   - type: kanban
     name: Board

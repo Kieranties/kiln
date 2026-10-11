@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "reference"
-    - projects.contains(this)
+    - list(projects).contains(this)
 views:
   - type: table
     name: References

@@ -92,7 +92,7 @@ describe('templates', () => {
   it('daily keeps Log last and links its neighbours', () => {
     const daily = templateOf(defs.find((d) => d.name === 'daily') as Definition);
     expect(daily.headings.at(-1)).toBe('Log');
-    expect(daily.text).toContain('[[<% yesterday %>|← yesterday]] · [[<% tomorrow %>|tomorrow →]]');
+    expect(daily.text).toContain('[[Daily/<% yesterday %>|← yesterday]] · [[Daily/<% tomorrow %>|tomorrow →]]');
     expect(daily.text).toMatch(/yesterday = .*tp\.file\.title/);
     expect(valueOf(daily, 'date')).toBe('<% tp.file.title %>');
   });

@@ -9,7 +9,7 @@ const STANDALONE = ['inbox.base', 'needs-review.base', 'active-projects.base', '
 /** Each related view: the page it sits on, its heading, its Base file and the filter it needs. */
 const related = defs.flatMap((d) =>
   Object.entries(d.views).map(([heading, view]) => {
-    let match = `${view.via}.contains(this)`;
+    let match = `list(${view.via}).contains(this)`;
     if (view.via === 'link') match = 'file.hasLink(this.file)';
     if (view.via === 'created') match = 'created == this.date';
     if (view.via === 'mtime') match = 'file.mtime.date() == this.date';
@@ -74,7 +74,12 @@ describe('Home, Board and the standalone views', () => {
   it('board shows all live work as a kanban by status', () => {
     const board = loadBase('root/Board.base');
     expect(board.filters).toEqual({
-      and: ['type == "work"', 'status != "abandoned"', { or: ['status != "done"', 'file.mtime > now() - "14 days"'] }],
+      and: [
+        'type == "work"',
+        'status != "abandoned"',
+        { or: ['status != "done"', 'file.mtime > now() - "14 days"'] },
+        { not: ['file.inFolder("_kiln")'] },
+      ],
     });
     const view = board.views[0];
     expect(view?.type).toBe('kanban');
@@ -87,7 +92,16 @@ describe('Home, Board and the standalone views', () => {
   });
 
   it('inbox lists captures waiting for triage', () => {
-    expect(loadBase('views/inbox.base').filters).toEqual({ and: ['type == "capture"', 'status == "inbox"'] });
+    expect(loadBase('views/inbox.base').filters).toEqual({
+      and: ['type == "capture"', 'status == "inbox"', { not: ['file.inFolder("_kiln")'] }],
+    });
+  });
+
+  it('views that match on type alone leave out the kit templates', () => {
+    // Templates in _kiln/templates carry type and status, so Bases would list them too.
+    for (const path of ['views/inbox.base', 'root/Board.base']) {
+      expect(JSON.stringify(loadBase(path).filters), path).toContain('{"not":["file.inFolder(\\"_kiln\\")"]}');
+    }
   });
 
   it('needs review lists any note with a reason', () => {

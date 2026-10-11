@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "decision"
-    - research.contains(this)
+    - list(research).contains(this)
 views:
   - type: table
     name: Decisions

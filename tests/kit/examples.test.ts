@@ -101,6 +101,29 @@ describe('Northwind Arena example vault', () => {
     for (const t of tasks) expect(t.data.projects, t.path).toEqual([]);
   });
 
+  it('every relationship view on the example project has something to show', () => {
+    const project = notes.find((n) => n.data.type === 'project');
+    const link = `[[${project?.name}]]`;
+    for (const [heading, view] of Object.entries(defs.get('project')?.views ?? {})) {
+      const shown = notes.filter((n) => n.data.type === view.type && (n.data[view.via] as unknown[])?.includes(link));
+      expect(shown.length, heading).toBeGreaterThan(0);
+    }
+  });
+
+  it('the example work spans the board columns the guide uses', () => {
+    const statuses = new Set(notes.filter((n) => n.data.type === 'work').map((n) => n.data.status));
+    for (const status of ['backlog', 'active', 'review', 'done']) expect(statuses, status).toContain(status);
+  });
+
+  it("the daily note's neighbour links name the Daily folder", () => {
+    // A bare [[2026-10-07]] would be created in Inbox, the new-note folder, as a capture.
+    for (const n of notes.filter((note) => note.data.type === 'daily')) {
+      expect(n.body, n.path).toMatch(
+        /^\[\[Daily\/\d{4}-\d{2}-\d{2}\|← yesterday\]\] · \[\[Daily\/\d{4}-\d{2}-\d{2}\|tomorrow →\]\]/,
+      );
+    }
+  });
+
   it('a reference from a GitHub key keeps a linkable name', () => {
     expect(names.has('northwind-arena-club-console 88 Renewal date rolls over a year early')).toBe(true);
   });

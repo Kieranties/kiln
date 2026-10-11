@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "person"
-    - organisations.contains(this)
+    - list(organisations).contains(this)
 views:
   - type: table
     name: People

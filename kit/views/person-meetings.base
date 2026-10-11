@@ -1,7 +1,7 @@
 filters:
   and:
     - type == "meeting"
-    - attendees.contains(this)
+    - list(attendees).contains(this)
 views:
   - type: table
     name: Meetings
