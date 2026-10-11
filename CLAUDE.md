@@ -8,6 +8,8 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 |---|---|
 | **Why kiln exists, principles, entities and kinds, layers** | [docs/vision.md](docs/vision.md) |
 | **User flows and the agreed story order** | [docs/specs/2026-10-11-user-flows.md](docs/specs/2026-10-11-user-flows.md) |
+| **Layer 1, the vault structure: design and plan** | [design](docs/specs/2026-10-11-layer-1-structure-design.md), [plan](docs/plans/2026-10-11-layer-1-structure.md) |
+| **The kit** (types, templates, views, settings), its guides and checks | [kit/README.md](kit/README.md), [Getting started](kit/GETTING-STARTED.md), [Try the sample](kit/TRY-THE-SAMPLE.md); tests in `tests/kit/` |
 | The v1 engine (MCP server, SQLite index, CLI, plugin): retired direction, code still in `src/`, released as v0.1.1 | [design](docs/specs/2026-10-10-kb-core-design.md), [plan](docs/plans/2026-10-10-kb-core-v1.md), [build and release](docs/specs/2026-10-11-build-and-release-design.md) |
 | How v1 was decided | [decision log](docs/context/2026-10-10-decision-log.md), [landscape research](docs/research/2026-10-10-knowledge-landscape.md), [spike results](docs/research/2026-10-10-spike-results.md) |
 

@@ -1,6 +1,6 @@
 # Layer 1: structure
 
-Status: **for review** (2026-10-11). Nothing here is final.
+Status: **built and checked** (2026-10-11), as the kit in `kit/`. Nothing here is final.
 
 Layer 1 of the [vision](../vision.md): the vault structure, so that entities are easy to find and read in Obsidian. It covers the flows Browse (5) and Add a type or kind (12) in [kiln user flows](2026-10-11-user-flows.md), and the shapes every later layer writes into.
 
@@ -188,6 +188,18 @@ The kiln Obsidian plugin starts after the migration slice, once real content has
 1. Generate the configuration from the type definitions, so adding a type is one step.
 2. Later: icons beside links, from the type definitions. Iconic does not decorate links, and a fork of Iconic is not worth tracking. Contributing link icons to Iconic upstream is worth a look first.
 3. Later: custom views, such as the inbox and the project page.
+
+### Found in the first test vault
+
+Building the kit and checking it in Obsidian 1.14.4 added these decisions:
+
+- **Board columns stay when empty.** Both boards list every live status in `groupOrder`, which also fixes their order and keeps `abandoned` off.
+- **Capitals on screen, lowercase in notes.** A kit CSS snippet (`kiln.css`) shows property names, values and board columns with capitals. View columns get readable headers through `displayName`. Notes keep lowercase names and values, so filters and Claude are unaffected.
+- **Icons everywhere.** Each type folder shows its type's icon in place of the folder arrow (Iconic's minimal folder icons). Home and the Board have their own icons. Every property has an icon, listed in the kit's `properties.md`; a relationship takes the icon and colour of the type it links to.
+- **File properties in the right sidebar.** Setup adds the file properties view to the right sidebar in `workspace.json`, with Obsidian closed.
+- **Templater's trigger is per device.** "Trigger Templater on new file creation" lives in Obsidian's local storage, not in Templater's settings file, so the owner turns it on once per device.
+- **Kit templates are notes too.** Views that match on type alone (Inbox, Board) leave out `_kiln`.
+- **Getting started is about your own vault.** The Northwind Arena sample is a separate page, for a trial vault.
 
 ### Linking before a note exists
 
