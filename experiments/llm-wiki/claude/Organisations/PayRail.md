@@ -19,6 +19,8 @@ PayRail takes card payments for our client clubs: [[Vale Rovers]]' payments run 
 
 We configure retries on our platform account, under Settings › Recurring › Retries or with the `retry_schedule` field on the account API, and receive `payment.retry_scheduled`, `payment.retry_succeeded` and `payment.retry_exhausted` webhooks. Their docs are at docs.payrail.example ([[PayRail Card retry schedules|PayRail docs]]).
 
+[[Priya Raman]] checks and changes our retry configuration in the PayRail dashboard ([[2026-10-08 Slack payments thread|Slack thread]]).
+
 ## Notes
 
 ## People

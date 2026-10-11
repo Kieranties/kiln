@@ -23,6 +23,8 @@ Clubs manage members, season tickets and renewals here.
 
 ## Known issues
 
+- It still waits for PayRail's day-5 webhook, because our account was never switched to the three-day retry schedule; [[Priya Raman]] is to change both and raise a ticket, which is not in the vault yet ([[2026-10-08 Slack payments thread|Slack thread]]).
+
 ## Projects
 
 ![[product-projects.base]]
