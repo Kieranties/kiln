@@ -197,8 +197,32 @@ describe('renderScalar', () => {
 
   it('round-trips awkward strings as both mapping values and list items', () => {
     const awkward = [
-      'a: b', '[[A]]', '- a', ',a', '#x', 'x #y', 'null', '-', '?', '&a', '*a', '!t', '%x', '@x', '`x',
-      '|', '>', '"q"', "it's", 'a\tb', ' pad ', '0o7', '+1', '1_000', 'Yes', 'no',
+      'a: b',
+      '[[A]]',
+      '- a',
+      ',a',
+      '#x',
+      'x #y',
+      'null',
+      '-',
+      '?',
+      '&a',
+      '*a',
+      '!t',
+      '%x',
+      '@x',
+      '`x',
+      '|',
+      '>',
+      '"q"',
+      "it's",
+      'a\tb',
+      ' pad ',
+      '0o7',
+      '+1',
+      '1_000',
+      'Yes',
+      'no',
     ];
     for (const s of awkward) {
       expect(parseFields(`k: ${renderScalar(s)}\n`)).toEqual({ k: s });
@@ -274,7 +298,10 @@ describe('renderNote', () => {
   });
 
   it('does not double blank lines when section text ends with a newline', () => {
-    const out = renderNote({ id: 'x' }, [{ heading: 'A', text: 'one\n' }, { heading: 'B', text: 'two\r\n\r\n' }]);
+    const out = renderNote({ id: 'x' }, [
+      { heading: 'A', text: 'one\n' },
+      { heading: 'B', text: 'two\r\n\r\n' },
+    ]);
     expect(out).toBe('---\nid: x\n---\n\n## A\none\n\n## B\ntwo\n');
   });
 

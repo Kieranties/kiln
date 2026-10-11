@@ -1,5 +1,16 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -81,7 +92,7 @@ describe('Index reconcile', () => {
 
     const notes = rows(ix, 'select * from notes order by path');
     expect(notes).toHaveLength(2);
-    const [person, scratch] = notes as Record<string, unknown>[];
+    const [person, scratch] = notes;
     expect(person).toMatchObject({
       path: 'anchors/person/Emmanuel Park.md',
       id: '01J9ZK3Q7V2M8N4P6R0S1T2U3V',
@@ -94,7 +105,10 @@ describe('Index reconcile', () => {
       created: '2026-10-01',
       updated: '2026-10-09',
     });
-    expect(JSON.parse(person!.fields_json as string)).toMatchObject({ title: 'Emmanuel Park', aliases: ['Manny', 'E. Park'] });
+    expect(JSON.parse(person!.fields_json as string)).toMatchObject({
+      title: 'Emmanuel Park',
+      aliases: ['Manny', 'E. Park'],
+    });
     expect(scratch).toMatchObject({ path: 'notes/scratch idea.md', id: null, type: null, title: 'scratch idea' });
 
     const file = rows(ix, "select * from files where path = 'anchors/person/Emmanuel Park.md'")[0]!;
@@ -105,12 +119,12 @@ describe('Index reconcile', () => {
       id: '01J9ZK3Q7V2M8N4P6R0S1T2U3V',
     });
 
-    expect(rows(ix, "select name_lc from aliases where path = 'anchors/person/Emmanuel Park.md' order by name_lc")).toEqual([
-      { name_lc: 'e. park' },
-      { name_lc: 'emmanuel park' },
-      { name_lc: 'manny' },
+    expect(
+      rows(ix, "select name_lc from aliases where path = 'anchors/person/Emmanuel Park.md' order by name_lc"),
+    ).toEqual([{ name_lc: 'e. park' }, { name_lc: 'emmanuel park' }, { name_lc: 'manny' }]);
+    expect(rows(ix, "select name_lc from aliases where path = 'notes/scratch idea.md'")).toEqual([
+      { name_lc: 'scratch idea' },
     ]);
-    expect(rows(ix, "select name_lc from aliases where path = 'notes/scratch idea.md'")).toEqual([{ name_lc: 'scratch idea' }]);
     expect(rows(ix, 'select src_path, target, target_lc from links order by target')).toEqual([
       { src_path: 'anchors/person/Emmanuel Park.md', target: 'Northwind Arena', target_lc: 'northwind arena' },
       { src_path: 'anchors/person/Emmanuel Park.md', target: 'Ticketing Platform', target_lc: 'ticketing platform' },
@@ -142,7 +156,9 @@ describe('Index reconcile', () => {
     const stats = ix.reconcile();
 
     expect(stats).toMatchObject({ added: 0, changed: 1, removed: 0, rebuilt: false });
-    expect(rows(ix, "select title from notes where path = 'anchors/topic/Topic 3.md'")).toEqual([{ title: 'Topic Three Renamed' }]);
+    expect(rows(ix, "select title from notes where path = 'anchors/topic/Topic 3.md'")).toEqual([
+      { title: 'Topic Three Renamed' },
+    ]);
     expect(ftsPaths(ix, 'floodlights')).toEqual(['anchors/topic/Topic 3.md']);
     expect(rows(ix, "select name_lc from aliases where path = 'anchors/topic/Topic 3.md'")).toEqual([
       { name_lc: 'topic three renamed' },
@@ -168,7 +184,7 @@ describe('Index reconcile', () => {
     writeTen();
     const ix = openIndex();
     ix.reconcile();
-    const id = (rows<{ id: string }>(ix, "select id from notes where path = 'anchors/topic/Topic 5.md'")[0]!).id;
+    const id = rows<{ id: string }>(ix, "select id from notes where path = 'anchors/topic/Topic 5.md'")[0]!.id;
 
     mkdirSync(join(base.path, 'notes'), { recursive: true });
     renameSync(join(base.path, 'anchors/topic/Topic 5.md'), join(base.path, 'notes/Moved five.md'));
@@ -185,7 +201,10 @@ describe('Index reconcile', () => {
 
   it('deleted file is removed from all tables', () => {
     writeTen();
-    write('notes/Gate plan.md', anchor('Gate plan', 'aliases:\n  - Turnstile rota\n').replace('body text', 'zeppelin [[Topic 1]]'));
+    write(
+      'notes/Gate plan.md',
+      anchor('Gate plan', 'aliases:\n  - Turnstile rota\n').replace('body text', 'zeppelin [[Topic 1]]'),
+    );
     const ix = openIndex();
     ix.reconcile();
     expect(ftsPaths(ix, 'zeppelin')).toEqual(['notes/Gate plan.md']);
@@ -231,11 +250,13 @@ describe('Index reconcile', () => {
     const before = counts();
 
     // 3 of 11 changed (27%): incremental.
-    for (const i of [0, 1, 2]) write(`anchors/topic/Topic ${i}.md`, anchor(`Topic ${i}`).replace('body text', 'revised once'));
+    for (const i of [0, 1, 2])
+      write(`anchors/topic/Topic ${i}.md`, anchor(`Topic ${i}`).replace('body text', 'revised once'));
     expect(ix.reconcile()).toMatchObject({ changed: 3, rebuilt: false });
 
     // 4 of 11 changed (36%): rebuild.
-    for (const i of [3, 4, 5, 6]) write(`anchors/topic/Topic ${i}.md`, anchor(`Topic ${i}`).replace('body text', 'revised twice'));
+    for (const i of [3, 4, 5, 6])
+      write(`anchors/topic/Topic ${i}.md`, anchor(`Topic ${i}`).replace('body text', 'revised twice'));
     const stats = ix.reconcile();
     expect(stats).toMatchObject({ scanned: 11, added: 0, changed: 4, removed: 0, rebuilt: true });
     expect(counts()).toEqual(before);
@@ -311,7 +332,10 @@ describe('Index recovery', () => {
   const indexDir = () => join(base.path, '.kiln', 'index');
   const writeGarbage = () => {
     mkdirSync(indexDir(), { recursive: true });
-    writeFileSync(join(indexDir(), 'kiln.sqlite'), 'this is not a sqlite database, it is Northwind Arena noise\n'.repeat(40));
+    writeFileSync(
+      join(indexDir(), 'kiln.sqlite'),
+      'this is not a sqlite database, it is Northwind Arena noise\n'.repeat(40),
+    );
     writeFileSync(join(indexDir(), 'kiln.sqlite-wal'), 'stale wal\n');
   };
 

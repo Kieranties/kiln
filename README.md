@@ -17,31 +17,16 @@ Markdown files in a folder (a *base*) are the truth. kiln keeps a rebuildable SQ
 
 ## Install
 
-Requires Node 24 or later (kiln uses `node:sqlite`).
+Requires Node 24 or later (kiln uses `node:sqlite`). kiln ships as two parts that must stay in step:
 
-**Install from the main checkout, not a git worktree.** The `npm link` and the plugin point at the folder you install from. If that folder is a worktree and the worktree is cleaned up, kiln breaks in every session.
+- **The `kiln` command**: the `@kieranties/kiln` package on GitHub Packages, also attached as a `.tgz` to each [GitHub Release](https://github.com/Kieranties/kiln/releases).
+- **The Claude Code plugin**: the `kiln` plugin in this repo's marketplace (`claude plugin marketplace add Kieranties/kiln`).
 
-1. **Add a `.npmrc`** to the repo root containing:
+The plugin in `plugin/` registers the `kiln mcp` server, the capture, triage, recall and review skills, and two hooks: the write guard and a session orientation line. Both the hooks and the MCP server run the `kiln` command on your PATH.
 
-   ```
-   registry=https://registry.npmjs.org/
-   ```
+[Getting started](docs/getting-started.md) has the full steps: the GitHub Packages token, both install routes, plugin auto-update, and updating.
 
-   Add this file by hand, because a permission rule blocks agents from writing it ([#56](https://github.com/Kieranties/kiln/issues/56)).
-
-2. Build, link and install the plugin:
-
-   ```sh
-   npm install
-   npm run build
-   npm link                                    # puts the `kiln` binary on your PATH
-   claude plugin marketplace add <repo path>   # this repo's .claude-plugin/marketplace.json
-   claude plugin install kiln@kiln
-   ```
-
-The plugin in `plugin/` registers the `kiln mcp` server, the capture, triage, recall and review skills, and two hooks: the write guard and a session orientation line. Both the hooks and the MCP server run the `kiln` binary on your PATH.
-
-**Rebuild and relink together.** The plugin and the linked binary must match. After pulling or changing kiln, run `npm run build && npm link` and update the plugin in the same step. If the hooks call a `kiln` that lacks a command they expect, they fail. A mismatched binary can block every Write and Edit: an older binary without the `hook` command exits with code 2, which Claude Code treats as "block this tool call".
+**Update both together.** If the hooks call a `kiln` that lacks a command they expect, they fail. A mismatched command can block every Write and Edit: an older command without the `hook` command exits with code 2, which Claude Code treats as "block this tool call".
 
 ## Configure
 
@@ -112,6 +97,54 @@ The base for `validate`, `reindex` and `status` follows the resolution order abo
 Every write to a base goes through kiln, so notes stay valid and indexed. The guard is a PreToolUse hook that blocks Claude's **Write, Edit, MultiEdit and NotebookEdit** on any file inside a base, and names the kiln tools to use instead. It follows junctions and symlinks, and reads Git Bash `/x/...` paths as drive paths.
 
 It does **not** cover Bash. A shell command can still write into a base.
+
+## Developing kiln
+
+1. **Add a `.npmrc`** to the repo root containing:
+
+   ```
+   registry=https://registry.npmjs.org/
+   ```
+
+   Add this file by hand, because a permission rule blocks agents from writing it ([#56](https://github.com/Kieranties/kiln/issues/56)).
+
+2. Run `npm install`. `npm test` builds and runs the suite, and the checks below cover the rest.
+
+**Try a change before it merges** by installing the PR's build, not your checkout. Each PR's `package` job uploads its prerelease `.tgz` as the `package` artifact:
+
+```sh
+run=$(gh run list --repo Kieranties/kiln --branch <branch> --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run download "$run" --repo Kieranties/kiln --name package --dir /tmp/kiln-pr
+npm install -g /tmp/kiln-pr/kieranties-kiln-*.tgz --registry https://registry.npmjs.org/
+claude plugin marketplace remove kiln
+claude plugin marketplace add Kieranties/kiln#<branch>
+claude plugin install kiln@kiln
+```
+
+To go back, reinstall the release (`npm install -g @kieranties/kiln@latest --registry https://registry.npmjs.org/`) and re-add the marketplace as `Kieranties/kiln`.
+
+### Versioning and releases
+
+Versions come from [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) (`nerdbank-gitversioning`).
+
+- `version.json` holds the major and minor version. The patch is the git height: the number of commits since `version.json` last changed.
+- `main` is the release branch. Each green commit on `main` publishes `<major>.<minor>.<height>`: the `release` job tags `v<version>`, publishes `@kieranties/kiln` to GitHub Packages, and creates a GitHub Release with the `.tgz`.
+- PRs build, test and pack a prerelease (`<version>-g<sha>`, downloadable from the run's `package` artifact), but never publish.
+- To start a new minor or major line, change `version` in `version.json` in a PR.
+- The committed `package.json` version is a placeholder (`0.0.0-placeholder`). CI stamps the real version before packing. Stamping needs a .NET 8 or later runtime and the full git history; building and testing need neither. To see the version locally: `npx nbgv get-version`.
+- The plugin has no version. Claude Code uses the commit SHA, so the plugin updates whenever `main` moves.
+
+`main` only changes through a squash-merged PR whose `lint`, `test (ubuntu-latest)`, `test (windows-latest)` and `package` checks pass. `v*` tags cannot be moved or deleted. The rules live in `.github/rulesets/`; apply changes with `scripts/apply-repo-settings.sh`.
+
+### Lint, format and type check
+
+```sh
+npm run lint          # oxlint with type-aware rules
+npm run format        # Prettier; format:check only checks
+npm run typecheck     # tsc over src, tests and scripts
+```
+
+CI runs all three, plus `claude plugin validate` on the marketplace and the plugin. Markdown and `tests/fixtures/` are not formatted: prose is hand-wrapped, and fixtures must stay byte-identical.
 
 ## Checks
 
@@ -215,4 +248,9 @@ Principles: knowledge is reachable from any session; one inbox has many feeders;
 - [Open issues](https://github.com/Kieranties/kiln/issues): decisions to verify, follow-ups and checks still to run
 - [Vision](docs/vision.md): the model, architecture and flow (current direction)
 - [KB core spec (lean v1)](docs/specs/2026-10-10-kb-core-design.md) and [implementation plan](docs/plans/2026-10-10-kb-core-v1.md)
+- [Build and release design](docs/specs/2026-10-11-build-and-release-design.md)
 - [Decision log](docs/context/2026-10-10-decision-log.md) and [research](docs/research/)
+
+## Licence
+
+[MIT](LICENSE).

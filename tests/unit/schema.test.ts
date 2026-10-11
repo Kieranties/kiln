@@ -15,7 +15,13 @@ const valid = (): Fields => ({
   confidence: 'verbatim',
 });
 
-const decision = (): Fields => ({ ...valid(), type: 'decision', kind: undefined, status: 'proposed', decided_on: '2026-10-10' });
+const decision = (): Fields => ({
+  ...valid(),
+  type: 'decision',
+  kind: undefined,
+  status: 'proposed',
+  decided_on: '2026-10-10',
+});
 const source = (): Fields => ({
   type: 'source',
   kind: 'jira',
@@ -24,7 +30,8 @@ const source = (): Fields => ({
   triage: 'pending',
 });
 
-const issuesFor = (fields: Fields, claudeWritten = false): ValidationIssue[] => validateFields(fields, { claudeWritten });
+const issuesFor = (fields: Fields, claudeWritten = false): ValidationIssue[] =>
+  validateFields(fields, { claudeWritten });
 
 /** Asserts exactly one issue on `field`, with a non-empty message and hint. */
 function expectIssue(issues: ValidationIssue[], field: string): ValidationIssue {

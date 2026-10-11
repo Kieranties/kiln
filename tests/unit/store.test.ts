@@ -1,5 +1,14 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -44,7 +53,9 @@ function fieldsOf(rel: string): Fields {
 }
 
 function rev(rel: string): string {
-  return createHash('sha256').update(readFileSync(abs(rel))).digest('hex');
+  return createHash('sha256')
+    .update(readFileSync(abs(rel)))
+    .digest('hex');
 }
 
 /** A hand-written file, indexed by an explicit reconcile. */
@@ -134,11 +145,27 @@ describe('capture', () => {
 
   it('capturing the same kind+sourceId updates the existing source and returns it to the inbox', () => {
     const s = store();
-    const first = s.capture({ kind: 'jira', title: 'NWA-42 Turnstile outage', content: 'Status: open\n', sourceId: 'NWA-42' });
-    s.markSource({ idOrPath: first.path, ifRevision: first.revision, triage: 'linked', outcome: 'update-work-item', linkedTo: ['[[Fix turnstile firmware]]'] });
+    const first = s.capture({
+      kind: 'jira',
+      title: 'NWA-42 Turnstile outage',
+      content: 'Status: open\n',
+      sourceId: 'NWA-42',
+    });
+    s.markSource({
+      idOrPath: first.path,
+      ifRevision: first.revision,
+      triage: 'linked',
+      outcome: 'update-work-item',
+      linkedTo: ['[[Fix turnstile firmware]]'],
+    });
 
     clock = new Date('2026-10-12T12:00:00.000Z');
-    const again = s.capture({ kind: 'jira', title: 'NWA-42 renamed upstream', content: 'Status: resolved\nFixed by firmware 4.2.\n', sourceId: 'NWA-42' });
+    const again = s.capture({
+      kind: 'jira',
+      title: 'NWA-42 renamed upstream',
+      content: 'Status: resolved\nFixed by firmware 4.2.\n',
+      sourceId: 'NWA-42',
+    });
 
     expect(again.created).toBe(false);
     expect(again.path).toBe(first.path);
@@ -162,15 +189,30 @@ describe('capture', () => {
 
   it('a repeat capture with an identical body leaves triage alone', () => {
     const s = store();
-    const first = s.capture({ kind: 'jira', title: 'NWA-42 Turnstile outage', content: 'Status: open\n', sourceId: 'NWA-42' });
+    const first = s.capture({
+      kind: 'jira',
+      title: 'NWA-42 Turnstile outage',
+      content: 'Status: open\n',
+      sourceId: 'NWA-42',
+    });
     s.markSource({ idOrPath: first.path, ifRevision: first.revision, triage: 'dismissed', outcome: 'dismiss' });
 
     clock = new Date('2026-10-12T12:00:00.000Z');
-    const again = s.capture({ kind: 'jira', title: 'NWA-42 Turnstile outage', content: 'Status: open\n', sourceId: 'NWA-42' });
+    const again = s.capture({
+      kind: 'jira',
+      title: 'NWA-42 Turnstile outage',
+      content: 'Status: open\n',
+      sourceId: 'NWA-42',
+    });
 
     expect(again.created).toBe(false);
     const f = fieldsOf(again.path);
-    expect(f).toMatchObject({ triage: 'dismissed', triage_outcome: 'dismiss', captured_at: '2026-10-12T12:00:00.000Z', updated: '2026-10-12' });
+    expect(f).toMatchObject({
+      triage: 'dismissed',
+      triage_outcome: 'dismiss',
+      captured_at: '2026-10-12T12:00:00.000Z',
+      updated: '2026-10-12',
+    });
     expect(ix.inbox()).toEqual([]);
   });
 
@@ -180,7 +222,12 @@ describe('capture', () => {
       '---\r\ntype: source\r\nkind: slack\r\ntitle: Gate queue chatter\r\ncaptured_at: 2026-09-28\r\n' +
         'triage: pending\r\nsource_id: C42-1\r\ndedupe_key: "slack:C42-1"\r\nupdated: 2026-09-28\r\n---\r\nold\r\n',
     );
-    const r = store().capture({ kind: 'slack', title: 'Gate queue chatter', content: 'line one\nline two\n', sourceId: 'C42-1' });
+    const r = store().capture({
+      kind: 'slack',
+      title: 'Gate queue chatter',
+      content: 'line one\nline two\n',
+      sourceId: 'C42-1',
+    });
     expect(r.created).toBe(false);
     expect(read(r.path)).toBe(
       '---\r\ntype: source\r\nkind: slack\r\ntitle: Gate queue chatter\r\ncaptured_at: "2026-10-10T12:00:00.000Z"\r\n' +
@@ -194,7 +241,12 @@ describe('capture', () => {
       rel,
       '---\ntype: source\nkind: github\ntitle: Scanner driver PR\ncaptured_at: 2026-09-30\ntriage: linked\nsource_id: PR-7\ndedupe_key: "github:PR-7"\n---',
     );
-    const r = store().capture({ kind: 'github', title: 'Scanner driver PR', content: 'Merged into main.\n', sourceId: 'PR-7' });
+    const r = store().capture({
+      kind: 'github',
+      title: 'Scanner driver PR',
+      content: 'Merged into main.\n',
+      sourceId: 'PR-7',
+    });
 
     expect(r.created).toBe(false);
     const text = read(rel);
@@ -244,21 +296,30 @@ describe('createNote', () => {
 
     const e = kilnError(() => s.createNote(workNote('Replace the Turnstile firmware')));
     expect(e.code).toBe('conflict');
-    expect(e.details).toMatchObject({ reason: 'duplicate', existing: { id: first.id, path: first.path, title: 'Replace turnstile firmware', type: 'work' } });
+    expect(e.details).toMatchObject({
+      reason: 'duplicate',
+      existing: { id: first.id, path: first.path, title: 'Replace turnstile firmware', type: 'work' },
+    });
     expect(readdirSync(abs('work/2026'))).toEqual(['Replace turnstile firmware.md']);
 
     // A different type with the same title is not a duplicate.
-    expect(s.createNote({ ...workNote('Replace turnstile firmware'), type: 'reference', kind: 'doc' }).created).toBe(true);
+    expect(s.createNote({ ...workNote('Replace turnstile firmware'), type: 'reference', kind: 'doc' }).created).toBe(
+      true,
+    );
   });
 
   it('createNote raises duplicate conflict for the same sources and a similar title', () => {
     const s = store();
     const first = s.createNote(workNote('Turnstile firmware rejects mobile tickets', { sources: ['[[A]]', '[[B]]'] }));
     // Similarity 4/6: under 0.85, but the sources set is the same (order and case aside).
-    const e = kilnError(() => s.createNote(workNote('Turnstile firmware rejects tickets at gates', { sources: ['[[b]]', '[[A]]'] })));
+    const e = kilnError(() =>
+      s.createNote(workNote('Turnstile firmware rejects tickets at gates', { sources: ['[[b]]', '[[A]]'] })),
+    );
     expect(e.details).toMatchObject({ reason: 'duplicate', existing: { path: first.path } });
     // Different sources: no conflict at that similarity.
-    expect(s.createNote(workNote('Turnstile firmware rejects tickets at gates', { sources: ['[[C]]'] })).created).toBe(true);
+    expect(s.createNote(workNote('Turnstile firmware rejects tickets at gates', { sources: ['[[C]]'] })).created).toBe(
+      true,
+    );
   });
 
   it('createNote treats equal titles made only of stopwords as duplicates', () => {
@@ -279,7 +340,10 @@ describe('createNote', () => {
     s.createNote(workNote('Stewarding rota'));
     // Written by hand after the last reconcile; the index does not know it yet.
     mkdirSync(abs('notes'), { recursive: true });
-    writeFileSync(abs('notes/Radio channel plan.md'), '---\ntype: work\ntitle: Radio channel plan\n---\nChannels per stand.\n');
+    writeFileSync(
+      abs('notes/Radio channel plan.md'),
+      '---\ntype: work\ntitle: Radio channel plan\n---\nChannels per stand.\n',
+    );
     ixNow += 10_001;
 
     const e = kilnError(() => s.createNote(workNote('Radio channel plan')));
@@ -290,7 +354,10 @@ describe('createNote', () => {
   it('createNote with newReason bypasses the duplicate check', () => {
     const s = store();
     const first = s.createNote(workNote('Replace turnstile firmware'));
-    const second = s.createNote({ ...workNote('Replace turnstile firmware'), newReason: 'Second stand has a separate rollout' });
+    const second = s.createNote({
+      ...workNote('Replace turnstile firmware'),
+      newReason: 'Second stand has a separate rollout',
+    });
     expect(second.created).toBe(true);
     expect(second.id).not.toBe(first.id);
     expect(second.path).toBe('work/2026/Replace turnstile firmware (2).md');
@@ -298,7 +365,13 @@ describe('createNote', () => {
 
   it('review flag fields round-trip (review: needed, review_reason)', () => {
     const s = store();
-    const r = s.createNote(workNote('Gate 4 scanner fault', { confidence: 'inferred', review: 'needed', review_reason: 'inferred from a Slack thread' }));
+    const r = s.createNote(
+      workNote('Gate 4 scanner fault', {
+        confidence: 'inferred',
+        review: 'needed',
+        review_reason: 'inferred from a Slack thread',
+      }),
+    );
     const text = read(r.path);
     expect(text).toMatch(/\nreview: needed\nreview_reason: inferred from a Slack thread\n---\n/);
     expect(ix.status().needsReview).toBe(1);
@@ -360,7 +433,10 @@ describe('updateNote', () => {
     const a = original.split('\r\n');
     const b = after.split('\r\n');
     expect(after.replace(/\r\n/g, '')).not.toContain('\n');
-    const changed = a.slice(0, 19).map((line, i) => (line === b[i] ? null : i)).filter((i) => i !== null);
+    const changed = a
+      .slice(0, 19)
+      .map((line, i) => (line === b[i] ? null : i))
+      .filter((i) => i !== null);
     expect(changed).toEqual([5, 7]);
     expect(b[5]).toBe('status: done # was blocked');
     expect(b[7]).toBe('updated: 2026-10-10');
@@ -368,7 +444,12 @@ describe('updateNote', () => {
     expect(b.length).toBe(a.length + 1);
     expect(b[19]).toBe('- 2026-10-10: firmware 4.2 deployed.');
     expect(b.slice(20)).toEqual(a.slice(19));
-    expect(r).toEqual({ id: '01J9ZK3Q7V2M8N4P6R0S1T2WRK', path: 'work/2026/Fix turnstile firmware.md', revision: rev(r.path), created: false });
+    expect(r).toEqual({
+      id: '01J9ZK3Q7V2M8N4P6R0S1T2WRK',
+      path: 'work/2026/Fix turnstile firmware.md',
+      revision: rev(r.path),
+      created: false,
+    });
     expect(ix.get(r.id!).fields.status).toBe('done');
   });
 
@@ -397,7 +478,13 @@ describe('updateNote', () => {
   it('updateNote on a note with unparseable frontmatter raises validation and does not write', () => {
     const text = '---\ntype: work\ntitle: [unclosed\n---\nBody.\n';
     handWrite('work/2026/Broken.md', text);
-    const e = kilnError(() => store().updateNote({ idOrPath: 'work/2026/Broken.md', ifRevision: rev('work/2026/Broken.md'), set: { status: 'done' } }));
+    const e = kilnError(() =>
+      store().updateNote({
+        idOrPath: 'work/2026/Broken.md',
+        ifRevision: rev('work/2026/Broken.md'),
+        set: { status: 'done' },
+      }),
+    );
     expect(e.code).toBe('validation');
     expect(read('work/2026/Broken.md')).toBe(text);
     expect(readdirSync(abs('work/2026'))).toEqual(['Broken.md']);
@@ -431,14 +518,21 @@ describe('updateNote', () => {
   });
 
   it('updateNote of an unknown note raises not_found', () => {
-    expect(kilnError(() => store().updateNote({ idOrPath: 'notes/Nope.md', ifRevision: 'x', set: { status: 'done' } })).code).toBe('not_found');
+    expect(
+      kilnError(() => store().updateNote({ idOrPath: 'notes/Nope.md', ifRevision: 'x', set: { status: 'done' } })).code,
+    ).toBe('not_found');
   });
 });
 
 describe('markSource', () => {
   it('markSource records triage, triage_outcome and linked_to', () => {
     const s = store();
-    const c = s.capture({ kind: 'web', title: 'Stadium news', content: 'New gates open in spring.', url: 'https://news.example/gates' });
+    const c = s.capture({
+      kind: 'web',
+      title: 'Stadium news',
+      content: 'New gates open in spring.',
+      url: 'https://news.example/gates',
+    });
     const r = s.markSource({
       idOrPath: c.path,
       ifRevision: c.revision,
@@ -461,17 +555,32 @@ describe('markSource', () => {
     const s = store();
     const c = s.capture({ kind: 'web', title: 'Stadium news', content: 'x' });
     const before = read(c.path);
-    expect(kilnError(() => s.markSource({ idOrPath: c.path, ifRevision: c.revision, triage: 'linked', outcome: 'ignore' })).code).toBe('validation');
     expect(
-      kilnError(() => s.markSource({ idOrPath: c.path, ifRevision: c.revision, triage: 'pending' as 'linked', outcome: 'dismiss' })).code,
+      kilnError(() => s.markSource({ idOrPath: c.path, ifRevision: c.revision, triage: 'linked', outcome: 'ignore' }))
+        .code,
     ).toBe('validation');
     expect(
-      kilnError(() => s.markSource({ idOrPath: c.path, ifRevision: c.revision, triage: 'linked', outcome: 'link-to-anchor', linkedTo: ['Turnstile Network'] })).code,
+      kilnError(() =>
+        s.markSource({ idOrPath: c.path, ifRevision: c.revision, triage: 'pending' as 'linked', outcome: 'dismiss' }),
+      ).code,
+    ).toBe('validation');
+    expect(
+      kilnError(() =>
+        s.markSource({
+          idOrPath: c.path,
+          ifRevision: c.revision,
+          triage: 'linked',
+          outcome: 'link-to-anchor',
+          linkedTo: ['Turnstile Network'],
+        }),
+      ).code,
     ).toBe('validation');
     expect(read(c.path)).toBe(before);
 
     const w = s.createNote(workNote('Fix turnstile firmware'));
-    const e = kilnError(() => s.markSource({ idOrPath: w.path, ifRevision: w.revision, triage: 'dismissed', outcome: 'dismiss' }));
+    const e = kilnError(() =>
+      s.markSource({ idOrPath: w.path, ifRevision: w.revision, triage: 'dismissed', outcome: 'dismiss' }),
+    );
     expect(e.code).toBe('validation');
     expect(fieldsOf(w.path)).not.toHaveProperty('triage');
   });
@@ -479,7 +588,11 @@ describe('markSource', () => {
   it('markSource with a stale revision raises conflict', () => {
     const s = store();
     const c = s.capture({ kind: 'web', title: 'Stadium news', content: 'x' });
-    expect(kilnError(() => s.markSource({ idOrPath: c.path, ifRevision: '0'.repeat(64), triage: 'dismissed', outcome: 'dismiss' })).details).toMatchObject({
+    expect(
+      kilnError(() =>
+        s.markSource({ idOrPath: c.path, ifRevision: '0'.repeat(64), triage: 'dismissed', outcome: 'dismiss' }),
+      ).details,
+    ).toMatchObject({
       reason: 'stale_revision',
     });
   });
@@ -526,7 +639,6 @@ describe('atomic writes', () => {
     expect(readdirSync(abs('sources/note'))).toEqual(['2026-10-10 Gate idea.md']);
   });
 });
-
 
 describe('pathKey', () => {
   it('normalises slashes, and case on Windows only', () => {

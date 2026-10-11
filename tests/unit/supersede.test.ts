@@ -1,5 +1,14 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -41,7 +50,9 @@ function fieldsOf(rel: string): Fields {
 }
 
 function rev(rel: string): string {
-  return createHash('sha256').update(readFileSync(abs(rel))).digest('hex');
+  return createHash('sha256')
+    .update(readFileSync(abs(rel)))
+    .digest('hex');
 }
 
 function thrown(fn: () => unknown): unknown {
@@ -114,7 +125,11 @@ describe('supersede', () => {
     const old = oldDecision(store());
     clock = new Date('2026-10-10T12:00:00.000Z');
 
-    const r = store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) });
+    const r = store().supersede({
+      oldIdOrPath: old.id!,
+      ifRevision: old.revision,
+      newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+    });
 
     expect(r.created.created).toBe(true);
     expect(r.created.path).toBe(NEW_PATH);
@@ -164,7 +179,13 @@ describe('supersede', () => {
     });
     const before = read(work.path);
 
-    const e = kilnError(() => s.supersede({ oldIdOrPath: work.path, ifRevision: work.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }));
+    const e = kilnError(() =>
+      s.supersede({
+        oldIdOrPath: work.path,
+        ifRevision: work.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
+    );
 
     expect(e.code).toBe('validation');
     expect(e.message).toContain('decision');
@@ -176,12 +197,20 @@ describe('supersede', () => {
     const s = store();
     const old = oldDecision(s);
     clock = new Date('2026-10-10T12:00:00.000Z');
-    s.supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) });
+    s.supersede({
+      oldIdOrPath: old.id!,
+      ifRevision: old.revision,
+      newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+    });
     const before = read(OLD_PATH);
     const files = readdirSync(abs('decisions/2026')).sort();
 
     const e = kilnError(() =>
-      s.supersede({ oldIdOrPath: old.id!, ifRevision: rev(OLD_PATH), newDecision: decision('Season card entry for away fans', { decided_on: '2026-10-10' }) }),
+      s.supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: rev(OLD_PATH),
+        newDecision: decision('Season card entry for away fans', { decided_on: '2026-10-10' }),
+      }),
     );
 
     expect(e.code).toBe('validation');
@@ -196,7 +225,13 @@ describe('supersede', () => {
     const old = oldDecision(s);
     const before = read(OLD_PATH);
 
-    const e = kilnError(() => s.supersede({ oldIdOrPath: old.id!, ifRevision: '0'.repeat(64), newDecision: decision(NEW, { decided_on: '2026-10-09' }) }));
+    const e = kilnError(() =>
+      s.supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: '0'.repeat(64),
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
+    );
 
     expect(e.code).toBe('conflict');
     expect(e.details).toEqual({ reason: 'stale_revision', current: old.revision });
@@ -207,7 +242,11 @@ describe('supersede', () => {
 
   it('an unknown old decision raises not_found and creates nothing', () => {
     const e = kilnError(() =>
-      store().supersede({ oldIdOrPath: 'decisions/2026/Nope.md', ifRevision: 'x', newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store().supersede({
+        oldIdOrPath: 'decisions/2026/Nope.md',
+        ifRevision: 'x',
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
     expect(e.code).toBe('not_found');
     expect(existsSync(abs('decisions'))).toBe(false);
@@ -221,7 +260,11 @@ describe('supersede', () => {
     const io = failingRename((n) => (n >= 2 && n <= 6 ? errno('EPERM') : undefined));
 
     const e = kilnError(() =>
-      store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store({ rename: io.rename }).supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e.code).toBe('locked_file');
@@ -238,7 +281,11 @@ describe('supersede', () => {
     const io = failingRename((n) => (n === 2 ? injected : undefined));
 
     const e = thrown(() =>
-      store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store({ rename: io.rename }).supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e).toBe(injected);
@@ -257,7 +304,11 @@ describe('supersede', () => {
     const old = oldDecision(store());
     const io = failingRename((n) => (n === 2 ? errno('EIO') : undefined));
     thrown(() =>
-      store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store({ rename: io.rename }).supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
     expect(readdirSync(abs('.kiln/trash'))).toHaveLength(1);
 
@@ -270,7 +321,11 @@ describe('supersede', () => {
     const old = oldDecision(store());
     const io = failingRename((n) => (n === 2 || n === 5 ? errno('EIO') : undefined));
     const s = store({ rename: io.rename });
-    const input = { oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) };
+    const input = {
+      oldIdOrPath: old.id!,
+      ifRevision: old.revision,
+      newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+    };
     thrown(() => s.supersede(input));
     thrown(() => s.supersede(input));
     expect(readdirSync(abs('.kiln/trash')).sort()).toEqual([
@@ -287,7 +342,11 @@ describe('supersede', () => {
     const io = failingRename((n) => (n === 2 ? injected : n >= 3 && n <= 6 ? errno('EPERM') : undefined));
 
     const e = thrown(() =>
-      store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store({ rename: io.rename }).supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e).toBe(injected);
@@ -307,12 +366,18 @@ describe('supersede', () => {
     const io = failingRename((n) => (n === 2 ? injected : n >= 3 ? errno('EACCES') : undefined));
 
     const e = thrown(() =>
-      store({ rename: io.rename }).supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store({ rename: io.rename }).supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e).toBe(injected);
     expect(io.calls).toBe(7);
-    expect((e as { details?: unknown }).details).toMatchObject({ rollback: { path: NEW_PATH, error: expect.stringContaining('is locked') } });
+    expect((e as { details?: unknown }).details).toMatchObject({
+      rollback: { path: NEW_PATH, error: expect.stringContaining('is locked') },
+    });
     // The move failed, so the new file is still in the vault, but the index has rolled back and the old file is intact.
     expect(existsSync(abs(NEW_PATH))).toBe(true);
     expect(kilnError(() => ix.get(NEW_PATH)).code).toBe('not_found');
@@ -330,7 +395,11 @@ describe('supersede', () => {
     };
 
     const e = thrown(() =>
-      store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store().supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e).toBe(injected);
@@ -353,7 +422,11 @@ describe('supersede', () => {
     };
 
     const e = thrown(() =>
-      store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }),
+      store().supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e).toBe(injected);
@@ -374,7 +447,11 @@ describe('supersede', () => {
     });
 
     const e = kilnError(() =>
-      s.supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision('Mobile tickets [draft]', { decided_on: '2026-10-09' }) }),
+      s.supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision('Mobile tickets [draft]', { decided_on: '2026-10-09' }),
+      }),
     );
 
     expect(e.code).toBe('validation');
@@ -388,7 +465,11 @@ describe('supersede', () => {
   it('a new decision without a title raises validation on title and writes nothing', () => {
     const old = oldDecision(store());
     const e = kilnError(() =>
-      store().supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { title: undefined, decided_on: '2026-10-09' }) }),
+      store().supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { title: undefined, decided_on: '2026-10-09' }),
+      }),
     );
     expect(e.code).toBe('validation');
     expect((e.details as { issues: { field: string }[] }).issues.map((i) => i.field)).toEqual(['title']);
@@ -397,23 +478,39 @@ describe('supersede', () => {
 
   it('the duplicate check excludes the superseded decision, given by path in another case and with backslashes', () => {
     const old = oldDecision(store());
-    const given = process.platform === 'win32' ? OLD_PATH.toUpperCase().replace(/\//g, '\\') : OLD_PATH.replace(/\//g, '\\');
+    const given =
+      process.platform === 'win32' ? OLD_PATH.toUpperCase().replace(/\//g, '\\') : OLD_PATH.replace(/\//g, '\\');
 
     // Near-identical to the old title ("the" is a stopword): a duplicate of anything but the decision it replaces.
-    const r = store().supersede({ oldIdOrPath: given, ifRevision: old.revision, newDecision: decision('Paper tickets for the away fans', { decided_on: '2026-10-09' }) });
+    const r = store().supersede({
+      oldIdOrPath: given,
+      ifRevision: old.revision,
+      newDecision: decision('Paper tickets for the away fans', { decided_on: '2026-10-09' }),
+    });
 
     expect(r.created.path).toBe('decisions/2026/2026-10-09 Paper tickets for the away fans.md');
     expect(r.superseded.path).toBe(OLD_PATH);
-    expect(fieldsOf(OLD_PATH).superseded_by).toEqual(['[[2026-10-09 Paper tickets for the away fans|Paper tickets for the away fans]]']);
+    expect(fieldsOf(OLD_PATH).superseded_by).toEqual([
+      '[[2026-10-09 Paper tickets for the away fans|Paper tickets for the away fans]]',
+    ]);
   });
 
   it('the duplicate check still runs against other decisions', () => {
     const s = store();
     const old = oldDecision(s);
-    const other = s.createNote({ type: 'decision', ...decision(NEW, { decided_on: '2026-09-15', sources: ['[[2026-09-14 Away fan survey]]'] }) });
+    const other = s.createNote({
+      type: 'decision',
+      ...decision(NEW, { decided_on: '2026-09-15', sources: ['[[2026-09-14 Away fan survey]]'] }),
+    });
     const before = read(OLD_PATH);
 
-    const e = kilnError(() => s.supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: '2026-10-09' }) }));
+    const e = kilnError(() =>
+      s.supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: '2026-10-09' }),
+      }),
+    );
 
     expect(e.code).toBe('conflict');
     expect(e.details).toMatchObject({ reason: 'duplicate', existing: { path: other.path } });
@@ -425,7 +522,13 @@ describe('supersede', () => {
     const s = store();
     const old = oldDecision(s);
     const before = read(OLD_PATH);
-    const e = kilnError(() => s.supersede({ oldIdOrPath: old.id!, ifRevision: old.revision, newDecision: decision(NEW, { decided_on: undefined }) }));
+    const e = kilnError(() =>
+      s.supersede({
+        oldIdOrPath: old.id!,
+        ifRevision: old.revision,
+        newDecision: decision(NEW, { decided_on: undefined }),
+      }),
+    );
     expect(e.code).toBe('validation');
     expect(e.message).toContain('decided_on');
     expect(readdirSync(abs('decisions/2026'))).toEqual([`2026-03-02 ${OLD}.md`]);
@@ -441,13 +544,20 @@ describe('supersede', () => {
     writeFileSync(abs(rel), text);
     ix.reconcile();
 
-    const r = s.supersede({ oldIdOrPath: rel, ifRevision: rev(rel), newDecision: decision('Tiered season ticket pricing', { decided_on: '2026-10-09' }) });
+    const r = s.supersede({
+      oldIdOrPath: rel,
+      ifRevision: rev(rel),
+      newDecision: decision('Tiered season ticket pricing', { decided_on: '2026-10-09' }),
+    });
 
     expect(fieldsOf(r.created.path)).toMatchObject({
       supersedes: ['[[2025-11-20 Season ticket pricing]]'],
       review_reason: 'supersedes 2025-11-20 Season ticket pricing',
     });
     expect(r.superseded.id).toBeNull();
-    expect(fieldsOf(rel)).toMatchObject({ status: 'superseded', superseded_by: ['[[2026-10-09 Tiered season ticket pricing|Tiered season ticket pricing]]'] });
+    expect(fieldsOf(rel)).toMatchObject({
+      status: 'superseded',
+      superseded_by: ['[[2026-10-09 Tiered season ticket pricing|Tiered season ticket pricing]]'],
+    });
   });
 });

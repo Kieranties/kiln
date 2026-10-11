@@ -97,7 +97,15 @@ export function scoreTriage(basePath: string, key: AnswerKey): TriageScore {
     const linkedTo = strings(f.linked_to);
     const outcome = typeof f.triage_outcome === 'string' && f.triage_outcome !== '' ? f.triage_outcome : '(none)';
     const actual = path === null ? 'missing' : f.triage === 'pending' ? 'pending' : outcome;
-    captures.push({ file: c.file, path, expected: c.expected_outcome, actual, correct: actual === c.expected_outcome, linkedTo, targets: c.targets });
+    captures.push({
+      file: c.file,
+      path,
+      expected: c.expected_outcome,
+      actual,
+      correct: actual === c.expected_outcome,
+      linkedTo,
+      targets: c.targets,
+    });
 
     const targetPaths = new Set(c.targets.filter((t) => t.endsWith('.md')).map(norm));
     for (const link of linkedTo) {
@@ -169,7 +177,9 @@ function main(argv: string[]): number {
     const score = scoreTriage(resolve(argv[0]!), key);
     process.stdout.write(`${formatScore(score)}\n`);
     const pass = score.accuracy >= PASS_ACCURACY;
-    process.stdout.write(`\n${pass ? 'PASS' : 'FAIL'}: accuracy ${score.accuracy.toFixed(2)} (target >= ${PASS_ACCURACY.toFixed(2)})\n`);
+    process.stdout.write(
+      `\n${pass ? 'PASS' : 'FAIL'}: accuracy ${score.accuracy.toFixed(2)} (target >= ${PASS_ACCURACY.toFixed(2)})\n`,
+    );
     return pass ? 0 : 1;
   } catch (e) {
     process.stderr.write(`ERROR: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}\n`);

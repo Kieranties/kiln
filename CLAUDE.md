@@ -1,6 +1,6 @@
 # kiln
 
-A personal knowledge and work system: unshaped things in, finished things out. Owner: Kieranties (private repo).
+A personal knowledge and work system: unshaped things in, finished things out. Owner: Kieranties (public repo).
 
 ## Start here
 
@@ -9,6 +9,7 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 | Why kiln exists, principles, work model | [docs/vision.md](docs/vision.md) |
 | **Current design (lean v1)** | [docs/specs/2026-10-10-kb-core-design.md](docs/specs/2026-10-10-kb-core-design.md) |
 | **Implementation plan** | [docs/plans/2026-10-10-kb-core-v1.md](docs/plans/2026-10-10-kb-core-v1.md) |
+| **Build and release** | [docs/specs/2026-10-11-build-and-release-design.md](docs/specs/2026-10-11-build-and-release-design.md) |
 | How we got here: decisions, preferences, open questions | [docs/context/2026-10-10-decision-log.md](docs/context/2026-10-10-decision-log.md) |
 | Evidence | [landscape research](docs/research/2026-10-10-knowledge-landscape.md), [spike results](docs/research/2026-10-10-spike-results.md) |
 
@@ -27,6 +28,8 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 
 ## Environment
 
-- Windows 11; Git Bash is the shell (use `/d/...` paths in Bash and `D:\...` in the file tools). Use `pwsh`, never `powershell`.
-- Node 24 (`node:sqlite`). TypeScript ESM, vitest.
+- Windows 11; Git Bash is the shell (MSYS `/x/...` paths in Bash, `X:\...` in the file tools). Use `pwsh`, never `powershell`.
+- Node 24 (`node:sqlite`). TypeScript 7 ESM, vitest, oxlint (type-aware), Prettier.
+- **Before pushing:** `npm run format:check`, `npm run lint`, `npm run typecheck` and `npm test`. CI runs the same and `main` requires them.
+- Machine-specific notes (drives, scratch folders, registries) go in your own `CLAUDE.local.md`, which is gitignored.
 - **npm:** the user's global npm registry may be a private one. This repo's `.npmrc` must set `registry=https://registry.npmjs.org/`. If a global install is needed, pass `--userconfig` pointing at a clean npmrc.

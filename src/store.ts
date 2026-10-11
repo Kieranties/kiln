@@ -12,7 +12,14 @@ import { editSections, type SectionEdit } from './sections.js';
 import { jaccard, titleTokens } from './similarity.js';
 import { KilnError, type Base, type Fields, type NoteType, type ValidationIssue, type WriteResult } from './types.js';
 
-export type CaptureInput = { kind: string; title: string; content: string; url?: string; sourceId?: string; why?: string };
+export type CaptureInput = {
+  kind: string;
+  title: string;
+  content: string;
+  url?: string;
+  sourceId?: string;
+  why?: string;
+};
 
 export type CreateNoteInput = {
   type: NoteType;
@@ -22,7 +29,13 @@ export type CreateNoteInput = {
   newReason?: string;
 };
 
-export type UpdateNoteInput = { idOrPath: string; ifRevision: string; set?: Fields; unset?: string[]; sections?: SectionEdit[] };
+export type UpdateNoteInput = {
+  idOrPath: string;
+  ifRevision: string;
+  set?: Fields;
+  unset?: string[];
+  sections?: SectionEdit[];
+};
 
 export type MarkSourceInput = {
   idOrPath: string;
@@ -50,7 +63,7 @@ const LOCK_CODES = new Set(['EPERM', 'EBUSY', 'EACCES']);
 const SAME_TITLE = 0.85;
 const SAME_SOURCES_TITLE = 0.5;
 
-const WIKILINK = /^\[\[[^\[\]]+\]\]$/;
+const WIKILINK = /^\[\[[^[\]]+\]\]$/;
 
 /** Fields kiln assigns itself; updates may not set or unset them. */
 const KILN_OWNED = ['id', 'created'];
@@ -193,13 +206,28 @@ export class Store {
     this.index.ensureFresh();
     const issues: ValidationIssue[] = [];
     if (i.triage !== 'linked' && i.triage !== 'dismissed') {
-      issues.push({ field: 'triage', message: `triage ${JSON.stringify(i.triage)} is not a triage outcome`, hint: 'use one of: linked, dismissed' });
+      issues.push({
+        field: 'triage',
+        message: `triage ${JSON.stringify(i.triage)} is not a triage outcome`,
+        hint: 'use one of: linked, dismissed',
+      });
     }
     if (!TRIAGE_OUTCOMES.includes(i.outcome)) {
-      issues.push({ field: 'triage_outcome', message: `unknown triage outcome ${JSON.stringify(i.outcome)}`, hint: `use one of: ${TRIAGE_OUTCOMES.join(', ')}` });
+      issues.push({
+        field: 'triage_outcome',
+        message: `unknown triage outcome ${JSON.stringify(i.outcome)}`,
+        hint: `use one of: ${TRIAGE_OUTCOMES.join(', ')}`,
+      });
     }
-    if (i.linkedTo !== undefined && !(Array.isArray(i.linkedTo) && i.linkedTo.every((l) => typeof l === 'string' && WIKILINK.test(l)))) {
-      issues.push({ field: 'linked_to', message: 'linked_to must be a list of wikilinks', hint: 'use wikilinks like "[[Note title]]"' });
+    if (
+      i.linkedTo !== undefined &&
+      !(Array.isArray(i.linkedTo) && i.linkedTo.every((l) => typeof l === 'string' && WIKILINK.test(l)))
+    ) {
+      issues.push({
+        field: 'linked_to',
+        message: 'linked_to must be a list of wikilinks',
+        hint: 'use wikilinks like "[[Note title]]"',
+      });
     }
     if (issues.length > 0) throw invalid(issues);
 
@@ -207,7 +235,13 @@ export class Store {
     if (i.linkedTo !== undefined) set.linked_to = i.linkedTo;
     return this.#update({ idOrPath: i.idOrPath, ifRevision: i.ifRevision, set }, (fields) => {
       if (fields.type !== 'source') {
-        throw invalid([{ field: 'type', message: `only a source can be triaged; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call markSource on a source note' }]);
+        throw invalid([
+          {
+            field: 'type',
+            message: `only a source can be triaged; this note's type is ${JSON.stringify(fields.type ?? null)}`,
+            hint: 'call markSource on a source note',
+          },
+        ]);
       }
     });
   }
@@ -228,7 +262,11 @@ export class Store {
       const old = this.#readChecked(i.oldIdOrPath, i.ifRevision, (fields) => {
         if (fields.type !== 'decision') {
           throw invalid([
-            { field: 'type', message: `only a decision can be superseded; this note's type is ${JSON.stringify(fields.type ?? null)}`, hint: 'call supersede on a decision note' },
+            {
+              field: 'type',
+              message: `only a decision can be superseded; this note's type is ${JSON.stringify(fields.type ?? null)}`,
+              hint: 'call supersede on a decision note',
+            },
           ]);
         }
         // Superseding a decision that is no longer current would overwrite superseded_by and lose its successor.
@@ -247,7 +285,12 @@ export class Store {
       const newPlan = this.#planCreate(
         {
           type: 'decision',
-          fields: { ...i.newDecision.fields, supersedes: [linkTo(old.rel, oldTitle)], review: 'needed', review_reason: `supersedes ${oldTitle}` },
+          fields: {
+            ...i.newDecision.fields,
+            supersedes: [linkTo(old.rel, oldTitle)],
+            review: 'needed',
+            review_reason: `supersedes ${oldTitle}`,
+          },
           sections: i.newDecision.sections,
         },
         new Set([old.rel]),
@@ -293,9 +336,15 @@ export class Store {
     } catch (moveError) {
       if (cause !== null && typeof cause === 'object') {
         const prior = (cause as { details?: unknown }).details;
-        const details = prior !== null && typeof prior === 'object' ? prior : prior === undefined ? {} : { original: prior };
+        const details =
+          prior !== null && typeof prior === 'object' ? prior : prior === undefined ? {} : { original: prior };
         const message = moveError instanceof Error ? moveError.message : String(moveError);
-        Object.assign(cause, { details: { ...details, rollback: { path: rel, error: `could not move the new file to .kiln/trash: ${message}` } } });
+        Object.assign(cause, {
+          details: {
+            ...details,
+            rollback: { path: rel, error: `could not move the new file to .kiln/trash: ${message}` },
+          },
+        });
       }
     }
   }
@@ -356,7 +405,10 @@ export class Store {
       const score = similarity(title, r.title);
       const matches =
         score >= SAME_TITLE ||
-        (score >= SAME_SOURCES_TITLE && sources.size > 0 && r.sources !== null && sameSet(sources, sourceSet(JSON.parse(r.sources))));
+        (score >= SAME_SOURCES_TITLE &&
+          sources.size > 0 &&
+          r.sources !== null &&
+          sameSet(sources, sourceSet(JSON.parse(r.sources))));
       if (matches && (best === null || score > best.score)) best = { ref: toRef(r), score };
     }
     return best?.ref ?? null;
@@ -365,7 +417,9 @@ export class Store {
   /** The indexed source with this `dedupe_key`, if any. */
   #sourceByKey(key: string): string | undefined {
     const row = this.index.db
-      .prepare("SELECT path FROM notes WHERE type = 'source' AND json_extract(fields_json, '$.dedupe_key') = ? ORDER BY path LIMIT 1")
+      .prepare(
+        "SELECT path FROM notes WHERE type = 'source' AND json_extract(fields_json, '$.dedupe_key') = ? ORDER BY path LIMIT 1",
+      )
       .get(key) as { path: string } | undefined;
     return row?.path;
   }
@@ -379,10 +433,14 @@ export class Store {
     const split = splitNote(text);
     const fields = parseFields(split.fmText);
     if (fields.dedupe_key !== key) {
-      throw new KilnError('conflict', `"${rel}" changed on disk and no longer has dedupe_key ${key}; re-read it and try again`, {
-        reason: 'stale_revision',
-        current: sha256(Buffer.from(text, 'utf8')),
-      });
+      throw new KilnError(
+        'conflict',
+        `"${rel}" changed on disk and no longer has dedupe_key ${key}; re-read it and try again`,
+        {
+          reason: 'stale_revision',
+          current: sha256(Buffer.from(text, 'utf8')),
+        },
+      );
     }
     let head = text.slice(0, text.length - split.body.length);
     // A file that ends at the closing fence with no EOL: start the body on a line of its own.
@@ -410,9 +468,17 @@ export class Store {
    * result's `fields` are the note's fields before the update. The caller holds the transaction.
    */
   #planUpdate(i: UpdateNoteInput, check?: (fields: Fields) => void): Planned {
-    const owned = KILN_OWNED.filter((k) => (i.set !== undefined && Object.hasOwn(i.set, k)) || (i.unset ?? []).includes(k));
+    const owned = KILN_OWNED.filter(
+      (k) => (i.set !== undefined && Object.hasOwn(i.set, k)) || (i.unset ?? []).includes(k),
+    );
     if (owned.length > 0) {
-      throw invalid(owned.map((k) => ({ field: k, message: `${k} is assigned by kiln and cannot be changed`, hint: `remove ${k} from set and unset` })));
+      throw invalid(
+        owned.map((k) => ({
+          field: k,
+          message: `${k} is assigned by kiln and cannot be changed`,
+          hint: `remove ${k} from set and unset`,
+        })),
+      );
     }
     return this.#planPatch(this.#readChecked(i.idOrPath, i.ifRevision, check), i);
   }
@@ -423,10 +489,14 @@ export class Store {
     const bytes = this.#readBytes(rel);
     const current = sha256(bytes);
     if (current !== ifRevision) {
-      throw new KilnError('conflict', `"${rel}" has changed since revision ${ifRevision}; re-read it and redo the change`, {
-        reason: 'stale_revision',
-        current,
-      });
+      throw new KilnError(
+        'conflict',
+        `"${rel}" has changed since revision ${ifRevision}; re-read it and redo the change`,
+        {
+          reason: 'stale_revision',
+          current,
+        },
+      );
     }
     const text = bytes.toString('utf8');
     const fields = parseFields(splitNote(text).fmText);
@@ -443,7 +513,11 @@ export class Store {
     for (const k of unset) if (k !== 'updated') delete merged[k];
     if (merged.type !== undefined && merged.type !== null) validate(merged, false);
 
-    let next = patchFields(text, set, unset.filter((k) => k !== 'updated'));
+    let next = patchFields(
+      text,
+      set,
+      unset.filter((k) => k !== 'updated'),
+    );
     if (i.sections && i.sections.length > 0) next = editSections(next, i.sections);
     const id = typeof merged.id === 'string' && merged.id !== '' ? merged.id : null;
     return { rel, text: next, id, fields };
@@ -453,7 +527,8 @@ export class Store {
     try {
       return readFileSync(join(this.base.path, rel));
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new KilnError('not_found', `Note file "${rel}" no longer exists`);
+      if ((e as NodeJS.ErrnoException).code === 'ENOENT')
+        throw new KilnError('not_found', `Note file "${rel}" no longer exists`);
       throw e;
     }
   }

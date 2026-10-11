@@ -54,7 +54,10 @@ beforeAll(() => {
   });
   if (init.status !== 0) throw new Error(`kiln init failed: ${init.stderr}`);
   // A rule rather than a default base, so a cwd outside repos/ matches nothing.
-  saveConfig({ bases: [{ name: 'northwind', path: base }], rules: [{ path: `${repos}/**`, base: 'northwind' }] }, cfgPath);
+  saveConfig(
+    { bases: [{ name: 'northwind', path: base }], rules: [{ path: `${repos}/**`, base: 'northwind' }] },
+    cfgPath,
+  );
 });
 
 afterAll(() => {
@@ -97,7 +100,8 @@ describe('kiln hook write-guard', () => {
   });
 
   it.skipIf(process.platform !== 'win32')('write-guard blocks an MSYS-style /x/... path into a base on win32', () => {
-    const msys = (p: string): string => p.replace(/^([A-Za-z]):[\\/]/, (_, d: string) => `/${d.toLowerCase()}/`).replaceAll('\\', '/');
+    const msys = (p: string): string =>
+      p.replace(/^([A-Za-z]):[\\/]/, (_, d: string) => `/${d.toLowerCase()}/`).replaceAll('\\', '/');
     const r = hook('write-guard', writeInput(msys(join(base, 'notes', 'Gate Staffing.md')), { cwd: msys(repos) }));
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toBe(GUARD_MESSAGE);
@@ -114,7 +118,14 @@ describe('kiln hook write-guard', () => {
   });
 
   it('write-guard exits 0 silently on malformed or empty stdin, or no path', () => {
-    for (const stdin of ['', '{not json', 'null', '[]', JSON.stringify({ tool_name: 'Write' }), JSON.stringify({ tool_input: {} })]) {
+    for (const stdin of [
+      '',
+      '{not json',
+      'null',
+      '[]',
+      JSON.stringify({ tool_name: 'Write' }),
+      JSON.stringify({ tool_input: {} }),
+    ]) {
       const r = hook('write-guard', stdin);
       expect(r.code, stdin).toBe(0);
       expect(r.stdout, stdin).toBe('');
@@ -142,7 +153,10 @@ describe('kiln hook usage errors', () => {
 describe('kiln hook session-start', () => {
   it('session-start prints the orientation line for a matching cwd and nothing otherwise', () => {
     // The hook never builds the index, so build it the way a user would after kiln init.
-    const reindex = spawnSync(process.execPath, [CLI, 'reindex', '--base', 'northwind'], { env: { ...process.env, KILN_CONFIG: cfgPath }, encoding: 'utf8' });
+    const reindex = spawnSync(process.execPath, [CLI, 'reindex', '--base', 'northwind'], {
+      env: { ...process.env, KILN_CONFIG: cfgPath },
+      encoding: 'utf8',
+    });
     expect(reindex.status, reindex.stderr).toBe(0);
     const cwd = join(repos, 'turnstile-firmware');
     const match = hook('session-start', JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', cwd }));
@@ -151,7 +165,10 @@ describe('kiln hook session-start', () => {
 
     const elsewhere = join(root, 'elsewhere');
     mkdirSync(elsewhere, { recursive: true });
-    const none = hook('session-start', JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', cwd: elsewhere }));
+    const none = hook(
+      'session-start',
+      JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', cwd: elsewhere }),
+    );
     expect(none.code).toBe(0);
     expect(none.stdout).toBe('');
     expect(none.stderr).toBe('');
@@ -163,7 +180,13 @@ describe('kiln hook session-start', () => {
     mkdirSync(fresh, { recursive: true });
     mkdirSync(project, { recursive: true });
     const freshCfg = join(root, 'fresh.yaml');
-    saveConfig({ bases: [{ name: 'fresh', path: fresh }], rules: [{ path: `${join(root, 'fresh-project')}/**`, base: 'fresh' }] }, freshCfg);
+    saveConfig(
+      {
+        bases: [{ name: 'fresh', path: fresh }],
+        rules: [{ path: `${join(root, 'fresh-project')}/**`, base: 'fresh' }],
+      },
+      freshCfg,
+    );
     const start = (): Run => {
       const r = spawnSync(process.execPath, [CLI, 'hook', 'session-start'], {
         cwd: root,

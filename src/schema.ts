@@ -38,7 +38,7 @@ const ROLES = ['client', 'vendor', 'partner', 'self'];
 const CONFIDENCE = ['verbatim', 'inferred'];
 const CAPTURED_BY = ['manual', 'watcher'];
 
-const WIKILINK = /^\[\[[^\[\]]+\]\]$/;
+const WIKILINK = /^\[\[[^[\]]+\]\]$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DATETIME = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))$/;
 
@@ -124,7 +124,11 @@ export function validateFields(fields: Fields, opts: { claudeWritten: boolean })
     }
   };
 
-  const wikilinks = { test: WIKILINK, what: 'entries that are not wikilinks', hint: 'use wikilinks like "[[Note title]]"' };
+  const wikilinks = {
+    test: WIKILINK,
+    what: 'entries that are not wikilinks',
+    hint: 'use wikilinks like "[[Note title]]"',
+  };
 
   // Common fields.
   if (KINDS[noteType].length > 0) checkEnum('kind', KINDS[noteType]);
@@ -133,7 +137,8 @@ export function validateFields(fields: Fields, opts: { claudeWritten: boolean })
   // Hand-written notes may omit `title` (the indexer falls back to the filename), so it is
   // required only on Claude-written notes; when present it must always be a non-empty string.
   if (!isPresent(fields.title)) {
-    if (opts.claudeWritten) add('title', 'title is required on Claude-written notes', 'set title to a short non-empty string');
+    if (opts.claudeWritten)
+      add('title', 'title is required on Claude-written notes', 'set title to a short non-empty string');
   } else if (!isString(fields.title) || fields.title.trim() === '') {
     add('title', 'title must be a non-empty string', 'set title to a short non-empty string');
   }
@@ -177,7 +182,11 @@ export function validateFields(fields: Fields, opts: { claudeWritten: boolean })
 
   if (noteType === 'source') {
     if (checkRequired('captured_at', HINT_DATE_OR_DATETIME) && !isIsoDateOrDateTime(fields.captured_at)) {
-      add('captured_at', `captured_at ${JSON.stringify(fields.captured_at)} is not a valid date or datetime`, HINT_DATE_OR_DATETIME);
+      add(
+        'captured_at',
+        `captured_at ${JSON.stringify(fields.captured_at)} is not a valid date or datetime`,
+        HINT_DATE_OR_DATETIME,
+      );
     }
     if (checkRequired('triage', oneOf(TRIAGE))) checkEnum('triage', TRIAGE);
     checkEnum('captured_by', CAPTURED_BY);

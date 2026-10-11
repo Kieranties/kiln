@@ -17,7 +17,9 @@ function write(rel: string, text: string): void {
 
 /** Frontmatter from `key: raw YAML value` pairs, then the body. */
 function note(fm: Record<string, string>, body: string): string {
-  return `---\n${Object.entries(fm).map(([k, v]) => `${k}: ${v}`).join('\n')}\n---\n${body}`;
+  return `---\n${Object.entries(fm)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('\n')}\n---\n${body}`;
 }
 
 const P = {
@@ -41,70 +43,206 @@ const MOBILE_ID = '01J9ZK3Q7V2M8N4P6R0S1T2MOB';
 
 /** A small Northwind Arena base: 3 anchors, a project, 3 decisions, 3 work items and 3 sources. */
 function writeBase(): void {
-  write(P.arena, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1ARENA', type: 'anchor', kind: 'organisation', role: 'self', title: 'Northwind Arena', status: 'active',
-      updated: '2026-09-01', aliases: '["Northwind", "Nordvind Årena"]', summary: 'The stadium and events company.' },
-    '\n## Summary\nRuns the stadium.\n',
-  ));
-  write(P.manny, note(
-    { id: MANNY_ID, type: 'anchor', kind: 'person', title: 'Emmanuel Park', status: 'active', updated: '2026-09-15',
-      aliases: '["Manny", "EP"]', summary: 'Head of venue operations at Northwind Arena.', anchors: '["[[Northwind Arena]]"]' },
-    '\n## Summary\nOwns the matchday operations plan.\nReports to the board.\n\n## Facts\n- Joined in 2024.\n',
-  ));
-  write(P.turnstiles, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1TURNS', type: 'anchor', kind: 'service', title: 'Turnstile Network', status: 'active',
-      updated: '2026-09-10', aliases: '["Gates"]', summary: 'The turnstiles and scanners at every entrance.' },
-    '\n## Summary\nForty turnstiles across four stands.\n',
-  ));
-  write(P.upgrade, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1UPGRD', type: 'project', title: 'Gate Upgrade', status: 'active', updated: '2026-10-03',
-      summary: 'Replace the turnstile controllers before the new season.', anchors: '["[[Turnstile Network]]"]' },
-    '\n## Goal\nNew controllers.\n',
-  ));
-  write(P.paper, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1PAPER', type: 'decision', title: 'Paper tickets at gates', status: 'superseded',
-      updated: '2026-09-20', summary: 'Paper tickets at gates stay accepted at gates.' },
-    '\n## Decision\nKeep paper tickets at gates.\n',
-  ));
-  write(P.mobile, note(
-    { id: MOBILE_ID, type: 'decision', title: 'Mobile tickets at gates', status: 'active', updated: '2026-10-01',
-      summary: 'Only phones are scanned.', anchors: '["[[Turnstile Network]]", "[[Manny]]"]', project: '"[[Gate Upgrade]]"' },
-    '\n## Decision\nMobile only.\n',
-  ));
-  write(P.marshals, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1MRSHL', type: 'decision', title: 'Queue marshals', status: 'proposed', updated: '2026-10-05',
-      summary: 'Add marshals to the north stand queues.' },
-    '\n## Context\nRaised by [[Emmanuel Park]].\n',
-  ));
-  write(P.firmware, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1FIRMW', type: 'work', kind: 'bug', title: 'Fix turnstile firmware', status: 'active',
-      updated: '2026-10-08', summary: 'Turnstiles reboot during updates.', anchors: '["[[Turnstile Network]]", "[[Emmanuel Park]]"]',
-      project: '"[[Gate Upgrade]]"', review: 'needed' },
-    '\n## Summary\nReboot loop.\n',
-  ));
-  write(P.rota, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1ROTAA', type: 'work', kind: 'chore', title: 'Stewarding rota', status: 'blocked', updated: '2026-10-06',
-      project: 'gate upgrade' },
-    '\n## Summary\nWaiting on [[emmanuel park]] to approve the rota.\n',
-  ));
-  write(P.radio, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1RADIO', type: 'work', kind: 'research', title: 'Radio audit', status: 'done', updated: '2026-10-09' },
-    '\n## Outcome\n[[EMMANUEL PARK]] signed off the radio audit.\n',
-  ));
-  write(P.email, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1EMAIL', type: 'source', kind: 'email', title: 'Firmware vendor email', triage: 'pending',
-      created: '2026-10-02', captured_at: '2026-09-29T09:00:00.000Z' },
-    '\nFrom the vendor.\n\n  The turnstile network firmware 4.2 fixes the turnstile firmware reboot loop.  \nMore firmware notes for the turnstile network follow.\n',
-  ));
-  write(P.web, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1WEBSR', type: 'source', kind: 'web', title: 'Stadium news', triage: 'pending', created: '2026-09-30' },
-    '\n[[NORDVIND ÅRENA]] will issue new staff lanyards.\n',
-  ));
-  write(P.slack, note(
-    { id: '01J9ZK3Q7V2M8N4P6R0S1SLACK', type: 'source', kind: 'slack', title: 'Gate queue chatter', triage: 'linked',
-      created: '2026-09-28', captured_at: '2026-09-28T18:00:00.000Z' },
-    '\nLong queues at the north stand.\n',
-  ));
+  write(
+    P.arena,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1ARENA',
+        type: 'anchor',
+        kind: 'organisation',
+        role: 'self',
+        title: 'Northwind Arena',
+        status: 'active',
+        updated: '2026-09-01',
+        aliases: '["Northwind", "Nordvind Årena"]',
+        summary: 'The stadium and events company.',
+      },
+      '\n## Summary\nRuns the stadium.\n',
+    ),
+  );
+  write(
+    P.manny,
+    note(
+      {
+        id: MANNY_ID,
+        type: 'anchor',
+        kind: 'person',
+        title: 'Emmanuel Park',
+        status: 'active',
+        updated: '2026-09-15',
+        aliases: '["Manny", "EP"]',
+        summary: 'Head of venue operations at Northwind Arena.',
+        anchors: '["[[Northwind Arena]]"]',
+      },
+      '\n## Summary\nOwns the matchday operations plan.\nReports to the board.\n\n## Facts\n- Joined in 2024.\n',
+    ),
+  );
+  write(
+    P.turnstiles,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1TURNS',
+        type: 'anchor',
+        kind: 'service',
+        title: 'Turnstile Network',
+        status: 'active',
+        updated: '2026-09-10',
+        aliases: '["Gates"]',
+        summary: 'The turnstiles and scanners at every entrance.',
+      },
+      '\n## Summary\nForty turnstiles across four stands.\n',
+    ),
+  );
+  write(
+    P.upgrade,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1UPGRD',
+        type: 'project',
+        title: 'Gate Upgrade',
+        status: 'active',
+        updated: '2026-10-03',
+        summary: 'Replace the turnstile controllers before the new season.',
+        anchors: '["[[Turnstile Network]]"]',
+      },
+      '\n## Goal\nNew controllers.\n',
+    ),
+  );
+  write(
+    P.paper,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1PAPER',
+        type: 'decision',
+        title: 'Paper tickets at gates',
+        status: 'superseded',
+        updated: '2026-09-20',
+        summary: 'Paper tickets at gates stay accepted at gates.',
+      },
+      '\n## Decision\nKeep paper tickets at gates.\n',
+    ),
+  );
+  write(
+    P.mobile,
+    note(
+      {
+        id: MOBILE_ID,
+        type: 'decision',
+        title: 'Mobile tickets at gates',
+        status: 'active',
+        updated: '2026-10-01',
+        summary: 'Only phones are scanned.',
+        anchors: '["[[Turnstile Network]]", "[[Manny]]"]',
+        project: '"[[Gate Upgrade]]"',
+      },
+      '\n## Decision\nMobile only.\n',
+    ),
+  );
+  write(
+    P.marshals,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1MRSHL',
+        type: 'decision',
+        title: 'Queue marshals',
+        status: 'proposed',
+        updated: '2026-10-05',
+        summary: 'Add marshals to the north stand queues.',
+      },
+      '\n## Context\nRaised by [[Emmanuel Park]].\n',
+    ),
+  );
+  write(
+    P.firmware,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1FIRMW',
+        type: 'work',
+        kind: 'bug',
+        title: 'Fix turnstile firmware',
+        status: 'active',
+        updated: '2026-10-08',
+        summary: 'Turnstiles reboot during updates.',
+        anchors: '["[[Turnstile Network]]", "[[Emmanuel Park]]"]',
+        project: '"[[Gate Upgrade]]"',
+        review: 'needed',
+      },
+      '\n## Summary\nReboot loop.\n',
+    ),
+  );
+  write(
+    P.rota,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1ROTAA',
+        type: 'work',
+        kind: 'chore',
+        title: 'Stewarding rota',
+        status: 'blocked',
+        updated: '2026-10-06',
+        project: 'gate upgrade',
+      },
+      '\n## Summary\nWaiting on [[emmanuel park]] to approve the rota.\n',
+    ),
+  );
+  write(
+    P.radio,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1RADIO',
+        type: 'work',
+        kind: 'research',
+        title: 'Radio audit',
+        status: 'done',
+        updated: '2026-10-09',
+      },
+      '\n## Outcome\n[[EMMANUEL PARK]] signed off the radio audit.\n',
+    ),
+  );
+  write(
+    P.email,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1EMAIL',
+        type: 'source',
+        kind: 'email',
+        title: 'Firmware vendor email',
+        triage: 'pending',
+        created: '2026-10-02',
+        captured_at: '2026-09-29T09:00:00.000Z',
+      },
+      '\nFrom the vendor.\n\n  The turnstile network firmware 4.2 fixes the turnstile firmware reboot loop.  \nMore firmware notes for the turnstile network follow.\n',
+    ),
+  );
+  write(
+    P.web,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1WEBSR',
+        type: 'source',
+        kind: 'web',
+        title: 'Stadium news',
+        triage: 'pending',
+        created: '2026-09-30',
+      },
+      '\n[[NORDVIND ÅRENA]] will issue new staff lanyards.\n',
+    ),
+  );
+  write(
+    P.slack,
+    note(
+      {
+        id: '01J9ZK3Q7V2M8N4P6R0S1SLACK',
+        type: 'source',
+        kind: 'slack',
+        title: 'Gate queue chatter',
+        triage: 'linked',
+        created: '2026-09-28',
+        captured_at: '2026-09-28T18:00:00.000Z',
+      },
+      '\nLong queues at the north stand.\n',
+    ),
+  );
 }
 
 const paths = (refs: { path: string }[]): string[] => refs.map((r) => r.path);
@@ -130,7 +268,13 @@ describe('search', () => {
     const paper = hits.find((h) => h.path === P.paper)!;
     const mobile = hits.find((h) => h.path === P.mobile)!;
     expect(paper.score / 0.4).toBeGreaterThan(mobile.score / 1.6);
-    expect(mobile).toMatchObject({ id: MOBILE_ID, title: 'Mobile tickets at gates', type: 'decision', kind: null, status: 'active' });
+    expect(mobile).toMatchObject({
+      id: MOBILE_ID,
+      title: 'Mobile tickets at gates',
+      type: 'decision',
+      kind: null,
+      status: 'active',
+    });
     expect(mobile.score).toBeGreaterThan(0);
   });
 
@@ -173,16 +317,27 @@ describe('search', () => {
       reference: { type: 'reference' },
     };
     // Identical indexed text, so the raw BM25 is identical and only the boost differs.
-    for (const [k, fm] of Object.entries(kinds)) write(`notes/z/${k}.md`, note({ ...fm, title: 'Zamboni bay' }, 'The zamboni bay.\n'));
+    for (const [k, fm] of Object.entries(kinds))
+      write(`notes/z/${k}.md`, note({ ...fm, title: 'Zamboni bay' }, 'The zamboni bay.\n'));
     ix.reconcile();
     const score = new Map(ix.search({ q: 'zamboni', autoScope: false }).map((h) => [h.path.slice(8, -3), h.score]));
     const raw = score.get('note')!;
     // An unboosted note scores exactly the negated BM25 with the spec's field weights.
     const bm25 = ix.db
-      .prepare("SELECT -bm25(fts, 5, 3, 2, 0.5, 1) AS s FROM fts JOIN notes n ON n.rowid = fts.rowid WHERE fts MATCH 'zamboni' AND n.path = ?")
+      .prepare(
+        "SELECT -bm25(fts, 5, 3, 2, 0.5, 1) AS s FROM fts JOIN notes n ON n.rowid = fts.rowid WHERE fts MATCH 'zamboni' AND n.path = ?",
+      )
       .get('notes/z/note.md') as { s: number };
     expect(raw).toBe(bm25.s);
-    const expected = { anchor: 1.6, project: 1.3, work: 1.3, active: 1.6, proposed: 1.3, superseded: 0.4, reference: 1.0 };
+    const expected = {
+      anchor: 1.6,
+      project: 1.3,
+      work: 1.3,
+      active: 1.6,
+      proposed: 1.3,
+      superseded: 0.4,
+      reference: 1.0,
+    };
     for (const [k, boost] of Object.entries(expected)) expect(score.get(k)! / raw).toBeCloseTo(boost, 9);
   });
 
@@ -213,7 +368,10 @@ describe('search', () => {
 describe('matchAnchors', () => {
   it("matchAnchors finds alias 'Manny' for anchor Emmanuel Park", () => {
     expect(ix.matchAnchors('Ask Manny about the queues')).toEqual(['Emmanuel Park']);
-    expect(ix.matchAnchors("What did manny's team decide for the gates?")).toEqual(['Emmanuel Park', 'Turnstile Network']);
+    expect(ix.matchAnchors("What did manny's team decide for the gates?")).toEqual([
+      'Emmanuel Park',
+      'Turnstile Network',
+    ]);
     expect(ix.matchAnchors('Gate Upgrade status at NORDVIND ÅRENA')).toEqual(['Gate Upgrade', 'Northwind Arena']);
   });
 
@@ -231,7 +389,13 @@ describe('resolve and brief', () => {
   it('resolve exact alias returns brief with active decisions and open work', () => {
     const r = ix.resolve('manny');
     expect(r.matches[0]).toEqual({
-      id: MANNY_ID, path: P.manny, title: 'Emmanuel Park', type: 'anchor', kind: 'person', status: 'active', updated: '2026-09-15',
+      id: MANNY_ID,
+      path: P.manny,
+      title: 'Emmanuel Park',
+      type: 'anchor',
+      kind: 'person',
+      status: 'active',
+      updated: '2026-09-15',
     });
     const b = r.brief!;
     expect(b.note.path).toBe(P.manny);
@@ -251,7 +415,10 @@ describe('resolve and brief', () => {
   });
 
   it('brief accepts a path and caps current truth', () => {
-    write('anchors/topic/Pitch.md', note({ type: 'anchor', kind: 'topic', title: 'Pitch' }, `\n## summary\n${'grass '.repeat(400)}\n`));
+    write(
+      'anchors/topic/Pitch.md',
+      note({ type: 'anchor', kind: 'topic', title: 'Pitch' }, `\n## summary\n${'grass '.repeat(400)}\n`),
+    );
     ix.reconcile();
     const b = ix.brief('anchors/topic/Pitch.md');
     expect(b.currentTruth).toHaveLength(1500);
@@ -281,31 +448,61 @@ describe('query', () => {
 
   it('a piped [[stem|Title]] link to a date-prefixed decision counts as linking for brief and query anchors', () => {
     const lanes = 'decisions/2026/2026-10-10 Phone-only entry lanes.md';
-    write(lanes, note(
-      { type: 'decision', title: 'Phone-only entry lanes', status: 'active', updated: '2026-10-10',
-        anchors: '["[[2026-10-01 Mobile tickets at gates|Mobile tickets at gates]]"]' },
-      '\n## Decision\nTwo lanes per stand.\n',
-    ));
+    write(
+      lanes,
+      note(
+        {
+          type: 'decision',
+          title: 'Phone-only entry lanes',
+          status: 'active',
+          updated: '2026-10-10',
+          anchors: '["[[2026-10-01 Mobile tickets at gates|Mobile tickets at gates]]"]',
+        },
+        '\n## Decision\nTwo lanes per stand.\n',
+      ),
+    );
     ix.reconcile();
     expect(paths(ix.brief(P.mobile).activeDecisions)).toEqual([lanes]);
     expect(paths(ix.query({ anchors: ['Mobile tickets at gates'] }))).toEqual([lanes]);
-    expect(paths(ix.query({ anchors: ['[[2026-10-01 Mobile tickets at gates|Mobile tickets at gates]]'] }))).toEqual([lanes]);
+    expect(paths(ix.query({ anchors: ['[[2026-10-01 Mobile tickets at gates|Mobile tickets at gates]]'] }))).toEqual([
+      lanes,
+    ]);
   });
 
   it('project matches a piped [[stem|Title]] link by the project title, alias or stem', () => {
-    write('projects/Gate Upgrade Phase 2.md', note({ type: 'project', title: '"Gate Upgrade: Phase 2"', status: 'active', aliases: '["GU2"]' }, ''));
-    write('work/2026/Wire gate 9.md', note(
-      { type: 'work', kind: 'chore', title: 'Wire gate 9', status: 'active', project: '"[[Gate Upgrade Phase 2|Gate Upgrade: Phase 2]]"' },
-      '',
-    ));
+    write(
+      'projects/Gate Upgrade Phase 2.md',
+      note({ type: 'project', title: '"Gate Upgrade: Phase 2"', status: 'active', aliases: '["GU2"]' }, ''),
+    );
+    write(
+      'work/2026/Wire gate 9.md',
+      note(
+        {
+          type: 'work',
+          kind: 'chore',
+          title: 'Wire gate 9',
+          status: 'active',
+          project: '"[[Gate Upgrade Phase 2|Gate Upgrade: Phase 2]]"',
+        },
+        '',
+      ),
+    );
     ix.reconcile();
-    for (const name of ['Gate Upgrade: Phase 2', '[[Gate Upgrade Phase 2|Gate Upgrade: Phase 2]]', 'gu2', 'Gate Upgrade Phase 2']) {
+    for (const name of [
+      'Gate Upgrade: Phase 2',
+      '[[Gate Upgrade Phase 2|Gate Upgrade: Phase 2]]',
+      'gu2',
+      'Gate Upgrade Phase 2',
+    ]) {
       expect(paths(ix.query({ project: name })), name).toEqual(['work/2026/Wire gate 9.md']);
     }
   });
 
   it('project matches case-insensitively beyond ASCII', () => {
-    write('work/2026/Bar refit.md', note({ type: 'work', kind: 'chore', title: 'Bar refit', status: 'active', project: '"[[Ölstand Refit]]"' }, ''));
+    write(
+      'work/2026/Bar refit.md',
+      note({ type: 'work', kind: 'chore', title: 'Bar refit', status: 'active', project: '"[[Ölstand Refit]]"' }, ''),
+    );
     ix.reconcile();
     expect(paths(ix.query({ project: 'ÖLSTAND REFIT' }))).toEqual(['work/2026/Bar refit.md']);
   });
@@ -319,7 +516,9 @@ describe('get', () => {
     const byId = ix.get(MANNY_ID);
     expect(byId).toMatchObject({ id: MANNY_ID, path: P.manny, revision: expected });
     expect(byId.fields).toMatchObject({ title: 'Emmanuel Park', aliases: ['Manny', 'EP'] });
-    expect(byId.body).toBe('\n## Summary\nOwns the matchday operations plan.\nReports to the board.\n\n## Facts\n- Joined in 2024.\n');
+    expect(byId.body).toBe(
+      '\n## Summary\nOwns the matchday operations plan.\nReports to the board.\n\n## Facts\n- Joined in 2024.\n',
+    );
 
     expect(ix.get(P.manny)).toEqual(byId);
     expect(ix.get(P.manny.replace(/\//g, '\\'))).toEqual(byId);

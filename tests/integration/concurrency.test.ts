@@ -71,7 +71,10 @@ afterEach(async () => {
  * Spawn one writer child (no shell) from the repo root. It prints `ready`, waits for `go` on stdin, then appends
  * `count` checkpoints. `started` resolves on `ready`; `done` resolves when the child exits.
  */
-function startWriter(name: string, count: number): { started: Promise<void>; go: () => void; done: Promise<WriterRun> } {
+function startWriter(
+  name: string,
+  count: number,
+): { started: Promise<void>; go: () => void; done: Promise<WriterRun> } {
   const child = spawn(process.execPath, ['--import', 'tsx', WRITER, base.path, NOTE, name, String(count)], {
     cwd: REPO_ROOT,
     env: { ...process.env, KILN_WRITER_GATE: 'stdin' },
@@ -206,7 +209,6 @@ describe('cross-process concurrency', () => {
     const ix = Index.open(base);
     const seen = new Set<string>();
     let reads = 0;
-    let busy = 0;
     const failures: string[] = [];
     let lastCount = 0;
 
@@ -216,19 +218,22 @@ describe('cross-process concurrency', () => {
           const rec = ix.get(NOTE);
           reads++;
           seen.add(rec.revision);
-          if (rec.fields.title !== TITLE || rec.fields.type !== 'work') failures.push(`get: frontmatter did not parse at ${rec.revision}`);
+          if (rec.fields.title !== TITLE || rec.fields.type !== 'work')
+            failures.push(`get: frontmatter did not parse at ${rec.revision}`);
           const lines = checkpoints(rec.body);
           if (!lines.every((l) => CHECKPOINT.test(l))) failures.push(`get: torn checkpoint lines at ${rec.revision}`);
-          if (lines.length < lastCount) failures.push(`get: went backwards from ${lastCount} to ${lines.length} checkpoints`);
+          if (lines.length < lastCount)
+            failures.push(`get: went backwards from ${lastCount} to ${lines.length} checkpoints`);
           lastCount = lines.length;
 
           const hits = ix.search({ q: 'turnstile firmware' });
           if (!hits.some((h) => h.path === NOTE)) failures.push('search: note missing');
           const refs = ix.query({ type: 'work' });
-          if (refs.length !== 1 || refs[0]!.path !== NOTE) failures.push(`query: expected the one note, got ${refs.length}`);
+          if (refs.length !== 1 || refs[0]!.path !== NOTE)
+            failures.push(`query: expected the one note, got ${refs.length}`);
         } catch (e) {
-          if (isBusy(e)) busy++;
-          else failures.push(`threw: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
+          // A busy reader is allowed; anything else is a failure.
+          if (!isBusy(e)) failures.push(`threw: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
         }
       });
       const reports = expectSucceeded(runs, 30);

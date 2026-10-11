@@ -68,7 +68,9 @@ describe('safeFileName', () => {
 
 describe('placeNote', () => {
   it('puts anchors under their kind', () => {
-    expect(placeNote({ type: 'anchor', kind: 'person', title: 'Ada Reyes' }, never)).toBe('anchors/person/Ada Reyes.md');
+    expect(placeNote({ type: 'anchor', kind: 'person', title: 'Ada Reyes' }, never)).toBe(
+      'anchors/person/Ada Reyes.md',
+    );
   });
 
   it('puts projects, references and notes in their flat folders', () => {
@@ -78,9 +80,9 @@ describe('placeNote', () => {
   });
 
   it('puts work under the year of created', () => {
-    expect(placeNote({ type: 'work', kind: 'bug', title: 'Gate scanner drops badges', created: '2026-10-10' }, never)).toBe(
-      'work/2026/Gate scanner drops badges.md',
-    );
+    expect(
+      placeNote({ type: 'work', kind: 'bug', title: 'Gate scanner drops badges', created: '2026-10-10' }, never),
+    ).toBe('work/2026/Gate scanner drops badges.md');
   });
 
   it('puts decisions under year with date prefix', () => {
@@ -90,9 +92,9 @@ describe('placeNote', () => {
   });
 
   it('puts sources under kind with the captured_at date prefix, for dates and datetimes', () => {
-    expect(placeNote({ type: 'source', kind: 'jira', title: 'NW-101', captured_at: '2026-10-10T09:30:00.000Z' }, never)).toBe(
-      'sources/jira/2026-10-10 NW-101.md',
-    );
+    expect(
+      placeNote({ type: 'source', kind: 'jira', title: 'NW-101', captured_at: '2026-10-10T09:30:00.000Z' }, never),
+    ).toBe('sources/jira/2026-10-10 NW-101.md');
     expect(placeNote({ type: 'source', kind: 'note', title: 'Call', captured_at: '2026-10-11' }, never)).toBe(
       'sources/note/2026-10-11 Call.md',
     );
@@ -132,7 +134,11 @@ describe('placeNote', () => {
     ['decision without decided_on', { type: 'decision', title: 'x' }, 'decided_on'],
     ['decision with malformed decided_on', { type: 'decision', title: 'x', decided_on: '2026-1-5' }, 'decided_on'],
     ['source without captured_at', { type: 'source', kind: 'jira', title: 'x' }, 'captured_at'],
-    ['source with malformed captured_at', { type: 'source', kind: 'jira', title: 'x', captured_at: 'soon' }, 'captured_at'],
+    [
+      'source with malformed captured_at',
+      { type: 'source', kind: 'jira', title: 'x', captured_at: 'soon' },
+      'captured_at',
+    ],
     ['anchor without kind', { type: 'anchor', title: 'x' }, 'kind'],
     ['anchor with unknown kind', { type: 'anchor', kind: '../escape', title: 'x' }, 'kind'],
     ['source without kind', { type: 'source', title: 'x', captured_at: '2026-10-10' }, 'kind'],

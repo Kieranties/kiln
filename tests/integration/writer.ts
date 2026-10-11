@@ -52,7 +52,11 @@ try {
     const text = `- ${writer} #${n}`;
     for (let attempt = 1; ; attempt++) {
       try {
-        revision = store.updateNote({ idOrPath: note, ifRevision: revision, sections: [{ heading: 'Checkpoints', mode: 'append', text }] }).revision;
+        revision = store.updateNote({
+          idOrPath: note,
+          ifRevision: revision,
+          sections: [{ heading: 'Checkpoints', mode: 'append', text }],
+        }).revision;
         revisions.push(revision);
         // A pause between appends, as a session has: without it this process re-takes the write lock before the
         // other writer's busy handler wakes, and the two runs of appends never interleave.
@@ -72,8 +76,14 @@ try {
   console.log(JSON.stringify({ writer, written: revisions.length, conflicts, busy, revisions }));
 } catch (e) {
   const detail =
-    e instanceof KilnError ? `${e.code}: ${e.message} ${JSON.stringify(e.details ?? null)}` : e instanceof Error ? (e.stack ?? e.message) : String(e);
-  console.error(`writer ${writer} failed after ${revisions.length} of ${count} appends (conflicts ${conflicts}, busy ${busy}): ${detail}`);
+    e instanceof KilnError
+      ? `${e.code}: ${e.message} ${JSON.stringify(e.details ?? null)}`
+      : e instanceof Error
+        ? (e.stack ?? e.message)
+        : String(e);
+  console.error(
+    `writer ${writer} failed after ${revisions.length} of ${count} appends (conflicts ${conflicts}, busy ${busy}): ${detail}`,
+  );
   process.exitCode = 1;
 } finally {
   index.close();
