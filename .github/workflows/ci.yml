@@ -1,0 +1,126 @@
+# Lint, test and package every PR and every push to main. A green push to main is a release:
+# nbgv versions it from version.json and the git height, it is published to GitHub Packages,
+# and a GitHub Release carries the same tarball.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # PR runs cancel superseded runs on the same branch; every commit on main runs to completion.
+  group: ci-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Validate the plugin marketplace and plugin
+        run: |
+          npx -y @anthropic-ai/claude-code@2.1.296 plugin validate .
+          npx -y @anthropic-ai/claude-code@2.1.296 plugin validate plugin
+
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  package:
+    name: package
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # nbgv counts the git height
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-dotnet@v6 # nbgv runs on .NET
+        with:
+          dotnet-version: 10.x
+      - run: npm ci
+      - run: npm run build
+      - name: Stamp the version
+        id: version
+        run: |
+          npx nbgv-setversion
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - run: npm pack
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package
+          path: kieranties-kiln-${{ steps.version.outputs.version }}.tgz
+          if-no-files-found: error
+
+  release:
+    name: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [lint, test, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      VERSION: ${{ needs.package.outputs.version }}
+      TARBALL: kieranties-kiln-${{ needs.package.outputs.version }}.tgz
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: package
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+      # Each step checks before it acts, so a re-run finishes a partial release without failing.
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if npm view "@kieranties/kiln@$VERSION" version >/dev/null 2>&1; then
+            echo "@kieranties/kiln@$VERSION is already published"
+          else
+            npm publish "./$TARBALL"
+          fi
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists"
+          else
+            gh release create "v$VERSION" "$TARBALL" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+          fi

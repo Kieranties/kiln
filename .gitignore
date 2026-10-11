@@ -9,3 +9,4 @@ dist/
 Thumbs.db
 tests/fixtures/denylist.txt
 CLAUDE.local.md
+*.tgz
