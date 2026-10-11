@@ -7,6 +7,9 @@ import { KIT, loadDefinitions, SHARED_PROPERTIES, sectionsOf, splitFrontmatter, 
 
 const EXAMPLES = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
 const DENYLIST = fileURLToPath(new URL('../fixtures/denylist.txt', import.meta.url));
+const REPO = fileURLToPath(new URL('../../', import.meta.url));
+const DOCS = join(REPO, 'docs');
+const TOP_LEVEL = ['README.md', 'CLAUDE.md', 'tests/fixtures/README.md'].map((f) => join(REPO, f));
 const DATE_FIRST = ['research', 'decision', 'meeting', 'daily', 'capture'];
 
 type Note = { path: string; folder: string; name: string; data: Record<string, unknown>; body: string };
@@ -128,7 +131,7 @@ describe('Northwind Arena example vault', () => {
     expect(names.has('northwind-arena-club-console 88 Renewal date rolls over a year early')).toBe(true);
   });
 
-  it("the kit contains no real names from the owner's organisation", (ctx) => {
+  it("the kit, the sample and the docs contain no real names from the owner's organisation", (ctx) => {
     if (!existsSync(DENYLIST)) {
       ctx.skip(
         'tests/fixtures/denylist.txt is absent (it is local-only and never committed); create it to run this check',
@@ -142,9 +145,10 @@ describe('Northwind Arena example vault', () => {
       .map((l) => l.toLowerCase());
     expect(terms.length, 'denylist.txt has no terms, so this check would pass vacuously').toBeGreaterThan(0);
     const hits: string[] = [];
-    for (const file of filesUnder(KIT)) {
+    const files = [...filesUnder(KIT), ...filesUnder(EXAMPLES), ...filesUnder(DOCS), ...TOP_LEVEL];
+    for (const file of files) {
       const text = readFileSync(file, 'utf8').toLowerCase();
-      for (const term of terms) if (text.includes(term)) hits.push(`${relative(KIT, file)}: ${term}`);
+      for (const term of terms) if (text.includes(term)) hits.push(`${relative(REPO, file)}: ${term}`);
     }
     expect(hits).toEqual([]);
   });

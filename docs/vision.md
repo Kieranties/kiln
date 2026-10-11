@@ -2,7 +2,7 @@
 
 Status: **current direction, still exploring** (2026-10-11). Nothing here is final.
 
-This replaces the 2026-10-10 vision, which is in git history. The engine it led to (an MCP server, a SQLite index, a CLI and Claude Code plugin) is released as v0.1.1 and is retired from the current direction. See [What v1 taught us](#what-v1-taught-us).
+This replaces the 2026-10-10 vision, which is in git history. The engine it led to (an MCP server, a SQLite index, a CLI and Claude Code plugin) was released as v0.1.1 and removed in 0.2; it remains in git history. See [What v1 taught us](#what-v1-taught-us).
 
 ## Problem
 

@@ -1,49 +1,32 @@
 {
-  "name": "@kieranties/kiln",
+  "name": "kiln",
   "version": "0.0.0-placeholder",
-  "description": "A personal knowledge base for Claude Code: markdown files are the truth, with a rebuildable SQLite index, an MCP server and hooks.",
+  "private": true,
+  "description": "kiln: a personal knowledge and work process built on Obsidian. The kit is the vault structure; this package only runs its checks.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kieranties/kiln.git"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "type": "module",
   "engines": {
     "node": ">=24"
   },
-  "bin": {
-    "kiln": "dist/cli.js"
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint --type-aware",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.1",
-    "picomatch": "^4.0.7",
-    "ulid": "^3.0.2",
-    "yaml": "^2.9.1",
-    "zod": "^4.6.5"
-  },
   "devDependencies": {
     "@types/node": "^24",
-    "@types/picomatch": "^4.0.3",
     "nerdbank-gitversioning": "^3.10.94",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2004",
     "prettier": "^3.9.10",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "yaml": "^2.9.1"
   }
 }

@@ -1,6 +1,6 @@
-# Lint, test and package every PR and every push to main. A green push to main is a release:
-# nbgv versions it from version.json and the git height, it is published to GitHub Packages,
-# and a GitHub Release carries the same tarball.
+# Check and package every PR and every push to main. A green push to main is a release:
+# nbgv versions it from version.json and the git height, and a GitHub Release carries the
+# kit as kiln-kit-<version>.zip.
 name: ci
 
 on:
@@ -31,10 +31,6 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
-      - name: Validate the plugin marketplace and plugin
-        run: |
-          npx -y @anthropic-ai/claude-code@2.1.296 plugin validate .
-          npx -y @anthropic-ai/claude-code@2.1.296 plugin validate plugin
 
   test:
     name: test (${{ matrix.os }})
@@ -69,17 +65,19 @@ jobs:
         with:
           dotnet-version: 10.x
       - run: npm ci
-      - run: npm run build
       - name: Stamp the version
         id: version
         run: |
           npx nbgv-setversion
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-      - run: npm pack
+      - name: Zip the kit
+        run: |
+          mkdir -p dist
+          (cd kit && zip -r "../dist/kiln-kit-${{ steps.version.outputs.version }}.zip" .)
       - uses: actions/upload-artifact@v7
         with:
-          name: package
-          path: kieranties-kiln-${{ steps.version.outputs.version }}.tgz
+          name: kit
+          path: dist/kiln-kit-${{ steps.version.outputs.version }}.zip
           if-no-files-found: error
 
   release:
@@ -89,31 +87,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
     concurrency:
       group: release
       cancel-in-progress: false
     env:
       VERSION: ${{ needs.package.outputs.version }}
-      TARBALL: kieranties-kiln-${{ needs.package.outputs.version }}.tgz
+      ZIP: kiln-kit-${{ needs.package.outputs.version }}.zip
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: package
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          registry-url: https://npm.pkg.github.com
-      # Each step checks before it acts, so a re-run finishes a partial release without failing.
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if npm view "@kieranties/kiln@$VERSION" version >/dev/null 2>&1; then
-            echo "@kieranties/kiln@$VERSION is already published"
-          else
-            npm publish "./$TARBALL"
-          fi
+          name: kit
+      # Checks before it acts, so a re-run finishes a partial release without failing.
       - name: Create the GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -122,5 +106,5 @@ jobs:
           if gh release view "v$VERSION" >/dev/null 2>&1; then
             echo "Release v$VERSION already exists"
           else
-            gh release create "v$VERSION" "$TARBALL" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+            gh release create "v$VERSION" "$ZIP" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
           fi
