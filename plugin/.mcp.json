@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "kiln": {
-      "command": "kiln",
-      "args": ["mcp"]
-    }
-  }
-}

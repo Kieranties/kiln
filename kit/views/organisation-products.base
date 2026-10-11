@@ -1,0 +1,21 @@
+filters:
+  and:
+    - type == "product"
+    - list(organisations).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Products
+    order:
+      - file.name
+      - kind
+      - status
+      - summary

@@ -1,0 +1,54 @@
+{
+  "templates_folder": "_kiln/templates",
+  "trigger_on_file_creation_mode": "folder",
+  "folder_templates": [
+    {
+      "folder": "Organisations",
+      "template": "_kiln/templates/Organisation.md"
+    },
+    {
+      "folder": "People",
+      "template": "_kiln/templates/Person.md"
+    },
+    {
+      "folder": "Products",
+      "template": "_kiln/templates/Product.md"
+    },
+    {
+      "folder": "Topics",
+      "template": "_kiln/templates/Topic.md"
+    },
+    {
+      "folder": "Projects",
+      "template": "_kiln/templates/Project.md"
+    },
+    {
+      "folder": "Work",
+      "template": "_kiln/templates/Work.md"
+    },
+    {
+      "folder": "Research",
+      "template": "_kiln/templates/Research.md"
+    },
+    {
+      "folder": "Decisions",
+      "template": "_kiln/templates/Decision.md"
+    },
+    {
+      "folder": "Meetings",
+      "template": "_kiln/templates/Meeting.md"
+    },
+    {
+      "folder": "Daily",
+      "template": "_kiln/templates/Daily.md"
+    },
+    {
+      "folder": "References",
+      "template": "_kiln/templates/Reference.md"
+    },
+    {
+      "folder": "Inbox",
+      "template": "_kiln/templates/Capture.md"
+    }
+  ]
+}

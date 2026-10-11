@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "reference"
+    - list(projects).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: References
+    order:
+      - file.name
+      - kind
+      - summary

@@ -1,0 +1,9 @@
+{
+  "propertiesInDocument": "hidden",
+  "showInlineTitle": true,
+  "newFileLocation": "folder",
+  "newFileFolderPath": "Inbox",
+  "newLinkFormat": "shortest",
+  "alwaysUpdateLinks": true,
+  "userIgnoreFilters": ["_kiln/"]
+}

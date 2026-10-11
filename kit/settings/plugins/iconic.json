@@ -1,0 +1,931 @@
+{
+  "showAllFileIcons": true,
+  "showAllFolderIcons": true,
+  "minimalFolderIcons": true,
+  "fileIcons": {
+    "Home.md": {
+      "icon": "lucide-house",
+      "color": "#50fa7b"
+    },
+    "Board.base": {
+      "icon": "lucide-square-kanban",
+      "color": "#8be9fd"
+    },
+    "_kiln": {
+      "icon": "lucide-settings",
+      "color": "#6272a4"
+    },
+    "Organisations": {
+      "icon": "lucide-building",
+      "color": "#6272a4"
+    },
+    "People": {
+      "icon": "lucide-user",
+      "color": "#50fa7b"
+    },
+    "Products": {
+      "icon": "lucide-box",
+      "color": "#69c8db"
+    },
+    "Topics": {
+      "icon": "lucide-book-open",
+      "color": "#f1fa8c"
+    },
+    "Projects": {
+      "icon": "lucide-rocket",
+      "color": "#a371f9"
+    },
+    "Work": {
+      "icon": "lucide-square-check",
+      "color": "#8be9fd"
+    },
+    "Research": {
+      "icon": "lucide-flask-conical",
+      "color": "#bd93f9"
+    },
+    "Decisions": {
+      "icon": "lucide-gavel",
+      "color": "#ffb86c"
+    },
+    "Meetings": {
+      "icon": "lucide-users",
+      "color": "#50fa7b"
+    },
+    "Daily": {
+      "icon": "lucide-sun",
+      "color": "#f1fa8c"
+    },
+    "References": {
+      "icon": "lucide-bookmark",
+      "color": "#6272a4"
+    },
+    "Inbox": {
+      "icon": "lucide-inbox",
+      "color": "#ffb86c"
+    }
+  },
+  "propertyIcons": {
+    "type": {
+      "icon": "lucide-shapes"
+    },
+    "kind": {
+      "icon": "lucide-tag"
+    },
+    "status": {
+      "icon": "lucide-circle-dot"
+    },
+    "created": {
+      "icon": "lucide-calendar-plus"
+    },
+    "summary": {
+      "icon": "lucide-text"
+    },
+    "aliases": {
+      "icon": "lucide-at-sign"
+    },
+    "keywords": {
+      "icon": "lucide-key-round"
+    },
+    "tags": {
+      "icon": "lucide-tags"
+    },
+    "review": {
+      "icon": "lucide-flag",
+      "color": "#ff5555"
+    },
+    "organisations": {
+      "icon": "lucide-building",
+      "color": "#6272a4"
+    },
+    "people": {
+      "icon": "lucide-user",
+      "color": "#50fa7b"
+    },
+    "attendees": {
+      "icon": "lucide-user",
+      "color": "#50fa7b"
+    },
+    "products": {
+      "icon": "lucide-box",
+      "color": "#69c8db"
+    },
+    "topics": {
+      "icon": "lucide-book-open",
+      "color": "#f1fa8c"
+    },
+    "projects": {
+      "icon": "lucide-rocket",
+      "color": "#a371f9"
+    },
+    "work": {
+      "icon": "lucide-square-check",
+      "color": "#8be9fd"
+    },
+    "research": {
+      "icon": "lucide-flask-conical",
+      "color": "#bd93f9"
+    },
+    "supersedes": {
+      "icon": "lucide-gavel",
+      "color": "#ffb86c"
+    },
+    "role": {
+      "icon": "lucide-briefcase"
+    },
+    "email": {
+      "icon": "lucide-mail"
+    },
+    "url": {
+      "icon": "lucide-link"
+    },
+    "verified": {
+      "icon": "lucide-badge-check"
+    },
+    "jira": {
+      "icon": "lucide-ticket"
+    },
+    "github": {
+      "icon": "lucide-github"
+    },
+    "priority": {
+      "icon": "lucide-signal"
+    },
+    "question": {
+      "icon": "lucide-circle-help"
+    },
+    "decided": {
+      "icon": "lucide-calendar-check"
+    },
+    "date": {
+      "icon": "lucide-calendar"
+    },
+    "author": {
+      "icon": "lucide-pen-line"
+    },
+    "published": {
+      "icon": "lucide-calendar"
+    },
+    "captured": {
+      "icon": "lucide-clock"
+    },
+    "from": {
+      "icon": "lucide-log-in"
+    }
+  },
+  "fileRules": [
+    {
+      "id": "kiln-organisation-client",
+      "name": "Organisation — client",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-building-2",
+      "color": "#ff79c6",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "organisation"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "client"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-organisation-vendor",
+      "name": "Organisation — vendor",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-package",
+      "color": "#69c8db",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "organisation"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "vendor"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-organisation-partner",
+      "name": "Organisation — partner",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-handshake",
+      "color": "#ffb86c",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "organisation"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "partner"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-organisation-self",
+      "name": "Organisation — self",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-landmark",
+      "color": "#a371f9",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "organisation"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "self"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-organisation",
+      "name": "Organisation",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-building",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "organisation"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-person",
+      "name": "Person",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-user",
+      "color": "#50fa7b",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "person"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-product-app",
+      "name": "Product — app",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-smartphone",
+      "color": "#69c8db",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "product"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "app"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-product-service",
+      "name": "Product — service",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-server",
+      "color": "#69c8db",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "product"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "service"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-product-tool",
+      "name": "Product — tool",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-wrench",
+      "color": "#69c8db",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "product"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "tool"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-product-platform",
+      "name": "Product — platform",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-layers",
+      "color": "#69c8db",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "product"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "platform"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-product",
+      "name": "Product",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-box",
+      "color": "#69c8db",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "product"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-topic",
+      "name": "Topic",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-book-open",
+      "color": "#f1fa8c",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "topic"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-project",
+      "name": "Project",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-rocket",
+      "color": "#a371f9",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "project"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-work-feature",
+      "name": "Work — feature",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-sparkles",
+      "color": "#8be9fd",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "work"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "feature"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-work-bug",
+      "name": "Work — bug",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-bug",
+      "color": "#ff5555",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "work"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "bug"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-work-chore",
+      "name": "Work — chore",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-hammer",
+      "color": "#8be9fd",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "work"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "chore"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-work-incident",
+      "name": "Work — incident",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-siren",
+      "color": "#ff5555",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "work"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "incident"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-work-task",
+      "name": "Work — task",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-circle-check",
+      "color": "#8be9fd",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "work"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "task"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-work",
+      "name": "Work",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-square-check",
+      "color": "#8be9fd",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "work"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-research",
+      "name": "Research",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-flask-conical",
+      "color": "#bd93f9",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "research"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-decision",
+      "name": "Decision",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-gavel",
+      "color": "#ffb86c",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "decision"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-meeting-standup",
+      "name": "Meeting — standup",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-message-circle",
+      "color": "#50fa7b",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "meeting"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "standup"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-meeting-workshop",
+      "name": "Meeting — workshop",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-presentation",
+      "color": "#50fa7b",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "meeting"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "workshop"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-meeting",
+      "name": "Meeting",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-users",
+      "color": "#50fa7b",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "meeting"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-daily",
+      "name": "Daily",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-sun",
+      "color": "#f1fa8c",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "daily"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-doc",
+      "name": "Reference — doc",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-file-text",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "doc"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-thread",
+      "name": "Reference — thread",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-messages-square",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "thread"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-spec",
+      "name": "Reference — spec",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-file-code",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "spec"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-code",
+      "name": "Reference — code",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-code",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "code"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-dashboard",
+      "name": "Reference — dashboard",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-gauge",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "dashboard"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-post",
+      "name": "Reference — post",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-newspaper",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "post"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-sheet",
+      "name": "Reference — sheet",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-sheet",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "sheet"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-slides",
+      "name": "Reference — slides",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-presentation",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "slides"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-video",
+      "name": "Reference — video",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-video",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "video"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference-ticket",
+      "name": "Reference — ticket",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-ticket",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        },
+        {
+          "source": "property:kind",
+          "operator": "is",
+          "value": "ticket"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-reference",
+      "name": "Reference",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-bookmark",
+      "color": "#6272a4",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "reference"
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "kiln-capture",
+      "name": "Capture",
+      "category": "rule",
+      "iconDefault": "lucide-file",
+      "icon": "lucide-inbox",
+      "color": "#ffb86c",
+      "match": "all",
+      "conditions": [
+        {
+          "source": "property:type",
+          "operator": "is",
+          "value": "capture"
+        }
+      ],
+      "enabled": true
+    }
+  ]
+}

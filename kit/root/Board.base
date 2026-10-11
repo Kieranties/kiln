@@ -1,0 +1,35 @@
+filters:
+  and:
+    - type == "work"
+    - status != "abandoned"
+    - or:
+        - status != "done"
+        - file.mtime > now() - "14 days"
+    - not:
+        - file.inFolder("_kiln")
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  projects:
+    displayName: Projects
+  priority:
+    displayName: Priority
+views:
+  - type: kanban
+    name: Board
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - projects
+      - priority
+    groupOrder:
+      - backlog
+      - active
+      - blocked
+      - review
+      - done

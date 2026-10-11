@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "capture"
+    - created == this.date
+properties:
+  file.name:
+    displayName: Name
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Captures
+    order:
+      - file.name
+      - status
+      - summary

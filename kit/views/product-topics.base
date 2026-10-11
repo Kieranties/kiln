@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "topic"
+    - list(products).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Topics
+    order:
+      - file.name
+      - status
+      - summary

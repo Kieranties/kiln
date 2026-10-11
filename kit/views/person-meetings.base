@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "meeting"
+    - list(attendees).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Meetings
+    order:
+      - file.name
+      - kind
+      - summary

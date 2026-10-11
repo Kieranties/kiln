@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "meeting"
+    - file.hasLink(this.file)
+properties:
+  file.name:
+    displayName: Name
+  kind:
+    displayName: Kind
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Meetings
+    order:
+      - file.name
+      - kind
+      - summary

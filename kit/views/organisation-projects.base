@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "project"
+    - list(organisations).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Projects
+    order:
+      - file.name
+      - status
+      - summary

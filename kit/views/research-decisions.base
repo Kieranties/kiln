@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "decision"
+    - list(research).contains(this)
+properties:
+  file.name:
+    displayName: Name
+  status:
+    displayName: Status
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Decisions
+    order:
+      - file.name
+      - status
+      - summary

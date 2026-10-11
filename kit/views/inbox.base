@@ -1,0 +1,23 @@
+filters:
+  and:
+    - type == "capture"
+    - status == "inbox"
+    - not:
+        - file.inFolder("_kiln")
+properties:
+  file.name:
+    displayName: Name
+  captured:
+    displayName: Captured
+  from:
+    displayName: From
+  summary:
+    displayName: Summary
+views:
+  - type: table
+    name: Inbox
+    order:
+      - file.name
+      - captured
+      - from
+      - summary
