@@ -8,3 +8,4 @@ dist/
 .DS_Store
 Thumbs.db
 tests/fixtures/denylist.txt
+CLAUDE.local.md
