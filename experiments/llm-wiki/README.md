@@ -1,6 +1,6 @@
 # Experiment: LLM-written knowledge
 
-Status: **running** (2026-10-11). The Claude side has run once; the plugin side is still to run. The first step of [#74](https://github.com/Kieranties/kiln/issues/74); the findings so far are in [LLM-written knowledge that reads well](../../docs/specs/2026-10-11-llm-written-knowledge.md).
+Status: **closed** (2026-10-11). The Claude side ran once; the plugin side was not run (see below). The first step of [#74](https://github.com/Kieranties/kiln/issues/74); the findings so far are in [LLM-written knowledge that reads well](../../docs/specs/2026-10-11-llm-written-knowledge.md).
 
 The question: given the same raw sources, which writes notes that read better in Obsidian, the karpathywiki plugin or Claude following the kit? All data is Northwind Arena, never the real vault.
 
@@ -22,7 +22,7 @@ Run in a Claude session with the draft skill [`kiln-ingest/SKILL.md`](kiln-inges
 
 ## Plugin side
 
-The owner's step: it needs Obsidian and a model API key.
+**Not run.** The plugin needs its own model API key and cannot use a Claude subscription, which was a deciding point against it. The steps are kept in case it is revisited.
 
 1. Make a trial vault and load the sample, as in [Try the sample](../../kit/TRY-THE-SAMPLE.md).
 2. Copy `tests/fixtures/sources/*` into the trial vault's `Sources/` folder.
@@ -80,15 +80,6 @@ One fresh session, the draft skill and nothing else; about five minutes for all 
 8. **No pronouns** unless a source uses them; use the name.
 9. **A review threshold:** flag what changes a decision, a status or a date someone relies on; leave small discrepancies to the log.
 
-### Both sides
+### Decision
 
-To fill in after the plugin side has run.
-
-| | Claude | Plugin |
-|---|---|---|
-| Notes created | | |
-| Notes updated | | |
-| Reads better | | |
-| Why | | |
-
-Decision: plugin, skills or a mix, recorded in [`docs/vision.md`](../../docs/vision.md).
+Skills on the kit types, borrowing the plugin's mechanics. Recorded in [`docs/vision.md`](../../docs/vision.md#knowledge-written-by-claude). The skill's next version starts from the list above.

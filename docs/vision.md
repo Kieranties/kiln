@@ -77,6 +77,14 @@ Persisting entities  <-  Project  <-  Work item  <-  Workspace  <-  Worktree
 
 Readable `summary`, `aliases` and `keywords` properties help both. Dedicated search is revisited only when real use shows misses.
 
+## Knowledge written by Claude
+
+Current direction (2026-10-11, [#74](https://github.com/Kieranties/kiln/issues/74)): **most knowledge is written by Claude, through skills on the kit's types**, following the pattern of Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). Raw sources are never edited, the kit is the schema, and each source is ingested into the notes a reader would look in.
+
+- **Why not the karpathywiki plugin.** The goals are the same and it is further along: lint, deduplication and an index are built. But it writes its own fixed note shapes beside the kit, not the kit's types; it deletes duplicates rather than archiving them; and it needs its own model API key rather than the Claude subscription already in use.
+- **Borrowed from it:** raw sources stay untouched; every claim links its source; a log of each ingest (the daily note's `## Log`); a lint pass; a part of each note Claude never writes.
+- **Still to build:** the ingest skill, starting from the [experiment's](../experiments/llm-wiki/README.md) draft and its list of fixes, then the lint pass. The [investigation](specs/2026-10-11-llm-written-knowledge.md) holds the findings and the open questions.
+
 ## What v1 taught us
 
 KB core v1 (2026-10-10 to 2026-10-11) built a deterministic engine before the experience: validated writes through MCP tools, a SQLite full-text index with weighted ranking, retrieval quality gates and a 100k-note scale target. Used on a real base, it showed:

@@ -9,6 +9,7 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 | **Why kiln exists, principles, entities, types and kinds, layers** | [docs/vision.md](docs/vision.md) |
 | **User flows and the agreed story order** | [docs/specs/2026-10-11-user-flows.md](docs/specs/2026-10-11-user-flows.md) |
 | **Layer 1, the vault structure: design and plan** | [design](docs/specs/2026-10-11-layer-1-structure-design.md), [plan](docs/plans/2026-10-11-layer-1-structure.md) |
+| **Knowledge written by Claude**: the direction, its investigation and the ingest experiment | [vision](docs/vision.md#knowledge-written-by-claude), [investigation](docs/specs/2026-10-11-llm-written-knowledge.md), [experiment](experiments/llm-wiki/README.md) |
 | **The kit** (types, templates, views, settings), its guides and checks | [kit/README.md](kit/README.md), [Getting started](kit/GETTING-STARTED.md), [Try the sample](kit/TRY-THE-SAMPLE.md); tests in `tests/kit/` |
 
 kiln 0.1 (an MCP server, SQLite index and CLI) was removed in 0.2. It is in the git history and the `v0.1.1` tag; the vision's "What v1 taught us" says why.

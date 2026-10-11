@@ -1,6 +1,6 @@
 # LLM-written knowledge that reads well
 
-Status: **exploring** (2026-10-11). Nothing here is agreed. This is the first investigation for [#74](https://github.com/Kieranties/kiln/issues/74). It records what the kit already gives, what the two routes actually do, and what the experiment needs before it can run.
+Status: **closed** (2026-10-11). The investigation for [#74](https://github.com/Kieranties/kiln/issues/74): what the kit already gives, what the two routes actually do, and what the experiment needed. The direction it led to is in the [vision](../vision.md#knowledge-written-by-claude): skills on the kit's types. The leans and open questions below carry into that work.
 
 The goal from the issue: most knowledge is written by the LLM, and it still reads well to a person in Obsidian ([vision](../vision.md) P1). The pattern is Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
 
@@ -131,7 +131,11 @@ The kit's equivalent is the inline title, then `summary` in the properties sideb
 
 The structural rules are cheap to add to `tests/kit` for the sample, and the same code can later run over a vault as the lint pass (vision "Open": checking Claude's writes).
 
-## Suggested next steps
+## Outcome
+
+The [experiment](../../experiments/llm-wiki/README.md) ran the Claude side once. The plugin side was not run: the plugin needs its own model API key and cannot use a Claude subscription, which settled the "Model" row of the issue's comparison on its own. With finding 1, that made the choice: skills on the kit types, borrowing the plugin's mechanics. Recorded in the [vision](../vision.md#knowledge-written-by-claude).
+
+## Suggested next steps (as written before the outcome)
 
 Each is a separate piece of work, in this order:
 
