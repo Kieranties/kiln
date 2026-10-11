@@ -10,12 +10,20 @@ const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
 const guide = readFileSync(join(KIT, 'GETTING-STARTED.md'), 'utf8');
 
 /** The text of a `## ` section of a Markdown document. */
-function section(text: string, heading: string): string {
+function section(document: string, heading: string): string {
+  const text = document.replace(/\r\n/g, '\n');
   const start = text.indexOf(`## ${heading}\n`);
   if (start < 0) throw new Error(`no section ${heading}`);
   const next = text.indexOf('\n## ', start + 1);
   return text.slice(start, next < 0 ? undefined : next);
 }
+
+describe('section()', () => {
+  it('finds a section in a document with Windows line endings', () => {
+    // Windows checkouts turn the docs' \n into \r\n.
+    expect(section('## One\r\nfirst\r\n## Two\r\nsecond\r\n', 'One')).toContain('first');
+  });
+});
 
 describe('kit docs', () => {
   it("both docs say to turn on Templater's per-device trigger", () => {
