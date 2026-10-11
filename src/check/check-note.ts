@@ -3,6 +3,7 @@ import { basename, join } from 'node:path';
 import { parse } from 'yaml';
 import type { Definition } from '../blueprint/load.js';
 import { sectionsOf, splitFrontmatter } from '../blueprint/markdown.js';
+import { frontmatterLinkTarget, linkTargets, nearest } from './links.js';
 import type { Vault } from './vault.js';
 
 export type Level = 'error' | 'warn';
@@ -139,6 +140,29 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
       });
     }
   }
+
+  const targets = new Set<string>();
+  for (const [key, type] of Object.entries(definition.properties)) {
+    const value = data[key];
+    if (type !== 'links' || !Array.isArray(value)) continue;
+    for (const item of value) {
+      const target = typeof item === 'string' ? frontmatterLinkTarget(item) : undefined;
+      if (target !== undefined) targets.add(target);
+    }
+  }
+  for (const target of linkTargets(body)) targets.add(target);
+  const candidates = [...new Set(vault.notes.map((note) => basename(note).replace(/\.md$/, '')))];
+  for (const target of targets) {
+    if (vault.names.has(target.toLowerCase())) continue;
+    const near = nearest(target, candidates);
+    const hint = near === undefined ? '' : `; did you mean [[${near}]]?`;
+    findings.push({ level: 'warn', message: `[[${target}]] doesn't exist yet${hint}` });
+  }
+
+  const sameName = vault.notes.filter(
+    (other) => other !== path && basename(other).replace(/\.md$/, '').toLowerCase() === name.toLowerCase(),
+  );
+  if (sameName.length > 0) findings.push({ level: 'warn', message: `file name also used by ${sameName.join(', ')}` });
 
   return result(findings.sort((a, b) => Number(b.level === 'error') - Number(a.level === 'error')));
 }

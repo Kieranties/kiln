@@ -2,6 +2,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { checkNote, type CheckOptions } from '../../src/check/check-note.js';
+import { formatResult } from '../../src/check/format.js';
 import { openVault } from '../../src/check/vault.js';
 import { makeVault } from './fixture.js';
 
@@ -114,5 +115,32 @@ describe('checkNote errors', () => {
       skipped: true,
     });
     expect(errors('Home.md')).toEqual([`no type; set type to one of: ${TYPES}`]);
+  });
+});
+
+describe('checkNote warnings and output', () => {
+  it("prints the spec's example", () => {
+    expect(formatResult(checkNote(vault, 'Inbox/Decide the grace period.md'))).toBe(
+      [
+        'Inbox/Decide the grace period.md',
+        '  error  type is work but the note is in Inbox/; work notes live in Work/',
+        '  error  missing section: ## Outcome',
+        '  error  unknown property: attendees (work has jira, github, priority, projects, products, and the shared properties)',
+        "  warn   [[Priya Rahman]] doesn't exist yet; did you mean [[Priya Raman]]?",
+      ].join('\n'),
+    );
+  });
+
+  it('warns about a file name another note uses', () => {
+    expect(checkNote(vault, 'Topics/Priya Raman.md').findings).toEqual([
+      { level: 'warn', message: 'file name also used by People/Priya Raman.md' },
+    ]);
+  });
+
+  it('links in any letter case, with aliases, headings, embeds and code, raise nothing', () => {
+    const note = readFileSync(join(dir, 'Topics', 'Renewal payments.md'), 'utf8');
+    const extra = '\nSee [[club console|the console]], [[Club Console#Facts]], ![[missing.base]] and `[[Nowhere]]`.\n';
+    writeFileSync(join(dir, 'Topics', 'Renewal payments copy.md'), note + extra);
+    expect(checkNote(vault, 'Topics/Renewal payments copy.md').findings).toEqual([]);
   });
 });
