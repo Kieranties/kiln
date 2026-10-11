@@ -27,6 +27,7 @@ The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist,
 - **Relationships are always lists of links,** even with one entry: `projects: ["[[Season Ticket Renewals 2027]]"]`.
 - **Dates** are `YYYY-MM-DD`; date-times are `YYYY-MM-DDTHH:mm`.
 - **Log lines** in a daily note are `- HH:mm text`, appended to the end of the file. `## Log` is always the last section.
+- **Check notes** with `/kiln:check`. It checks each note against its definition and never changes a note.
 - **Archive, never delete.** A note is retired through its `status`.
 
 ## Setting up a vault
