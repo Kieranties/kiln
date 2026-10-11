@@ -3,6 +3,14 @@
   "showAllFolderIcons": true,
   "minimalFolderIcons": true,
   "fileIcons": {
+    "Home.md": {
+      "icon": "lucide-house",
+      "color": "#50fa7b"
+    },
+    "Board.base": {
+      "icon": "lucide-square-kanban",
+      "color": "#8be9fd"
+    },
     "_kiln": {
       "icon": "lucide-settings",
       "color": "#6272a4"

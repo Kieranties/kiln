@@ -75,6 +75,12 @@ describe('Iconic rules', () => {
     expect(iconic.fileIcons._kiln?.icon).toMatch(/^lucide-/);
   });
 
+  it('Home and Board have icons', () => {
+    const { fileIcons } = loadJson<{ fileIcons: Record<string, { icon: string }> }>('settings/plugins/iconic.json');
+    expect(fileIcons['Home.md']?.icon).toBe('lucide-house');
+    expect(fileIcons['Board.base']?.icon).toBe('lucide-square-kanban');
+  });
+
   it('the apply procedure merges folder icons and switches on minimal folder icons', () => {
     const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
     for (const part of ['fileIcons', 'minimalFolderIcons']) expect(readme, part).toContain(part);
