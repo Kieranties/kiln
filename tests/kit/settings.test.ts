@@ -86,7 +86,10 @@ describe('Iconic rules', () => {
     expect(Object.keys(catalogue).sort()).toEqual(Object.keys(types).sort());
     for (const [prop, entry] of Object.entries(catalogue)) {
       if (entry.links) {
-        expect(defs.map((d) => d.name), prop).toContain(entry.links);
+        expect(
+          defs.map((d) => d.name),
+          prop,
+        ).toContain(entry.links);
         expect(types[prop], `${prop} links, so it is a list`).toBe('multitext');
       } else {
         expect(entry.icon, prop).toMatch(/^lucide-[a-z0-9-]+$/);
