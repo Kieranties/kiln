@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { readBlueprint, readDefinitions } from '../../src/blueprint/load.js';
+import { readBlueprint, readDefinitions, readPropertyCatalogue } from '../../src/blueprint/load.js';
 import { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
 import { BLUEPRINT } from '../kit/load.js';
 
@@ -37,11 +37,22 @@ describe('readBlueprint', () => {
     );
     expect(() => readDefinitions(tmp)).toThrow(/types\/bad\.md: statuses must be a list/);
   });
+
+  it('rejects a kind or property entry whose inner field is not text', () => {
+    mkdirSync(join(tmp, 'types'), { recursive: true });
+    writeFileSync(
+      join(tmp, 'types', 'bad.md'),
+      '---\nname: bad\nfolder: Bad\nnaming: title\nkinds:\n  odd:\n    icon: 3\n---\nBad.\n',
+    );
+    expect(() => readDefinitions(tmp)).toThrow(/types\/bad\.md: kinds\.odd is not valid/);
+    writeFileSync(join(tmp, 'properties.md'), '---\nproperties:\n  owner:\n    links: [person]\n---\n');
+    expect(() => readPropertyCatalogue(tmp)).toThrow(/properties\.md: properties\.owner is not valid/);
+  });
 });
 
 describe('markdown', () => {
   it('splits frontmatter after a byte-order mark, with Windows line endings', () => {
-    expect(splitFrontmatter('﻿---\r\ntype: work\r\n---\r\n## Context\r\n')).toEqual({
+    expect(splitFrontmatter('\uFEFF---\r\ntype: work\r\n---\r\n## Context\r\n')).toEqual({
       frontmatter: 'type: work',
       body: '## Context\r\n',
     });

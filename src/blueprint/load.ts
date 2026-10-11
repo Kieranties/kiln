@@ -89,10 +89,13 @@ function mapOf<T>(
 }
 
 const isPropType = (value: unknown): value is PropType => PROP_TYPES.some((t) => t === value);
-const isKind = (value: unknown): value is { icon?: string; color?: string } => value === null || isMap(value);
+const isOptionalText = (value: unknown): boolean => value === undefined || typeof value === 'string';
+const isKind = (value: unknown): value is { icon?: string; color?: string } =>
+  value === null || (isMap(value) && isOptionalText(value.icon) && isOptionalText(value.color));
 const isView = (value: unknown): value is ViewDef =>
   isMap(value) && typeof value.type === 'string' && typeof value.via === 'string';
-const isEntry = (value: unknown): value is PropertyEntry => isMap(value);
+const isEntry = (value: unknown): value is PropertyEntry =>
+  isMap(value) && isOptionalText(value.icon) && isOptionalText(value.color) && isOptionalText(value.links);
 
 /** Every `dir/types/*.md`, parsed, sorted by file name. */
 export function readDefinitions(dir: string): Definition[] {

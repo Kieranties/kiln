@@ -1,6 +1,6 @@
 /** Splits a note into its frontmatter text and body. A leading byte-order mark is ignored. */
 export function splitFrontmatter(text: string): { frontmatter: string; body: string } {
-  const clean = text.replace(/^﻿/, '');
+  const clean = text.replace(/^\uFEFF/, '');
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/.exec(clean);
   if (!match) return { frontmatter: '', body: clean };
   return { frontmatter: match[1] ?? '', body: match[2] ?? '' };
