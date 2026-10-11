@@ -2,12 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { KIT } from './load.js';
+import { BLUEPRINT } from './load.js';
 
 const SAMPLE = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
 
-const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
-const guide = readFileSync(join(KIT, 'GETTING-STARTED.md'), 'utf8');
+const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');
+const guide = readFileSync(join(BLUEPRINT, 'GETTING-STARTED.md'), 'utf8');
 
 /** The text of a `## ` section of a Markdown document. */
 function section(document: string, heading: string): string {
@@ -37,7 +37,7 @@ describe('kit docs', () => {
   });
 
   it('the sample page names every sample note', () => {
-    const sample = readFileSync(join(KIT, 'TRY-THE-SAMPLE.md'), 'utf8');
+    const sample = readFileSync(join(BLUEPRINT, 'TRY-THE-SAMPLE.md'), 'utf8');
     expect(sample).toContain('tests/fixtures/layer1');
     const notes = readdirSync(SAMPLE, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
     for (const note of notes) expect(sample, note.name).toContain(basename(note.name, '.md'));

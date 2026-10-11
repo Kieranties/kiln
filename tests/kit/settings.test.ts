@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { KIT, loadDefinitions, loadJson, loadProperties, SHARED_PROPERTIES } from './load.js';
+import { BLUEPRINT, loadDefinitions, loadJson, loadProperties, SHARED_PROPERTIES } from './load.js';
 
 const defs = loadDefinitions();
 
@@ -82,7 +82,7 @@ describe('Iconic rules', () => {
   });
 
   it('the apply procedure merges folder icons and switches on minimal folder icons', () => {
-    const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
+    const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');
     for (const part of ['fileIcons', 'minimalFolderIcons']) expect(readme, part).toContain(part);
   });
 
@@ -162,7 +162,7 @@ describe('Obsidian settings', () => {
     }
   });
 
-  it('app settings hide properties and keep the kit out of search', () => {
+  it('app settings hide properties and keep the blueprint out of search', () => {
     expect(loadJson('settings/app.json')).toEqual({
       propertiesInDocument: 'hidden',
       showInlineTitle: true,
@@ -194,7 +194,7 @@ describe('Obsidian settings', () => {
 
   it('the kiln snippet shows property names, values and board columns with capitals, and is switched on', () => {
     expect(loadJson('settings/appearance.json')).toEqual({ enabledCssSnippets: ['kiln'] });
-    const css = readFileSync(join(KIT, 'settings', 'snippets', 'kiln.css'), 'utf8');
+    const css = readFileSync(join(BLUEPRINT, 'settings', 'snippets', 'kiln.css'), 'utf8');
     for (const selector of ['.metadata-property-key', '.metadata-property-value', 'kanban']) {
       expect(css, selector).toContain(selector);
     }
