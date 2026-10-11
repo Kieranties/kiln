@@ -13,7 +13,8 @@ export type Vault = {
 
 /** Starts at `path` (or its folder) and walks up to the first folder holding `_kiln/types/`. */
 export function findVault(path: string): string | undefined {
-  let current = statSync(path, { throwIfNoEntry: false })?.isDirectory() ? path : dirname(path);
+  const start = resolve(path);
+  let current = statSync(start, { throwIfNoEntry: false })?.isDirectory() ? start : dirname(start);
   for (;;) {
     if (existsSync(join(current, '_kiln', 'types'))) return current;
     const parent = dirname(current);

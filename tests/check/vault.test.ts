@@ -19,6 +19,16 @@ describe('findVault', () => {
   it('accepts the vault folder itself', () => {
     expect(findVault(vault)).toBe(vault);
   });
+  it('returns an absolute root for a relative path', () => {
+    const here = process.cwd();
+    try {
+      process.chdir(vault);
+      expect(findVault(join('Work', 'Fix renewal date rollover.md'))).toBe(vault);
+      expect(findVault('.')).toBe(vault);
+    } finally {
+      process.chdir(here);
+    }
+  });
   it('finds nothing outside a vault', () => {
     expect(findVault(outside)).toBeUndefined();
   });
