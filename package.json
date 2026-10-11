@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@types/node": "^24",
-    "nerdbank-gitversioning": "^3.10.94",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2004",
     "prettier": "^3.9.10",

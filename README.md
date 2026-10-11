@@ -23,7 +23,7 @@ Each release on GitHub also carries the kit as `kiln-kit-<version>.zip`.
 
 ## Working on kiln
 
-Node 24 or later. `npm ci`, then before pushing: `npm run format:check`, `npm run lint`, `npm run typecheck` and `npm test`. CI runs the same, and `main` requires them. Every green push to `main` is a release, versioned by [nbgv](https://github.com/dotnet/Nerdbank.GitVersioning) from `version.json`.
+Node 24 or later. `npm ci`, then before pushing: `npm run format:check`, `npm run lint`, `npm run typecheck` and `npm test`. CI runs the same as its `check` job, which `main` requires. Every merge to `main` is a release: version `0.2.<n>` (the version in `version.json`, then the number of commits since it last changed), tagged `v0.2.<n>`, with the kit attached. To start a new minor version, change `version.json`.
 
 kiln 0.1 was a knowledge-base engine (an MCP server, a SQLite index and a CLI). It was removed in 0.2; the vision's "What v1 taught us" says why. It remains in the git history and the `v0.1.1` tag.
 

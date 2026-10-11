@@ -27,6 +27,6 @@ kiln 0.1 (an MCP server, SQLite index and CLI) was removed in 0.2. It is in the 
 
 - Windows 11; Git Bash is the shell (MSYS `/x/...` paths in Bash, `X:\...` in the file tools). Use `pwsh`, never `powershell`.
 - Node 24. TypeScript 7 ESM, vitest, oxlint (type-aware), Prettier.
-- **Before pushing:** `npm run format:check`, `npm run lint`, `npm run typecheck` and `npm test`. CI runs the same and `main` requires them. Every green push to `main` is a release with the kit attached as a zip.
+- **Before pushing:** `npm run format:check`, `npm run lint`, `npm run typecheck` and `npm test`. CI runs the same as its `check` job, which `main` requires. Every merge to `main` is a release, tagged `v<version.json>.<n>`, with the kit attached as a zip.
 - Machine-specific notes (drives, scratch folders, registries) go in your own `CLAUDE.local.md`, which is gitignored.
 - **npm:** the user's global npm registry may be a private one. This repo's `.npmrc` must set `registry=https://registry.npmjs.org/`. If a global install is needed, pass `--userconfig` pointing at a clean npmrc.

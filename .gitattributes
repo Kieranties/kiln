@@ -1,1 +1,3 @@
+# Every clone gets LF line endings, on Windows too, so the kit and its checks read the same everywhere.
+* text=auto eol=lf
 *.sh text eol=lf
