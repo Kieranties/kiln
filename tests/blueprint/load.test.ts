@@ -1,0 +1,53 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterAll, describe, expect, it } from 'vitest';
+import { readBlueprint, readDefinitions } from '../../src/blueprint/load.js';
+import { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
+import { BLUEPRINT } from '../kit/load.js';
+
+const tmp = mkdtempSync(join(tmpdir(), 'kiln-blueprint-'));
+afterAll(() => rmSync(tmp, { recursive: true, force: true }));
+
+describe('readBlueprint', () => {
+  it('reads the repo blueprint: twelve definitions and the property catalogue', () => {
+    const blueprint = readBlueprint(BLUEPRINT);
+    expect(blueprint.definitions.map((d) => d.name)).toEqual([
+      'capture',
+      'daily',
+      'decision',
+      'meeting',
+      'organisation',
+      'person',
+      'product',
+      'project',
+      'reference',
+      'research',
+      'topic',
+      'work',
+    ]);
+    expect(blueprint.properties.entries.attendees).toEqual({ links: 'person' });
+  });
+
+  it('names the file and field of a malformed definition', () => {
+    mkdirSync(join(tmp, 'types'), { recursive: true });
+    writeFileSync(
+      join(tmp, 'types', 'bad.md'),
+      '---\nname: bad\nfolder: Bad\nnaming: title\nstatuses: active\n---\nBad.\n',
+    );
+    expect(() => readDefinitions(tmp)).toThrow(/types\/bad\.md: statuses must be a list/);
+  });
+});
+
+describe('markdown', () => {
+  it('splits frontmatter after a byte-order mark, with Windows line endings', () => {
+    expect(splitFrontmatter('﻿---\r\ntype: work\r\n---\r\n## Context\r\n')).toEqual({
+      frontmatter: 'type: work',
+      body: '## Context\r\n',
+    });
+  });
+
+  it('trims section headings', () => {
+    expect([...sectionsOf('## Log \n- 09:00 x\n').keys()]).toEqual(['Log']);
+  });
+});
