@@ -46,6 +46,15 @@ describe('readBlueprint', () => {
     );
   });
 
+  it('requires last to be one of the sections', () => {
+    mkdirSync(join(tmp, 'types'), { recursive: true });
+    writeFileSync(
+      join(tmp, 'types', 'bad.md'),
+      '---\nname: bad\nfolder: Bad\nnaming: title\nsections:\n  - Notes\nlast: Log\n---\nBad.\n',
+    );
+    expect(() => readDefinitions(tmp)).toThrow(/types\/bad\.md: last must be one of its sections/);
+  });
+
   it('rejects a kind or property entry whose inner field is not text', () => {
     mkdirSync(join(tmp, 'types'), { recursive: true });
     writeFileSync(

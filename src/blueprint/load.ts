@@ -118,6 +118,8 @@ export function readDefinitions(dir: string): Definition[] {
       const naming = data.naming;
       if (!NAMINGS.some((n) => n === naming)) throw new Error(`${where}: naming must be one of ${NAMINGS.join(', ')}`);
       const last = text(data, 'last', where, false);
+      const sections = textList(data, 'sections', where);
+      if (last && !sections.includes(last)) throw new Error(`${where}: last must be one of its sections`);
       return {
         name: text(data, 'name', where, true),
         folder: text(data, 'folder', where, true),
@@ -128,7 +130,7 @@ export function readDefinitions(dir: string): Definition[] {
         statuses: textList(data, 'statuses', where),
         properties: mapOf(data, 'properties', where, isPropType),
         kinds: Object.fromEntries(Object.entries(kinds).map(([k, v]) => [k, v ?? {}])),
-        sections: textList(data, 'sections', where),
+        sections,
         ...(last ? { last } : {}),
         views: mapOf(data, 'views', where, isView),
         body: body.trim(),
