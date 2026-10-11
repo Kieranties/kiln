@@ -1,0 +1,12 @@
+filters:
+  and:
+    - type == "work"
+    - file.hasLink(this.file)
+views:
+  - type: table
+    name: Work raised
+    order:
+      - file.name
+      - kind
+      - status
+      - summary

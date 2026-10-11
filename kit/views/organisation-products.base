@@ -1,0 +1,12 @@
+filters:
+  and:
+    - type == "product"
+    - organisations.contains(this)
+views:
+  - type: table
+    name: Products
+    order:
+      - file.name
+      - kind
+      - status
+      - summary

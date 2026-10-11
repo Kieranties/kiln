@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "topic"
+    - topics.contains(this)
+views:
+  - type: table
+    name: Sub-topics
+    order:
+      - file.name
+      - status
+      - summary

@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "capture"
+    - created == this.date
+views:
+  - type: table
+    name: Captures
+    order:
+      - file.name
+      - status
+      - summary

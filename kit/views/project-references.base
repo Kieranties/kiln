@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "reference"
+    - projects.contains(this)
+views:
+  - type: table
+    name: References
+    order:
+      - file.name
+      - kind
+      - summary

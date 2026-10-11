@@ -1,0 +1,14 @@
+filters:
+  and:
+    - type == "work"
+    - projects.contains(this)
+views:
+  - type: kanban
+    name: Board
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - priority

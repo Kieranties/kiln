@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "project"
+    - people.contains(this)
+views:
+  - type: table
+    name: Projects
+    order:
+      - file.name
+      - status
+      - summary

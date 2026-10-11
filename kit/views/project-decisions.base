@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "decision"
+    - projects.contains(this)
+views:
+  - type: table
+    name: Decisions
+    order:
+      - file.name
+      - status
+      - summary

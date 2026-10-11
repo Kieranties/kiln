@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "topic"
+    - products.contains(this)
+views:
+  - type: table
+    name: Topics
+    order:
+      - file.name
+      - status
+      - summary

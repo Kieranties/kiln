@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "decision"
+    - supersedes.contains(this)
+views:
+  - type: table
+    name: Superseded by
+    order:
+      - file.name
+      - status
+      - summary

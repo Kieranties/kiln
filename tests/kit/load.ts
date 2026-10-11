@@ -70,6 +70,20 @@ export function loadDefinitions(): Definition[] {
     });
 }
 
+export type BaseView = { type: string; name: string; order?: string[]; groupBy?: { property: string } };
+export type BaseFile = { filters?: { and?: unknown[] }; views: BaseView[] };
+
+/** A Bases file, parsed. `path` is relative to kit/, e.g. 'views/inbox.base'. */
+export function loadBase(path: string): BaseFile {
+  return parse(readFileSync(join(KIT, path), 'utf8')) as BaseFile;
+}
+
+/** Every .base file in kit/views. */
+export function viewFiles(): string[] {
+  const dir = join(KIT, 'views');
+  return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.base')) : [];
+}
+
 export type Template = {
   frontmatterKeys: string[];
   frontmatterRaw: string;

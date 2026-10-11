@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "research"
+    - topics.contains(this)
+views:
+  - type: table
+    name: Research
+    order:
+      - file.name
+      - status
+      - summary

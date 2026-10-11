@@ -1,0 +1,12 @@
+filters:
+  and:
+    - type == "work"
+    - file.mtime.date() == this.date
+views:
+  - type: table
+    name: Work touched
+    order:
+      - file.name
+      - kind
+      - status
+      - summary

@@ -1,0 +1,11 @@
+filters:
+  and:
+    - type == "meeting"
+    - projects.contains(this)
+views:
+  - type: table
+    name: Meetings
+    order:
+      - file.name
+      - kind
+      - summary
