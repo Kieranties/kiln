@@ -69,3 +69,64 @@ export function loadDefinitions(): Definition[] {
       } as Definition;
     });
 }
+
+export type Template = {
+  frontmatterKeys: string[];
+  frontmatterRaw: string;
+  headings: string[];
+  embeds: string[];
+  /** Body content under each `## ` heading, trimmed. */
+  sections: Map<string, string>;
+  text: string;
+};
+
+/** The Base file a view heading embeds, e.g. viewFile('research', 'Work raised') === 'research-work-raised.base'. */
+export function viewFile(type: string, heading: string): string {
+  return `${type}-${heading.toLowerCase().replace(/ /g, '-')}.base`;
+}
+
+/** Splits a body into its `## ` sections. */
+export function sectionsOf(body: string): Map<string, string> {
+  const sections = new Map<string, string>();
+  let current: string | undefined;
+  let lines: string[] = [];
+  const flush = () => {
+    if (current !== undefined) sections.set(current, lines.join('\n').trim());
+  };
+  for (const line of body.split(/\r?\n/)) {
+    const heading = /^## (.+)$/.exec(line);
+    if (heading) {
+      flush();
+      current = heading[1] ?? '';
+      lines = [];
+    } else lines.push(line);
+  }
+  flush();
+  return sections;
+}
+
+/**
+ * Every template in kit/templates, keyed by file name. Templater tags are not valid YAML, so
+ * frontmatter keys are read line by line, after any leading `<%* ... %>` script blocks.
+ */
+export function loadTemplates(): Map<string, Template> {
+  const dir = join(KIT, 'templates');
+  if (!existsSync(dir)) throw new Error(`kit/templates is missing (${dir})`);
+  const templates = new Map<string, Template>();
+  for (const f of readdirSync(dir).filter((name) => name.endsWith('.md'))) {
+    const text = readFileSync(join(dir, f), 'utf8');
+    const { frontmatter, body } = splitFrontmatter(text.replace(/^(<%\*[\s\S]*?%>\r?\n)+/, ''));
+    templates.set(f, {
+      frontmatterRaw: frontmatter,
+      frontmatterKeys: frontmatter
+        .split(/\r?\n/)
+        .map((line) => /^([a-z_]+):/.exec(line)?.[1])
+        .filter((key): key is string => key !== undefined),
+      headings: [...body.matchAll(/^## (.+)$/gm)].map((m) => m[1] ?? ''),
+      embeds: [...body.matchAll(/^!\[\[(.+?)\]\]$/gm)].map((m) => m[1] ?? ''),
+      sections: sectionsOf(body),
+      text,
+    });
+  }
+  return templates;
+}
