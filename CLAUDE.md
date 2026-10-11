@@ -10,6 +10,7 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 | **User flows and the agreed story order** | [docs/specs/2026-10-11-user-flows.md](docs/specs/2026-10-11-user-flows.md) |
 | **Layer 1, the vault structure: design and plan** | [design](docs/specs/2026-10-11-layer-1-structure-design.md), [plan](docs/plans/2026-10-11-layer-1-structure.md) |
 | **The kit** (types, templates, views, settings), its guides and checks | [kit/README.md](kit/README.md), [Getting started](kit/GETTING-STARTED.md), [Try the sample](kit/TRY-THE-SAMPLE.md); tests in `tests/kit/` |
+| **The kiln plugin for Claude Code**: the kit as a plugin, with the skill that applies it to a vault | [design](docs/specs/2026-10-11-kit-plugin-design.md), [install and use](kit/README.md#the-kiln-plugin); the plugin is `kit/` itself, listed by `.claude-plugin/marketplace.json` |
 
 kiln 0.1 (an MCP server, SQLite index and CLI) was removed in 0.2. It is in the git history and the `v0.1.1` tag; the vision's "What v1 taught us" says why.
 

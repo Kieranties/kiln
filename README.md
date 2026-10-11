@@ -9,6 +9,7 @@ Obsidian first, then Claude, then everything else. kiln is a vault structure tha
 - **[Getting started](kit/GETTING-STARTED.md):** set up your vault with the kiln kit, from an empty folder.
 - **[Try the sample](kit/TRY-THE-SAMPLE.md):** see the whole kit working with a fictional project, in a trial vault.
 - **[The kiln kit](kit/README.md):** the types, conventions and how the kit is applied.
+- **[The kiln plugin](kit/README.md#the-kiln-plugin):** the kit as a Claude Code plugin, so any Claude session can set up or update a vault: `claude plugin marketplace add Kieranties/kiln --sparse .claude-plugin kit`, then `claude plugin install kiln@kiln`.
 
 Each release on GitHub also carries the kit as `kiln-kit-<version>.zip`.
 
@@ -16,7 +17,8 @@ Each release on GitHub also carries the kit as `kiln-kit-<version>.zip`.
 
 | Path | What |
 |---|---|
-| `kit/` | The kit: type definitions, Templater templates, Bases views, Obsidian and plugin settings, and its guides |
+| `kit/` | The kit: type definitions, Templater templates, Bases views, Obsidian and plugin settings, and its guides. It is also the kiln plugin for Claude Code, with the `apply-kit` skill |
+| `.claude-plugin/` | The plugin marketplace, which lists `kit/` as the `kiln` plugin |
 | `tests/kit/` | Checks every kit file against the type definitions, and the sample against both |
 | `tests/fixtures/layer1/` | The Northwind Arena sample vault |
 | `docs/` | The vision, the user flows and story order, and each layer's design and plan |

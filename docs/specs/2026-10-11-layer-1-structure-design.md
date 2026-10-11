@@ -167,7 +167,7 @@ Adding a type (flow 12) at layer 1 means editing or adding a definition, then ha
 
 ### The kit
 
-The repo holds the kit under `kit/`: the type definitions, templates and view files. It is structure only, with no knowledge. A vault is set up by copying `kit/` into the vault as `_kiln/` and having Claude apply it.
+The repo holds the kit under `kit/`: the type definitions, templates and view files. It is structure only, with no knowledge. A vault is set up by copying `kit/` into the vault as `_kiln/` and having Claude apply it. The kit folder is also a Claude Code plugin, so any Claude session can apply it without a clone: see [The kiln plugin](2026-10-11-kit-plugin-design.md).
 
 Community plugins in the kit: **Iconic** (icons), **Templater** (templates), **QuickAdd** (capture and log), **Homepage** (open on `Home.md`). The board uses Bases' built-in kanban.
 

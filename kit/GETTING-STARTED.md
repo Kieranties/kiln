@@ -10,11 +10,14 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 
 - **Obsidian 1.14 or later.** Check in Settings → About. The board needs Bases' built-in kanban, added in 1.14.
 - **Claude Code** (`claude --version`).
-- **A clone of the kiln repo:**
+- **The kiln plugin for Claude Code.** It carries the kit, so you need no copy of the kiln repo. Install it once:
 
   ```bash
-  git clone https://github.com/Kieranties/kiln.git
+  claude plugin marketplace add Kieranties/kiln --sparse .claude-plugin kit
+  claude plugin install kiln@kiln
   ```
+
+  `claude plugin list` then shows `kiln@kiln`. To get kit updates as they land, run `/plugin` in Claude, open **Marketplaces**, choose **kiln** and select **Enable auto-update**. [The kiln plugin](README.md#the-kiln-plugin) has the details.
 
 ## 2. Make your vault
 
@@ -28,19 +31,19 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 
 ## 3. Apply the kit
 
-Start Claude in the kiln repo:
+Start Claude in any folder:
 
 ```bash
-cd kiln
 claude
 ```
 
 Give it this prompt, with your folder filled in:
 
 ```text
-Set up the kiln kit in <vault folder> by following "Setting up a vault" in kit/README.md exactly.
-Report each file you wrote and each setting you merged.
+Set up the kiln kit in <vault folder>.
 ```
+
+Claude checks the four plugins are installed and asks you to confirm that Obsidian is closed and Templater's trigger is on. Then it copies the kit in as `_kiln`, merges the settings and reports each file it wrote and each setting it changed.
 
 ## 4. Check it
 
@@ -82,7 +85,8 @@ Tell Claude about anything that doesn't match, with the line it failed on.
 ## 6. Next steps
 
 - **Try the sample:** [Try the sample](TRY-THE-SAMPLE.md) shows every type and view with a fictional project, in a separate trial vault.
-- **Add a type:** give Claude a prompt like this:
+- **Keep up with the kit:** when the plugin updates, ask Claude to `Re-apply the kiln kit to <vault folder>`. It copies in what changed and merges the settings again.
+- **Add a type:** a new type changes the kit itself, so this one is done in a clone of the kiln repo. Start Claude there and give it a prompt like this:
 
   ```text
   Add a "runbook" type to the kiln kit: a how-to for operating a product, with sections Purpose, Steps and Rollback, linked to products.
