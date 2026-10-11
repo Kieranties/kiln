@@ -1,0 +1,324 @@
+{
+  "questions": [
+    {
+      "id": "exact_term-1",
+      "category": "exact_term",
+      "question": "Checkout is throwing E_POOL_TIMEOUT. What does that mean and what should on-call do about it?",
+      "variants": [
+        "E_POOL_TIMEOUT checkout connection pool exhausted",
+        "database connection pool timeout runbook on-call",
+        "checkout DB pool saturation alert remediation"
+      ],
+      "primary": ["references/Payments service runbook.md"],
+      "secondary": [
+        "work/2026/Matchday checkout outage 14 March.md",
+        "references/Checkout latency dashboard.md"
+      ]
+    },
+    {
+      "id": "exact_term-2",
+      "category": "exact_term",
+      "question": "What was pen test finding PT-2026-04 and what did we change because of it?",
+      "variants": [
+        "PT-2026-04 penetration test finding remediation",
+        "pentest vulnerability security fix changes",
+        "security audit finding mitigation PT-2026-04"
+      ],
+      "primary": ["decisions/2026/2026-02-25 Password reset links stay valid for 15 minutes.md"],
+      "secondary": [
+        "sources/meeting/2026-02-25 Identity security review February.md",
+        "work/2026/Password reset links expire too early.md"
+      ]
+    },
+    {
+      "id": "exact_term-3",
+      "category": "exact_term",
+      "question": "Why is chargeWithFallback() a problem in the renewal job?",
+      "variants": [
+        "chargeWithFallback renewal job issue",
+        "renewal billing fallback charge duplicate payment risk",
+        "subscription renewal payment retry fallback bug"
+      ],
+      "primary": ["work/2026/Duplicate charges on renewal retry.md"],
+      "secondary": [
+        "sources/jira/2026-09-02 NWA-311 Renewals charged twice after provider timeout.md",
+        "decisions/2026/2026-08-19 Retry failed renewal payments four times over ten days.md"
+      ]
+    },
+    {
+      "id": "exact_term-4",
+      "category": "exact_term",
+      "question": "Harbour members are reporting PASS_SIGNING_FAILED again. What caused it last time and how did we fix it?",
+      "variants": [
+        "PASS_SIGNING_FAILED Harbour wallet pass",
+        "Apple Wallet pass signing certificate expired",
+        "mobile pass signing failure root cause fix"
+      ],
+      "primary": ["work/2026/Membership cards fail to add to phone wallets.md"],
+      "secondary": [
+        "sources/jira/2026-08-05 NWA-322 Membership cards fail to add to phone wallets.md",
+        "anchors/topic/Observability.md",
+        "anchors/organisation/Harbour Athletic.md"
+      ]
+    },
+    {
+      "id": "vocab_mismatch-1",
+      "category": "vocab_mismatch",
+      "question": "Can fans who use a chair reserve their place, plus a free one for whoever helps them, on the website now, or do they still have to ring up?",
+      "variants": [
+        "wheelchair accessible seating online booking",
+        "companion carer free ticket accessibility",
+        "step-free disabled booking phone line only"
+      ],
+      "primary": ["work/2026/Accessible seating booking flow.md"],
+      "secondary": [
+        "anchors/topic/Accessible seating.md",
+        "sources/meeting/2026-07-08 Ticketing planning Q3.md"
+      ]
+    },
+    {
+      "id": "vocab_mismatch-2",
+      "category": "vocab_mismatch",
+      "question": "There was a morning over the summer when nobody could get into the app or show their tickets for about forty minutes. What went wrong, and what did we change afterwards?",
+      "variants": [
+        "summer outage login failure mobile tickets",
+        "auth incident app sign-in down 40 minutes postmortem",
+        "token key rotation outage ticket display incident"
+      ],
+      "primary": ["work/2026/Signing key rotation sign-in incident.md"],
+      "secondary": [
+        "sources/jira/2026-07-29 NWA-319 Token signing key rotation broke sign-in.md",
+        "references/Identity provider OIDC integration spec.md"
+      ]
+    },
+    {
+      "id": "vocab_mismatch-3",
+      "category": "vocab_mismatch",
+      "question": "Can a Harbour fan on the cheaper package switch to the better one partway through the year, and how would we work out what they owe?",
+      "variants": [
+        "Harbour membership tier upgrade mid-season",
+        "pro-rata proration upgrade pricing",
+        "membership plan change prorated charge calculation"
+      ],
+      "primary": ["work/2026/Mid-season membership tier upgrades.md"],
+      "secondary": [
+        "sources/jira/2026-09-10 NWA-347 Mid-season membership tier upgrades.md",
+        "references/Membership tiers and benefits matrix.md"
+      ]
+    },
+    {
+      "id": "vocab_mismatch-4",
+      "category": "vocab_mismatch",
+      "question": "Fans keep saying the email that's meant to get them back into their account is useless by the time it lands in their inbox. What's going on?",
+      "variants": [
+        "password reset email link expired",
+        "account recovery magic link expiry delayed delivery",
+        "reset token TTL email delivery latency"
+      ],
+      "primary": ["work/2026/Password reset links expire too early.md"],
+      "secondary": [
+        "sources/jira/2026-09-29 NWA-341 Password reset links expire before they arrive.md",
+        "decisions/2026/2026-02-25 Password reset links stay valid for 15 minutes.md"
+      ]
+    },
+    {
+      "id": "decision_temporal-1",
+      "category": "decision_temporal",
+      "question": "How long do Fan App refresh tokens last now, and how has that changed over the year?",
+      "variants": [
+        "Fan App refresh token lifetime TTL",
+        "refresh token expiry change session duration",
+        "token expiry decision history"
+      ],
+      "primary": ["decisions/2026/2026-07-22 Rotate Fan App refresh tokens with a 14-day lifetime.md"],
+      "secondary": [
+        "decisions/2026/2026-04-08 Fan App refresh tokens expire after 7 days.md",
+        "decisions/2026/2026-01-20 Fan App sign-in sessions last 30 days.md",
+        "sources/meeting/2026-07-22 Identity steering group July.md"
+      ]
+    },
+    {
+      "id": "decision_temporal-2",
+      "category": "decision_temporal",
+      "question": "What's our current rule for retrying a failed renewal payment, and what did it replace?",
+      "variants": [
+        "renewal payment retry policy dunning",
+        "failed payment retry schedule decision superseded",
+        "subscription renewal retry rule change"
+      ],
+      "primary": ["decisions/2026/2026-08-19 Retry failed renewal payments four times over ten days.md"],
+      "secondary": [
+        "decisions/2026/2026-03-04 Retry failed renewal payments three times in one week.md",
+        "sources/meeting/2026-08-19 Renewal retry policy review.md"
+      ]
+    },
+    {
+      "id": "decision_temporal-3",
+      "category": "decision_temporal",
+      "question": "Is Danny's team still running our own event broker, or did that change? When?",
+      "variants": [
+        "Danny team self-hosted message broker Kafka",
+        "event bus migration managed service",
+        "event broker ownership decision change"
+      ],
+      "primary": ["decisions/2026/2026-05-12 Use the managed message queue for platform events.md"],
+      "secondary": [
+        "decisions/2026/2026-02-03 Run a self-hosted event broker for platform events.md",
+        "work/2026/Build self-hosted event broker cluster.md",
+        "references/Moving platform events to the managed queue.md"
+      ]
+    },
+    {
+      "id": "decision_temporal-4",
+      "category": "decision_temporal",
+      "question": "What did we decide about dynamic pricing for the Kings, and when does it get looked at again?",
+      "variants": [
+        "Kings dynamic pricing decision",
+        "variable ticket pricing review date",
+        "demand-based pricing deferred revisit"
+      ],
+      "primary": ["decisions/2026/2026-07-08 Pause the dynamic pricing pilot until Kingsport FC board sign-off.md"],
+      "secondary": [
+        "work/2026/Dynamic pricing pilot.md",
+        "sources/meeting/2026-07-08 Ticketing planning Q3.md",
+        "anchors/person/Declan Moorcroft.md"
+      ]
+    },
+    {
+      "id": "multi_hop-1",
+      "category": "multi_hop",
+      "question": "The renewals double-charge bug broke a rule we agreed in August. What exactly does that rule say about retries, and how much are we refunding?",
+      "variants": [
+        "renewals double charge duplicate payment refund",
+        "August payment retry rule idempotency policy",
+        "renewal retry policy decision refund amount"
+      ],
+      "primary": [
+        "decisions/2026/2026-08-19 Retry failed renewal payments four times over ten days.md",
+        "work/2026/Duplicate charges on renewal retry.md"
+      ],
+      "secondary": [
+        "sources/meeting/2026-09-09 Payments weekly 9 September.md",
+        "projects/Season Ticket Renewals 2027.md"
+      ]
+    },
+    {
+      "id": "multi_hop-2",
+      "category": "multi_hop",
+      "question": "What short-term fix did we ship for seats showing as free when they had already sold, and who is the head of digital at the club that was hit, so I can let them know?",
+      "variants": [
+        "seat availability oversold stale inventory hotfix",
+        "double-sold seats cache sync mitigation",
+        "club head of digital contact"
+      ],
+      "primary": [
+        "work/2026/Seat map shows sold seats as available.md",
+        "anchors/organisation/Harbour Athletic.md"
+      ],
+      "secondary": [
+        "sources/jira/2026-09-16 NWA-352 Seat map shows sold seats as available.md",
+        "decisions/2026/2026-02-18 Cache the seat map for 60 seconds.md",
+        "anchors/person/Kwame Mensah.md"
+      ]
+    },
+    {
+      "id": "multi_hop-3",
+      "category": "multi_hop",
+      "question": "The Vale Rovers history problem goes back to a scoping call made before go-live. What was decided then, and what's still needed to fix it before the away ballot?",
+      "variants": [
+        "Vale Rovers purchase history migration scope",
+        "historical data import excluded go-live decision",
+        "away ballot loyalty points history backfill"
+      ],
+      "primary": [
+        "decisions/2026/2026-05-28 Vale Rovers go live on 1 August.md",
+        "work/2026/Rovers season ticket history and loyalty points missing.md"
+      ],
+      "secondary": [
+        "work/2026/Vale Rovers member data import.md",
+        "sources/meeting/2026-05-28 Vale Rovers onboarding checkpoint.md",
+        "anchors/organisation/Vale Rovers.md"
+      ]
+    },
+    {
+      "id": "multi_hop-4",
+      "category": "multi_hop",
+      "question": "What was the root cause of the March checkout outage, and what connection pooler settings did we end up with after the database upgrade that followed it?",
+      "variants": [
+        "March checkout outage root cause postmortem",
+        "PgBouncer connection pooler config after Postgres upgrade",
+        "database upgrade pool size settings"
+      ],
+      "primary": [
+        "work/2026/Matchday checkout outage 14 March.md",
+        "work/2026/Upgrade payments-db to Postgres 16.md"
+      ],
+      "secondary": [
+        "references/Matchday checkout outage postmortem.md",
+        "sources/meeting/2026-03-19 Checkout outage postmortem review.md"
+      ]
+    },
+    {
+      "id": "resume_status-1",
+      "category": "resume_status",
+      "question": "Where do things stand on STR27? What's blocking it and when does it need to get moving again?",
+      "variants": [
+        "STR27 status blocker",
+        "STR27 blocked dependency next steps deadline",
+        "STR27 progress restart date"
+      ],
+      "primary": ["projects/Season Ticket Renewals 2027.md"],
+      "secondary": [
+        "work/2026/Duplicate charges on renewal retry.md",
+        "work/2026/Renewal reminder emails.md",
+        "work/2026/Stored card auto-renewal.md"
+      ]
+    },
+    {
+      "id": "resume_status-2",
+      "category": "resume_status",
+      "question": "What still has to happen before we can drop to reduced PCI scope for the November assessment?",
+      "variants": [
+        "PCI DSS scope reduction SAQ November assessment",
+        "cardholder data scope tokenisation remaining work",
+        "PCI audit readiness outstanding actions"
+      ],
+      "primary": ["work/2026/Remove card details from Club Console.md"],
+      "secondary": [
+        "anchors/topic/PCI compliance.md",
+        "references/Club Console PCI scope thread.md",
+        "decisions/2026/2026-04-21 Hold card data only as payment provider tokens.md"
+      ]
+    },
+    {
+      "id": "resume_status-3",
+      "category": "resume_status",
+      "question": "Where has Mei got to with moving the console users across to the new IdP? Which clubs are done and what's next?",
+      "variants": [
+        "Mei admin console SSO identity provider migration",
+        "console users IdP cutover clubs progress",
+        "staff login migration Entra Okta rollout status"
+      ],
+      "primary": ["work/2026/Move Club Console staff accounts to the new identity provider.md"],
+      "secondary": [
+        "projects/Identity Platform Migration.md",
+        "decisions/2026/2026-06-30 Migrate Club Console staff accounts before fan accounts.md"
+      ]
+    },
+    {
+      "id": "resume_status-4",
+      "category": "resume_status",
+      "question": "What has Jay got left to do on switching the app's sign-in over to OIDC?",
+      "variants": [
+        "Jay OIDC migration Fan App login remaining tasks",
+        "app authentication OpenID Connect cutover status",
+        "mobile sign-in identity provider OAuth switch progress"
+      ],
+      "primary": ["work/2026/OIDC login for the Fan App.md"],
+      "secondary": [
+        "projects/Identity Platform Migration.md",
+        "references/Identity provider OIDC integration spec.md"
+      ]
+    }
+  ]
+}
