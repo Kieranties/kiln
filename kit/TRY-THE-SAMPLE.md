@@ -6,13 +6,23 @@ Use a separate trial vault, so the sample never mixes with your own notes.
 
 ## 1. Make a trial vault
 
-Follow [Getting started](GETTING-STARTED.md) sections 1 to 3 with a new empty folder, for example `D:\tmp\kiln-sample`. In section 3, use this prompt instead:
+1. Follow [Getting started](GETTING-STARTED.md) **sections 1 and 2 only**, with a new empty folder, for example `D:\tmp\kiln-sample`. Stop when Obsidian is closed.
+2. Come back here instead of going on to Getting started section 3. Start Claude in the kiln repo:
 
-```text
-Set up the kiln kit in <trial vault folder> by following "Setting up a vault" in kit/README.md exactly.
-Then copy the Northwind Arena sample from tests/fixtures/layer1 into it.
-Report each file you wrote and each setting you merged.
-```
+   ```bash
+   cd kiln
+   claude
+   ```
+
+3. Give it this prompt, with your trial folder filled in. It applies the kit and adds the sample:
+
+   ```text
+   Set up the kiln kit in <trial vault folder> by following "Setting up a vault" in kit/README.md exactly.
+   Then copy the Northwind Arena sample from tests/fixtures/layer1 into it.
+   Report each file you wrote and each setting you merged.
+   ```
+
+4. Open Obsidian on the trial vault and carry on with section 3 below.
 
 ## 2. What's in it
 
