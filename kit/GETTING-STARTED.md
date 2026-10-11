@@ -21,9 +21,10 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 1. Create an empty folder for your vault, for example `D:\notes`.
 2. In Obsidian, choose **Open folder as vault** and pick the folder.
 3. Go to Settings → Community plugins and select **Exit restricted mode**. (Before Obsidian 1.14.4, the button was **Turn on community plugins**.)
-4. Select **Browse** and install and enable each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**.
-5. In Settings → Templater, turn on **Trigger Templater on new file creation**. Templater keeps this switch on your device rather than in the vault, so the kit can't set it for you. Without it, new notes get no template.
-6. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the kit must be applied while it is closed.
+4. Select **Browse** and install each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**. Installing does not turn a plugin on.
+5. Back in Settings → Community plugins, find each of the four under **Installed plugins** and switch it on.
+6. In Settings → Templater, turn on **Trigger Templater on new file creation**. Templater keeps this switch on your device rather than in the vault, so the kit can't set it for you. Without it, new notes get no template.
+7. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the kit must be applied while it is closed.
 
 ## 3. Apply the kit
 
