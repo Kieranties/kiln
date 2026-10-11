@@ -29,7 +29,7 @@ function namingError(definition: Definition, name: string): string | undefined {
   }
 }
 
-/** Checks one note against the vault's blueprint. `path` is vault-relative with `/`. Never writes. */
+/** Checks one note against the vault's blueprint. `path` is vault-relative with `/`. Never writes. Throws when the file can't be read. */
 export function checkNote(vault: Vault, path: string, options: CheckOptions = {}): NoteResult {
   const text = readFileSync(join(vault.root, path), 'utf8');
   const result = (findings: Finding[]): NoteResult => ({ path, findings });
@@ -101,7 +101,12 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
   for (const section of definition.sections) {
     if (!headings.includes(section)) add(`missing section: ## ${section}`);
   }
-  if (definition.last && headings[headings.length - 1] !== definition.last) {
+  const lastHeading = body
+    .split(/\r?\n/)
+    .map((line) => /^## (.+)$/.exec(line)?.[1]?.trim())
+    .filter((heading) => heading !== undefined)
+    .at(-1);
+  if (definition.last && headings.includes(definition.last) && lastHeading !== definition.last) {
     add(`## ${definition.last} must be the last section`);
   }
 

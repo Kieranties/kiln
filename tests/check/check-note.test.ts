@@ -48,6 +48,21 @@ describe('checkNote errors', () => {
     ]);
   });
 
+  it('the last section is the final heading, whatever repeats', () => {
+    const lf = readFileSync(join(dir, 'Daily', '2026-10-07.md'), 'utf8');
+    const front = lf.slice(0, lf.indexOf('\n---\n', 4) + 5);
+    const write = (name: string, headings: string[]) =>
+      writeFileSync(join(dir, 'Daily', name), front + headings.map((h) => `## ${h}\n\n- 09:00 x\n`).join('\n'));
+    write('2026-10-08.md', ['Log', 'Reflection', 'Log']);
+    write('2026-10-09.md', ['Reflection', 'Log', 'Reflection']);
+    write('2026-10-10.md', ['Reflection']);
+    expect(errors('Daily/2026-10-08.md')).not.toContain('## Log must be the last section');
+    expect(errors('Daily/2026-10-09.md')).toContain('## Log must be the last section');
+    const missingLog = errors('Daily/2026-10-10.md');
+    expect(missingLog).toContain('missing section: ## Log');
+    expect(missingLog).not.toContain('## Log must be the last section');
+  });
+
   it('a moment with a status and no date in its name', () => {
     expect(errors('Meetings/Renewals retro.md')).toEqual([
       'meeting has no status; leave status empty',
