@@ -7368,7 +7368,7 @@ var require_dist = __commonJS({
 });
 
 // src/check/run.ts
-import { statSync as statSync2 } from "node:fs";
+import { realpathSync, statSync as statSync2 } from "node:fs";
 import { relative as relative2, resolve as resolve2, sep as sep2 } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -7763,6 +7763,13 @@ var USAGE = `Usage: node kiln-check.mjs [--today] [--new] <note-or-folder>...
   --today           only notes changed since midnight
   --new             the notes were just created: <% and an empty body are errors
 Exit code: 0 no errors, 1 errors, 2 bad arguments.`;
+function onDisk(path) {
+  try {
+    return realpathSync.native(path);
+  } catch {
+    return path;
+  }
+}
 var message = (e) => e instanceof Error ? e.message : String(e);
 var failure = (path, text2) => ({ path, findings: [{ level: "error", message: text2 }] });
 function runCheck(argv, options = {}) {
@@ -7802,12 +7809,12 @@ function runCheck(argv, options = {}) {
   const results = [];
   const seen = /* @__PURE__ */ new Set();
   for (const typed of positionals) {
-    const absolute = resolve2(cwd, typed);
-    const stats = statSync2(absolute, { throwIfNoEntry: false });
+    const stats = statSync2(resolve2(cwd, typed), { throwIfNoEntry: false });
     if (!stats) {
       results.push(failure(typed, "no such note or folder"));
       continue;
     }
+    const absolute = onDisk(resolve2(cwd, typed));
     const root = findVault(absolute);
     if (!root) {
       results.push(failure(typed, "not in a kiln vault: no _kiln/types/ folder here or above"));

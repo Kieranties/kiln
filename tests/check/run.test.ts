@@ -1,5 +1,15 @@
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -98,6 +108,24 @@ describe('runCheck', () => {
     const count = readdirSync(join(sample, 'Work')).filter((f) => f.endsWith('.md')).length;
     const note = join(sample, 'Work', 'Fix renewal date rollover.md');
     expect(runCheck([note, join(sample, 'Work')]).output).toBe(`Checked ${count} notes: no problems.`);
+  });
+
+  // Windows and macOS file systems ignore letter case, so a path can be typed in any case.
+  const ignoresCase = existsSync(join(sample, 'WORK'));
+  it.skipIf(!ignoresCase)('takes a path typed in a different letter case as the note or folder it names', () => {
+    const count = readdirSync(join(sample, 'Work')).filter((f) => f.endsWith('.md')).length;
+    expect(runCheck([join(sample, 'work')]).output).toBe(`Checked ${count} notes: no problems.`);
+    expect(runCheck([join(sample, 'work', 'fix renewal date rollover.md')])).toEqual({
+      output: 'Checked 1 note: no problems.',
+      exitCode: 0,
+    });
+  });
+
+  it('follows a link to a folder in the vault to the folder itself', () => {
+    const count = readdirSync(join(sample, 'Work')).filter((f) => f.endsWith('.md')).length;
+    const link = join(outside, 'linked-work');
+    symlinkSync(join(sample, 'Work'), link, 'junction');
+    expect(runCheck([link]).output).toBe(`Checked ${count} notes: no problems.`);
   });
 
   it('never writes to the vault', () => {

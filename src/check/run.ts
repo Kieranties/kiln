@@ -1,4 +1,4 @@
-import { statSync } from 'node:fs';
+import { realpathSync, statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import { parseArgs } from 'node:util';
 import { checkNote, NoteReadError, type NoteResult } from './check-note.js';
@@ -12,6 +12,18 @@ const USAGE = `Usage: node kiln-check.mjs [--today] [--new] <note-or-folder>...
   --today           only notes changed since midnight
   --new             the notes were just created: <% and an empty body are errors
 Exit code: 0 no errors, 1 errors, 2 bad arguments.`;
+
+/**
+ * The path as the file system spells it: its letter case as on disk, since Windows and macOS accept any, and links
+ * followed. Falls back to the path as given on the rare drive where that can't be worked out.
+ */
+function onDisk(path: string): string {
+  try {
+    return realpathSync.native(path);
+  } catch {
+    return path;
+  }
+}
 
 const message = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 const failure = (path: string, text: string): NoteResult => ({ path, findings: [{ level: 'error', message: text }] });
@@ -57,12 +69,12 @@ export function runCheck(argv: string[], options: RunOptions = {}): { output: st
   const results: NoteResult[] = [];
   const seen = new Set<string>();
   for (const typed of positionals) {
-    const absolute = resolve(cwd, typed);
-    const stats = statSync(absolute, { throwIfNoEntry: false });
+    const stats = statSync(resolve(cwd, typed), { throwIfNoEntry: false });
     if (!stats) {
       results.push(failure(typed, 'no such note or folder'));
       continue;
     }
+    const absolute = onDisk(resolve(cwd, typed));
     const root = findVault(absolute);
     if (!root) {
       results.push(failure(typed, 'not in a kiln vault: no _kiln/types/ folder here or above'));
