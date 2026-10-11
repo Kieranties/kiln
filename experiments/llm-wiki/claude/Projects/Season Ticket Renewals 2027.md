@@ -7,7 +7,7 @@ summary: Run the 2027 season ticket renewals for Vale Rovers on the Club Console
 aliases: []
 keywords: []
 tags: []
-review:
+review: "Current state says one bug is open on renewal dates, but issue 88 was closed on 2026-10-07: fixed by PR 91, with all 312 affected renewals corrected."
 organisations:
   - "[[Vale Rovers]]"
 products:

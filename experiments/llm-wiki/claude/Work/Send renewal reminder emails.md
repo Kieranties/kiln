@@ -7,7 +7,7 @@ summary: Supporters get a reminder two weeks before their renewal date.
 aliases: []
 keywords: []
 tags: []
-review:
+review: "Outcome says the reminders were sent on 2026-10-01; the 2026-10-06 standup transcript says they went out on Friday (2026-10-02 or 2026-10-03), with a handful bounced."
 jira: []
 github: []
 priority: high

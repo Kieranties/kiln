@@ -10,6 +10,8 @@ review:
 date: 2026-10-06
 attendees:
   - "[[Priya Raman]]"
+  - "[[Tom Ellis]]"
+  - "[[Sam Okafor]]"
 projects:
   - "[[Season Ticket Renewals 2027]]"
 organisations:

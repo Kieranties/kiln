@@ -11,7 +11,7 @@ keywords:
 tags:
   - payments
 review:
-verified: 2026-10-02
+verified: 2026-10-06
 topics: []
 products:
   - "[[Club Console]]"
@@ -20,9 +20,19 @@ products:
 
 Renewals charge the saved card on the renewal date.
 
+Card payments go through [[PayRail]], which retries a failed recurring payment automatically on a schedule we set. What happens after the last retry, such as a grace period before a seat is released, is ours to run ([[PayRail Card retry schedules|PayRail docs]]).
+
 ## Durable facts
 
 - A failed card is retried; each retry is a new charge attempt.
+- Each PayRail retry is a new charge attempt and may appear on the supporter's statement as a pending authorisation ([[PayRail Card retry schedules|PayRail docs]]).
+- PayRail retries soft declines (insufficient funds, a limit reached, issuer unavailable). It never retries hard declines (lost or stolen card, closed account, fraud) and sends `payment.retry_exhausted` straight away ([[PayRail Card retry schedules|PayRail docs]]).
+- PayRail's default schedule retries three times: 1, 3 and 5 days after the failure. A custom schedule has 1 to 10 retries, all within 14 days, and a change applies only to failures from the next day ([[PayRail Card retry schedules|PayRail docs]]).
+- PayRail's smart timing, off by default, may move a retry by up to 24 hours towards a likelier time, never past the schedule's last day ([[PayRail Card retry schedules|PayRail docs]]).
+- PayRail does not hold or release anything: a grace period should start from `payment.retry_exhausted` and be managed in our own system ([[PayRail Card retry schedules|PayRail docs]]).
+- At [[Vale Rovers]], card failures are more common for phone renewals, where a club staff member enters the card; many older supporters renew this way ([[Vale Rovers — onboarding notes|onboarding notes]]).
+- A failed renewal card is retried daily for three days, then the supporter is emailed, as [[2026-10-05 Retry failed renewals for three days|decided on 2026-10-05]] ([[2026-10-06 Renewals standup — transcript|standup transcript]]).
+- The grace period before a seat is released is a per-club [[Club Console]] setting, default seven days after the last retry and up to thirty; it was in review on 2026-10-06 ([[2026-10-06 Renewals standup — transcript|standup transcript]]).
 
 ## Notes
 
