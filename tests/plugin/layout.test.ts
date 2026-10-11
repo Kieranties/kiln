@@ -76,3 +76,35 @@ describe('the release', () => {
     expect(steps.some((s) => s.run?.includes('"dist/kiln-blueprint-$VERSION.zip"'))).toBe(true);
   });
 });
+
+describe('the living docs', () => {
+  // The dated plans and the design notes are records, and keep the paths they were written with.
+  const LIVING = [
+    'README.md',
+    'CLAUDE.md',
+    'docs/vision.md',
+    'docs/specs/2026-10-11-layer-1-structure-design.md',
+    'tests/fixtures/README.md',
+    ...readdirSync(join(PLUGIN, 'blueprint'))
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => `claude-plugin/blueprint/${f}`),
+  ];
+  const text = (doc: string) => readFileSync(join(REPO, doc), 'utf8');
+
+  it('link only to files that exist', () => {
+    const broken: string[] = [];
+    for (const doc of LIVING) {
+      for (const [, target = ''] of text(doc).matchAll(/\]\(([^)\s]+)\)/g)) {
+        if (/^(https?:|mailto:|#)/.test(target)) continue;
+        const path = join(REPO, doc, '..', decodeURI(target.split('#')[0] ?? ''));
+        if (!existsSync(path)) broken.push(`${doc}: ${target}`);
+      }
+    }
+    expect(broken).toEqual([]);
+  });
+
+  it('name no kit/ path, since the kit is now the blueprint', () => {
+    const stale = LIVING.filter((doc) => /(?<![\w/])kit\//.test(text(doc)));
+    expect(stale).toEqual([]);
+  });
+});

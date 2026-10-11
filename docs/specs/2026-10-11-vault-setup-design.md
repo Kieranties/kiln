@@ -8,7 +8,7 @@ Part of [Foundation: Claude in the vault](https://github.com/Kieranties/kiln/iss
 
 ### A Node helper does the mechanical work
 
-Most of "Setting up a vault" (`kit/README.md`) is mechanical: create the type folders, copy the blueprint to `_kiln/`, and merge the settings fragments into `.obsidian/`. A prototype of about 150 lines did all ten merges, and a second run changed nothing. So the skill runs a bundled Node helper, and Claude handles the judgement:
+Most of "Setting up a vault" (`claude-plugin/blueprint/README.md`) is mechanical: create the type folders, copy the blueprint to `_kiln/`, and merge the settings fragments into `.obsidian/`. A prototype of about 150 lines did all ten merges, and a second run changed nothing. So the skill runs a bundled Node helper, and Claude handles the judgement:
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-setup.mjs" plan --vault "D:\notes"

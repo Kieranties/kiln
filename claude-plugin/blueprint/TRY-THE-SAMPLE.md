@@ -1,6 +1,6 @@
 # Try the sample
 
-The sample is a fictional project, with one note of every type around it, so you can see the whole kit working before adding anything of your own. It belongs to Northwind Arena, an invented sports-tech platform, and its client club Vale Rovers.
+The sample is a fictional project, with one note of every type around it, so you can see the whole blueprint working before adding anything of your own. It belongs to Northwind Arena, an invented sports-tech platform, and its client club Vale Rovers.
 
 Use a separate trial vault, so the sample never mixes with your own notes.
 
@@ -14,10 +14,10 @@ Use a separate trial vault, so the sample never mixes with your own notes.
    claude
    ```
 
-3. Give it this prompt, with your trial folder filled in. It applies the kit and adds the sample:
+3. Give it this prompt, with your trial folder filled in. It applies the blueprint and adds the sample:
 
    ```text
-   Set up the kiln kit in <trial vault folder> by following "Setting up a vault" in kit/README.md exactly.
+   Set up the kiln blueprint in <trial vault folder> by following "Setting up a vault" in claude-plugin/blueprint/README.md exactly.
    Then copy the Northwind Arena sample from tests/fixtures/layer1 into it.
    Report each file you wrote and each setting you merged.
    ```

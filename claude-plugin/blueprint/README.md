@@ -1,10 +1,10 @@
-# The kiln kit
+# The kiln blueprint
 
-**New here? Follow [Getting started](GETTING-STARTED.md)** to set up your vault from an empty folder. To see the whole kit working first, [try the sample](TRY-THE-SAMPLE.md) in a trial vault.
+**New here? Follow [Getting started](GETTING-STARTED.md)** to set up your vault from an empty folder. To see the whole blueprint working first, [try the sample](TRY-THE-SAMPLE.md) in a trial vault.
 
-The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how each one looks, and how they link. It is configuration, not code. The design is in [Layer 1: structure](../docs/specs/2026-10-11-layer-1-structure-design.md).
+The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist, how each one looks, and how they link. It is configuration, not code. The design is in [Layer 1: structure](../../docs/specs/2026-10-11-layer-1-structure-design.md).
 
-## What the kit is
+## What the blueprint is
 
 | Folder | Holds | Goes to |
 |---|---|---|
@@ -15,7 +15,7 @@ The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how e
 | `root/` | `Home.md` and `Board.base` | The vault root |
 | `settings/` | Obsidian and plugin settings, as fragments to merge | `.obsidian/` |
 
-`tests/kit/` checks every kit file against the definitions: `npx vitest run tests/kit`.
+`tests/kit/` checks every blueprint file against the definitions: `npx vitest run tests/kit`.
 
 ## Conventions
 
@@ -31,11 +31,11 @@ The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how e
 
 ## Setting up a vault
 
-The steps for whoever applies the kit, usually Claude. `<vault>` is the vault folder. For the owner's walk-through, see [Getting started](GETTING-STARTED.md).
+The steps for whoever applies the blueprint, usually Claude. `<vault>` is the vault folder. For the owner's walk-through, see [Getting started](GETTING-STARTED.md).
 
 1. **Check the plugins are installed and Obsidian is closed.** `<vault>/.obsidian/plugins/` has `iconic`, `templater-obsidian`, `quickadd` and `homepage`. Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up. Confirm with the owner that they turned on **Trigger Templater on new file creation** in Templater's settings: Templater keeps that switch per device in Obsidian's local storage, so no settings file can set it, and without it no folder template runs.
 2. **Create the type folders** in `<vault>`: the `folder` of every definition in `types/`.
-3. **Copy the kit in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md`, this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The sample notes in `tests/fixtures/layer1` are copied only when asked for (see `TRY-THE-SAMPLE.md`).
+3. **Copy the blueprint in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md`, this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The sample notes in `tests/fixtures/layer1` are copied only when asked for (see `TRY-THE-SAMPLE.md`).
 4. **Merge each settings fragment.** Keep every setting the vault already has unless the rule says otherwise. When a target file is missing, write the fragment as it is.
 
    | Fragment | Target in `<vault>/.obsidian/` | Rule |
@@ -47,9 +47,9 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
    | `community-plugins.json` | `community-plugins.json` | Add the four ids that are missing |
    | `snippets/kiln.css` | `snippets/kiln.css` | Copy the file. It shows property names, values and board columns with capitals; notes stay lowercase |
    | `appearance.json` | `appearance.json` | Add `kiln` to `enabledCssSnippets` |
-   | `plugins/iconic.json` | `plugins/iconic/data.json` | Set `showAllFileIcons`, `showAllFolderIcons` and `minimalFolderIcons` (folder icons replace the folder arrows). Set the `fileIcons` entries for the kit's folders, `_kiln`, `Home.md` and `Board.base`, and the `propertyIcons` entries for the properties in `properties.md`, keeping the rest. Remove `fileRules` entries whose `id` starts with `kiln-`, then put the kit's rules first, so they win over older rules |
-   | `plugins/templater.json` | `plugins/templater-obsidian/data.json` | Set `templates_folder` and `trigger_on_file_creation_mode`; replace `folder_templates` entries for the kit's folders and keep the rest |
-   | `plugins/quickadd.json` | `plugins/quickadd/data.json` | Remove `choices` entries whose `id` starts with `kiln-`, then add the kit's |
+   | `plugins/iconic.json` | `plugins/iconic/data.json` | Set `showAllFileIcons`, `showAllFolderIcons` and `minimalFolderIcons` (folder icons replace the folder arrows). Set the `fileIcons` entries for the blueprint's folders, `_kiln`, `Home.md` and `Board.base`, and the `propertyIcons` entries for the properties in `properties.md`, keeping the rest. Remove `fileRules` entries whose `id` starts with `kiln-`, then put the blueprint's rules first, so they win over older rules |
+   | `plugins/templater.json` | `plugins/templater-obsidian/data.json` | Set `templates_folder` and `trigger_on_file_creation_mode`; replace `folder_templates` entries for the blueprint's folders and keep the rest |
+   | `plugins/quickadd.json` | `plugins/quickadd/data.json` | Remove `choices` entries whose `id` starts with `kiln-`, then add the blueprint's |
    | `plugins/homepage.json` | `plugins/homepage/data.json` | Set `homepages["Main Homepage"]` and `version` |
 
 5. **Put file properties in the right sidebar.** Notes keep properties out of the text, so the file properties view must be open. In `<vault>/.obsidian/workspace.json`:

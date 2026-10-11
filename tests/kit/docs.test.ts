@@ -25,7 +25,7 @@ describe('section()', () => {
   });
 });
 
-describe('kit docs', () => {
+describe('blueprint docs', () => {
   it("both docs say to turn on Templater's per-device trigger", () => {
     // Templater keeps this switch in Obsidian's local storage, so no settings file can set it.
     for (const doc of [readme, guide]) expect(doc).toContain('Trigger Templater on new file creation');
@@ -49,7 +49,7 @@ describe('kit docs', () => {
   });
 
   it('the property list is copied, merged and kept up to date', () => {
-    expect(section(readme, 'What the kit is')).toContain('properties.md');
+    expect(section(readme, 'What the blueprint is')).toContain('properties.md');
     const setup = section(readme, 'Setting up a vault');
     for (const part of ['properties.md', 'propertyIcons']) expect(setup, part).toContain(part);
     expect(section(readme, 'Adding or changing a type')).toContain('properties.md');
@@ -63,7 +63,7 @@ describe('kit docs', () => {
     expect(guide).not.toContain('Run **Show file properties**');
   });
 
-  it('setting up a vault copies all three kit docs', () => {
+  it('setting up a vault copies all three blueprint docs', () => {
     const steps = section(readme, 'Setting up a vault');
     for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);
   });
