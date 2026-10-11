@@ -6,6 +6,9 @@ import { splitFrontmatter } from './markdown.js';
 export type PropType = 'text' | 'date' | 'datetime' | 'number' | 'links' | 'list';
 export const PROP_TYPES: readonly PropType[] = ['text', 'date', 'datetime', 'number', 'links', 'list'];
 
+export const NAMINGS = ['title', 'date', 'date-title', 'source-title'] as const;
+export type Naming = (typeof NAMINGS)[number];
+
 /** `via` is a relationship property on `type`, or 'link' for file.hasLink(this.file). */
 export type ViewDef = { type: string; via: string };
 
@@ -13,12 +16,15 @@ export type Definition = {
   name: string;
   folder: string;
   template: string;
+  naming: Naming;
   icon: string;
   color: string;
   statuses: string[];
   properties: Record<string, PropType>;
   kinds: Record<string, { icon?: string; color?: string }>;
   sections: string[];
+  /** A section that must stay last, such as the daily note's Log. */
+  last?: string;
   views: Record<string, ViewDef>;
   body: string;
 };
@@ -26,7 +32,7 @@ export type Definition = {
 /** A property's icon: its own, or (for a relationship) the type it links to. */
 export type PropertyEntry = { icon?: string; color?: string; links?: string };
 
-export type PropertyCatalogue = { entries: Record<string, PropertyEntry> };
+export type PropertyCatalogue = { shared: string[]; optional: string[]; entries: Record<string, PropertyEntry> };
 
 /** Everything a blueprint folder defines. */
 export type Blueprint = { definitions: Definition[]; properties: PropertyCatalogue };
@@ -109,16 +115,21 @@ export function readDefinitions(dir: string): Definition[] {
       const { frontmatter, body } = splitFrontmatter(readFileSync(join(typesDir, f), 'utf8'));
       const data = parseYaml(frontmatter, where);
       const kinds = mapOf(data, 'kinds', where, isKind);
+      const naming = data.naming;
+      if (!NAMINGS.some((n) => n === naming)) throw new Error(`${where}: naming must be one of ${NAMINGS.join(', ')}`);
+      const last = text(data, 'last', where, false);
       return {
         name: text(data, 'name', where, true),
         folder: text(data, 'folder', where, true),
         template: text(data, 'template', where, false),
+        naming: naming as Naming,
         icon: text(data, 'icon', where, false),
         color: text(data, 'color', where, false),
         statuses: textList(data, 'statuses', where),
         properties: mapOf(data, 'properties', where, isPropType),
         kinds: Object.fromEntries(Object.entries(kinds).map(([k, v]) => [k, v ?? {}])),
         sections: textList(data, 'sections', where),
+        ...(last ? { last } : {}),
         views: mapOf(data, 'views', where, isView),
         body: body.trim(),
       };
@@ -132,7 +143,12 @@ export function readPropertyCatalogue(dir: string): PropertyCatalogue {
   if (!existsSync(file)) throw new Error(`${where} is missing (${file})`);
   const { frontmatter } = splitFrontmatter(readFileSync(file, 'utf8'));
   const data = parseYaml(frontmatter, where);
-  return { entries: mapOf(data, 'properties', where, isEntry) };
+  if (!Array.isArray(data.shared)) throw new Error(`${where}: shared must be a list`);
+  return {
+    shared: textList(data, 'shared', where),
+    optional: textList(data, 'optional', where),
+    entries: mapOf(data, 'properties', where, isEntry),
+  };
 }
 
 /** A blueprint folder: `claude-plugin/blueprint/` in the repo, `<vault>/_kiln/` in a vault. */

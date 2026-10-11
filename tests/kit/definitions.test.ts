@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { loadDefinitions, PROP_TYPES, SHARED_PROPERTIES, type Definition } from './load.js';
+import { NAMINGS } from '../../src/blueprint/load.js';
+import { loadDefinitions, OPTIONAL_PROPERTIES, PROP_TYPES, SHARED_PROPERTIES, type Definition } from './load.js';
 
 const TYPES = [
   'organisation',
@@ -27,6 +28,44 @@ function def(name: string): Definition {
 }
 
 describe('type definitions', () => {
+  it('naming matches the spec', () => {
+    expect(Object.fromEntries(TYPES.map((t) => [t, def(t).naming]))).toEqual({
+      organisation: 'title',
+      person: 'title',
+      product: 'title',
+      topic: 'title',
+      project: 'title',
+      work: 'title',
+      research: 'date-title',
+      decision: 'date-title',
+      meeting: 'date-title',
+      daily: 'date',
+      reference: 'source-title',
+      capture: 'date-title',
+    });
+  });
+
+  it('only the daily note keeps a section last, and it is one of its sections', () => {
+    const lasts = Object.fromEntries(TYPES.filter((t) => def(t).last).map((t) => [t, def(t).last]));
+    expect(lasts).toEqual({ daily: 'Log' });
+    expect(def('daily').sections.at(-1)).toBe('Log');
+  });
+
+  it('properties.md lists the shared and optional properties', () => {
+    expect(SHARED_PROPERTIES).toEqual([
+      'type',
+      'kind',
+      'status',
+      'created',
+      'summary',
+      'aliases',
+      'keywords',
+      'tags',
+      'review',
+    ]);
+    expect(OPTIONAL_PROPERTIES).toEqual(['captured', 'from', 'url']);
+  });
+
   it('has exactly the twelve starting types', () => {
     expect([...byName().keys()].sort()).toEqual([...TYPES].sort());
   });
@@ -34,6 +73,7 @@ describe('type definitions', () => {
   it('every definition is complete', () => {
     for (const d of loadDefinitions()) {
       expect(d.folder, d.name).toBeTruthy();
+      expect(NAMINGS, d.name).toContain(d.naming);
       expect(d.template, d.name).toMatch(/^[A-Z][a-z]+\.md$/);
       expect(d.icon, d.name).toMatch(/^lucide-[a-z0-9-]+$/);
       expect(d.color, d.name).toMatch(/^#[0-9a-f]{6}$/);

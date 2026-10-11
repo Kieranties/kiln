@@ -3,6 +3,7 @@ type: kiln-type
 name: meeting
 folder: Meetings
 template: Meeting.md
+naming: date-title
 icon: lucide-users
 color: "#50fa7b"
 statuses: []

@@ -3,6 +3,7 @@ type: kiln-type
 name: person
 folder: People
 template: Person.md
+naming: title
 icon: lucide-user
 color: "#50fa7b"
 statuses:

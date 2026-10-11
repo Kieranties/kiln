@@ -21,18 +21,11 @@ export {
 } from '../../src/blueprint/load.js';
 export { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
 
-/** The properties every note carries, in template order. */
-export const SHARED_PROPERTIES = [
-  'type',
-  'kind',
-  'status',
-  'created',
-  'summary',
-  'aliases',
-  'keywords',
-  'tags',
-  'review',
-] as const;
+/** The properties every note carries, in template order (properties.md `shared`). */
+export const SHARED_PROPERTIES: readonly string[] = readPropertyCatalogue(BLUEPRINT).shared;
+
+/** The properties any note may carry (properties.md `optional`). */
+export const OPTIONAL_PROPERTIES: readonly string[] = readPropertyCatalogue(BLUEPRINT).optional;
 
 /** Every type definition in blueprint/types, parsed. */
 export const loadDefinitions = (): Definition[] => readDefinitions(BLUEPRINT);

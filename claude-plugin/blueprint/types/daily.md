@@ -3,6 +3,7 @@ type: kiln-type
 name: daily
 folder: Daily
 template: Daily.md
+naming: date
 icon: lucide-sun
 color: "#f1fa8c"
 statuses: []
@@ -15,6 +16,7 @@ sections:
   - Scratch
   - Reflection
   - Log
+last: Log
 views:
   Captures:
     type: capture

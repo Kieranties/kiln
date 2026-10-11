@@ -3,6 +3,7 @@ type: kiln-type
 name: capture
 folder: Inbox
 template: Capture.md
+naming: date-title
 icon: lucide-inbox
 color: "#ffb86c"
 statuses:

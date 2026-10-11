@@ -8,8 +8,8 @@ The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist,
 
 | Folder | Holds | Goes to |
 |---|---|---|
-| `types/` | One **definition** per type: its folder, icon, colour, statuses, properties, kinds, sections and related views. The single source of truth | `_kiln/types/` in the vault |
-| `properties.md` | Every property, with its icon. A relationship takes the icon and colour of the type it links to | `_kiln/properties.md` |
+| `types/` | One **definition** per type: its folder, naming rule, icon, colour, statuses, properties, kinds, sections and related views. The single source of truth | `_kiln/types/` in the vault |
+| `properties.md` | Every property, with its icon, and the lists of shared and optional properties. A relationship takes the icon and colour of the type it links to | `_kiln/properties.md` |
 | `templates/` | One Templater template per type, written from its definition | `_kiln/templates/` |
 | `views/` | Bases views: each type's related views, and the inbox, review, project and today views | `_kiln/views/` |
 | `root/` | `Home.md` and `Board.base` | The vault root |
@@ -62,7 +62,7 @@ The steps for whoever applies the blueprint, usually Claude. `<vault>` is the va
 
 ## Adding or changing a type
 
-1. Add or edit the definition in `types/`. Its body says what the type is for and when to use it.
+1. Add or edit the definition in `types/`. Its body says what the type is for and when to use it. Set its `naming`: `title`, `date`, `date-title` or `source-title`. `last` names a section that must stay last, as Log does for the daily note.
 2. Update what is written from it:
    - the template in `templates/`;
    - a Base in `views/` for each view (`<type>-<view>.base`);

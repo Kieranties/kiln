@@ -60,7 +60,7 @@ Characters that break links (`#`, `^`, `[`, `]`, `|`) are replaced in file names
 
 ### Properties
 
-Shared by every type:
+Shared by every type. The list lives in `properties.md` (`shared`), with `captured`, `from` and `url` optional on every type (`optional`):
 
 | Property | Holds |
 |---|---|
@@ -131,13 +131,14 @@ Shared properties are not repeated. Relationship properties are in *italics*.
 
 ### Type definitions and how they are applied
 
-Each type has a **definition note** in the vault, `_kiln/types/<type>.md`. Its properties define the folder, icon, colour, statuses, properties, kinds (with icon or colour overrides), body sections and related views. Its body explains in prose what the type is for and when to use it. Definitions are the single source of truth, readable in Obsidian and by Claude.
+Each type has a **definition note** in the vault, `_kiln/types/<type>.md`. Its properties define the folder, naming rule, icon, colour, statuses, properties, kinds (with icon or colour overrides), body sections and related views. Its body explains in prose what the type is for and when to use it. `naming` is how a note's file name is formed: `title`, `date`, `date-title` or `source-title`. `last`, where a type has one, names a section that must stay last, as Log does for the daily note. Definitions are the single source of truth, readable in Obsidian and by Claude.
 
 ```yaml
 ---
 type: kiln-type
 name: product
 folder: Products
+naming: title
 icon: lucide-box
 color: "#69c8db"
 statuses: [active, archived]

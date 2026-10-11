@@ -1,5 +1,21 @@
 ---
 type: kiln-properties
+# Every note carries these, in this order
+shared:
+  - type
+  - kind
+  - status
+  - created
+  - summary
+  - aliases
+  - keywords
+  - tags
+  - review
+# Any note may carry these: a capture converted to another type keeps them
+optional:
+  - captured
+  - from
+  - url
 properties:
   # Shared by every type
   type: { icon: lucide-shapes }
@@ -40,3 +56,5 @@ properties:
 Every property in the vault, with the icon Iconic shows beside it.
 
 A relationship has no icon of its own: it takes the icon and colour of the type it links to, so `projects` shows the project's rocket and `attendees` the person icon. Add a property here when a type definition adds one.
+
+`shared` lists the properties every note carries, in template order. `optional` lists the ones any note may carry, so a capture converted to another type keeps `captured`, `from` and `url`.

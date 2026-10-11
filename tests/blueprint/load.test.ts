@@ -38,6 +38,14 @@ describe('readBlueprint', () => {
     expect(() => readDefinitions(tmp)).toThrow(/types\/bad\.md: statuses must be a list/);
   });
 
+  it('requires a known naming rule', () => {
+    mkdirSync(join(tmp, 'types'), { recursive: true });
+    writeFileSync(join(tmp, 'types', 'bad.md'), '---\nname: bad\nfolder: Bad\nnaming: loud\n---\nBad.\n');
+    expect(() => readDefinitions(tmp)).toThrow(
+      /types\/bad\.md: naming must be one of title, date, date-title, source-title/,
+    );
+  });
+
   it('rejects a kind or property entry whose inner field is not text', () => {
     mkdirSync(join(tmp, 'types'), { recursive: true });
     writeFileSync(
@@ -45,7 +53,7 @@ describe('readBlueprint', () => {
       '---\nname: bad\nfolder: Bad\nnaming: title\nkinds:\n  odd:\n    icon: 3\n---\nBad.\n',
     );
     expect(() => readDefinitions(tmp)).toThrow(/types\/bad\.md: kinds\.odd is not valid/);
-    writeFileSync(join(tmp, 'properties.md'), '---\nproperties:\n  owner:\n    links: [person]\n---\n');
+    writeFileSync(join(tmp, 'properties.md'), '---\nshared: [type]\nproperties:\n  owner:\n    links: [person]\n---\n');
     expect(() => readPropertyCatalogue(tmp)).toThrow(/properties\.md: properties\.owner is not valid/);
   });
 });

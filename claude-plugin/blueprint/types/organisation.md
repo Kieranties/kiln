@@ -3,6 +3,7 @@ type: kiln-type
 name: organisation
 folder: Organisations
 template: Organisation.md
+naming: title
 icon: lucide-building
 color: "#6272a4"
 statuses:

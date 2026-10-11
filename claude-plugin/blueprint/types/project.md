@@ -3,6 +3,7 @@ type: kiln-type
 name: project
 folder: Projects
 template: Project.md
+naming: title
 icon: lucide-rocket
 color: "#a371f9"
 statuses:

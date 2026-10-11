@@ -3,6 +3,7 @@ type: kiln-type
 name: product
 folder: Products
 template: Product.md
+naming: title
 icon: lucide-box
 color: "#69c8db"
 statuses:
