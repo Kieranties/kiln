@@ -91,5 +91,5 @@ Reversed: "Obsidian is a viewer and never required", "Claude writes only through
 
 ## Open
 
-- **Checking Claude's writes.** v1 validated every write. The replacement is skills plus a check, either a command or inside Obsidian. Decided in layer 3.
-- **How Claude reaches the vault.** Plain file reads and writes, an Obsidian MCP, or both. This decides whether Obsidian must be running. Decided in layer 3.
+- **Checking Claude's writes.** Current direction (2026-10-11): one `kiln-check` script that reads the type definitions. Kiln skills run it on the notes a flow touched, and the owner runs `/kiln:check`. It checks that a note is still valid after it changes, whoever changed it. See [the note check](specs/2026-10-11-note-check-design.md).
+- **How Claude reaches the vault.** Current direction (2026-10-11): plain files by default, with the official Obsidian CLI on demand for renames, search and Bases queries; it launches Obsidian if it is closed. Claude creates notes through QuickAdd's CLI. No MCP server. Obsidian is needed only when one of those features is, never for setup. See [vault access](specs/2026-10-11-vault-access-design.md). **Waiting on two trials** in that note before it counts as settled.
