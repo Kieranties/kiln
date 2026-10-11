@@ -22,7 +22,7 @@ Use a separate trial vault, so the sample never mixes with your own notes.
    Report each file you wrote and each setting you merged.
    ```
 
-4. Open Obsidian on the trial vault and carry on with section 3 below.
+4. Open Obsidian on the trial vault. Open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and run **Show file properties**, so the file properties view sits in the right sidebar. Then carry on with section 3 below.
 
 ## 2. What's in it
 
@@ -56,7 +56,7 @@ Open Obsidian. Work through the list; each line is one thing to look at.
 
 **The project**
 
-- [ ] Open *Season Ticket Renewals 2027*. In the properties view, dates show a date picker and `organisations`, `products` and `people` show as lists of links.
+- [ ] Open *Season Ticket Renewals 2027*. In the file properties view, dates show a date picker and `organisations`, `products` and `people` show as lists of links.
 - [ ] At the bottom, its views list its work, decision, meeting, research and reference.
 - [ ] Its Board shows three cards: *Fix renewal date rollover* (active), *Add a grace period setting* (review) and *Send renewal reminder emails* (done). Drag the bug to **review**: its `status` changes to `review`.
 - [ ] Open the **Board** from Home. It shows those three and *Book the stadium walkthrough* in Backlog. Every column is there, in order (Backlog, Active, Blocked, Review, Done), including the empty Blocked column.

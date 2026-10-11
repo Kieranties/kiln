@@ -46,6 +46,14 @@ Report each file you wrote and each setting you merged.
 
 Open Obsidian.
 
+**Show properties in the right sidebar.** Notes keep their properties out of the text, so you read and edit them in the sidebar instead:
+
+1. Open the command palette (Ctrl+P, or Cmd+P on a Mac) and search for **properties**.
+2. Run **Show file properties**. The file properties view opens in the right sidebar.
+3. It stays there, showing the properties of whichever note is open. Once opened, Obsidian remembers it for this vault.
+
+Then check:
+
 - [ ] Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review, all empty.
 - [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the kit. Each folder shows its type's icon and colour in place of the `>` arrow.
 
@@ -56,7 +64,7 @@ Each step is something you'll do every day. Check the result as you go.
 **Capture something**
 
 - [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A note appears in `Inbox` with an inbox icon, and Home's Inbox lists it.
-- [ ] Open it: there is no properties block in the text. Properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open), filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase. Each property has an icon; relationships such as `projects` show the icon and colour of the type they link to.
+- [ ] Open it: there is no properties block in the text. Its properties show in the file properties view in the right sidebar, filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase. Each property has an icon; relationships such as `projects` show the icon and colour of the type they link to.
 - [ ] Create a note with **New note**: it lands in `Inbox` as a capture too.
 
 **Log your day**
