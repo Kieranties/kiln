@@ -25,8 +25,6 @@ kiln has two parts, and you install both:
 
 Every commit on `main` is a release, versioned `<major>.<minor>.<patch>`. The plugin and the command must stay in step, so always update both (section 9).
 
-> **Moving from a source install?** If you installed kiln earlier with `npm link` from a checkout, remove that first: `npm rm -g kiln`, then `claude plugin uninstall kiln@kiln` and `claude plugin marketplace remove kiln`.
-
 ## 2. Install the `kiln` command
 
 ### From GitHub Packages (recommended)

@@ -100,8 +100,6 @@ It does **not** cover Bash. A shell command can still write into a base.
 
 ## Developing kiln
 
-To run kiln from source instead of a release:
-
 1. **Add a `.npmrc`** to the repo root containing:
 
    ```
@@ -110,19 +108,20 @@ To run kiln from source instead of a release:
 
    Add this file by hand, because a permission rule blocks agents from writing it ([#56](https://github.com/Kieranties/kiln/issues/56)).
 
-2. Build, link and install the plugin from your checkout:
+2. Run `npm install`. `npm test` builds and runs the suite, and the checks below cover the rest.
 
-   ```sh
-   npm install
-   npm run build
-   npm link                                    # puts the `kiln` binary on your PATH
-   claude plugin marketplace add <repo path>   # this repo's .claude-plugin/marketplace.json
-   claude plugin install kiln@kiln
-   ```
+**Try a change before it merges** by installing the PR's build, not your checkout. Each PR's `package` job uploads its prerelease `.tgz` as the `package` artifact:
 
-**Install from the main checkout, not a git worktree.** The `npm link` and the plugin point at the folder you install from. If that folder is a worktree and the worktree is cleaned up, kiln breaks in every session.
+```sh
+run=$(gh run list --repo Kieranties/kiln --branch <branch> --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run download "$run" --repo Kieranties/kiln --name package --dir /tmp/kiln-pr
+npm install -g /tmp/kiln-pr/kieranties-kiln-*.tgz --registry https://registry.npmjs.org/
+claude plugin marketplace remove kiln
+claude plugin marketplace add Kieranties/kiln#<branch>
+claude plugin install kiln@kiln
+```
 
-**Rebuild and relink together.** After pulling or changing kiln, run `npm run build && npm link` and update the plugin in the same step. To go back to a release, run `npm rm -g @kieranties/kiln`, remove the local marketplace (`claude plugin marketplace remove kiln`), and follow [Getting started](docs/getting-started.md).
+To go back, reinstall the release (`npm install -g @kieranties/kiln@latest --registry https://registry.npmjs.org/`) and re-add the marketplace as `Kieranties/kiln`.
 
 ### Versioning and releases
 
@@ -251,3 +250,7 @@ Principles: knowledge is reachable from any session; one inbox has many feeders;
 - [KB core spec (lean v1)](docs/specs/2026-10-10-kb-core-design.md) and [implementation plan](docs/plans/2026-10-10-kb-core-v1.md)
 - [Build and release design](docs/specs/2026-10-11-build-and-release-design.md)
 - [Decision log](docs/context/2026-10-10-decision-log.md) and [research](docs/research/)
+
+## Licence
+
+[MIT](LICENSE).

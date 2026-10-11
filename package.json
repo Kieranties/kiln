@@ -2,7 +2,7 @@
   "name": "@kieranties/kiln",
   "version": "0.0.0-placeholder",
   "description": "A personal knowledge base for Claude Code: markdown files are the truth, with a rebuildable SQLite index, an MCP server and hooks.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kieranties/kiln.git"

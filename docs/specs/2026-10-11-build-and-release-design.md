@@ -78,7 +78,7 @@ Runs on `pull_request` to `main` and `push` to `main`. The default token permiss
 
 - **oxlint**: `oxlint --type-aware` with a committed `.oxlintrc.json`: the default rule set plus the recommended type-aware rules. It ignores `dist/`, `node_modules/` and `tests/fixtures/`.
 - **Prettier**: `.prettierrc.json` with `singleQuote: true`, `semi: true`, `printWidth: 120`, `endOfLine: "auto"`. `.prettierignore` covers Markdown, `tests/fixtures/`, `package-lock.json`, `dist/` and `node_modules/`. It formats `.ts`, `.json`, `.yml` and `.yaml`.
-- **The one-off reformat** lands in its own commit, listed in `.git-blame-ignore-revs`.
+- **The one-off reformat** ships in this work. `main` is squash-only, so it shares a commit with the other changes, and there is no `.git-blame-ignore-revs`.
 - **Existing lint findings** are fixed in this work. If they turn out to be extensive, stop and report instead of piling fixes in.
 
 ## Repo settings and rulesets
