@@ -1,6 +1,7 @@
 {
   "name": "kiln",
   "owner": { "name": "Kieranties" },
+  "description": "The kiln knowledge base plugin for Claude Code.",
   "plugins": [
     {
       "name": "kiln",
