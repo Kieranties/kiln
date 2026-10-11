@@ -20,8 +20,8 @@ Obsidian first. Then Claude. Then everything else.
 - **P2 Obsidian is home.** Structure, views and workflows are designed in Obsidian. Claude follows the same structure rather than having its own.
 - **P3 Plain files, reachable from anywhere.** The vault is markdown on disk, and any Claude session in any folder can reach it. Ideally without Obsidian running, but that is not yet a requirement: if an Obsidian MCP proves the right way to work with the vault, it may need Obsidian open.
 - **P4 My process, not a generic one.** Reuse Obsidian's core features and community plugins where they fit the process. Build kiln's own where the process needs it.
-- **P5 Configuration first, code when it earns its place.** Start as a vault kit: kinds, templates, Bases views, CSS snippets and a few community plugins. Grow a kiln Obsidian plugin as gaps appear. Custom views (inbox, project, board) and icon and styling rules are the expected first gaps.
-- **P6 Easy to extend.** Adding a kind is cheap for me and for Claude, and the new kind arrives with its template, icon, styling and views.
+- **P5 Configuration first, code when it earns its place.** Start as a vault kit: types and kinds, templates, Bases views, CSS snippets and a few community plugins. Grow a kiln Obsidian plugin as gaps appear. Custom views (inbox, project, board) and icon and styling rules are the expected first gaps.
+- **P6 Easy to extend.** Adding a type or kind is cheap for me and for Claude, and it arrives with its template, icon, styling and views.
 - **P7 One inbox.** Everything comes in one way and is triaged in one place.
 - **P8 Remote truth, selective local context.** External systems own their data. Only what I engage with is held locally, as a summary. Writes out are explicit and approved.
 
@@ -31,26 +31,31 @@ Built in this order. Each layer is usable on its own.
 
 | Layer | What it is | Flows |
 |---|---|---|
-| 1. **Structure** | Kinds, folders, templates, properties, Bases views, icons and styling. Entities that are easy to find and read in Obsidian | Note shapes, Browse, Add a kind |
+| 1. **Structure** | Types and kinds, folders, templates, properties, Bases views, icons and styling. Entities that are easy to find and read in Obsidian | Note shapes, Browse, Add a type or kind |
 | 2. **Workflows** | How I work with those entities: inbox and capture, triage, the daily log, meetings, research | Capture, Triage, Daily rhythm, Meeting, Research |
 | 3. **Claude** | Skills that teach Claude the structure and the workflows, plus existing Obsidian skills or an Obsidian MCP where they help | Ask, Start work, Work and checkpoint |
 | 4. **Further** | Close-out, refresh, scheduling, Herdr workspaces, feeders | Close-out, Follow up and refresh |
 
 The flows and the agreed story order are in [kiln user flows](specs/2026-10-11-user-flows.md).
 
-## Entities and kinds
+## Entities, types and kinds
 
-Everything in the vault is an **entity**: one note about one thing. Every entity has a **kind**, and the kind decides its template, properties, icon, styling and views. Kinds are cheap to add (P6). The starting set is settled in layer 1.
+Everything in the vault is an **entity**: one note about one thing. Every entity has a **type**, and may have a **kind** within that type:
 
-Kinds differ in how long their entities live:
+- **Type** is the top level: `work`, `organisation`, `reference`, `person`.
+- **Kind** narrows a type: work is a `bug` or a `feature`, an organisation is a `client` or a `vendor`.
 
-| Lifespan | Example kinds |
+The type decides the template, properties, icon, styling and views. A kind can override any of them, such as a bug icon on bug work items. Views filter on either level. Types and kinds are cheap to add (P6). The starting set is settled in layer 1.
+
+Types differ in how long their entities live:
+
+| Lifespan | Example types |
 |---|---|
 | **Persists** | organisation, product, topic, person |
-| **Ends** | project, work item |
+| **Ends** | project, work |
 | **A moment** | meeting, daily, decision |
 
-This replaces v1's "anchors": persisting is a trait of a kind, not a separate tier.
+This replaces v1's "anchors": persisting is a trait of a type, not a separate tier.
 
 ## Work model
 
@@ -60,7 +65,7 @@ Persisting entities  <-  Project  <-  Work item  <-  Workspace  <-  Worktree
  person, ...)             optional)                   ephemeral)     checkout)
 ```
 
-- **If it ends, it is a project. If it persists, it is a persisting kind.** The Fan App is a product. Fan App v1 and v2 are projects that distil onto it.
+- **If it ends, it is a project. If it persists, it is a persisting type.** The Fan App is a product. Fan App v1 and v2 are projects that distil onto it.
 - **The ticket is the team's record; the work item is mine.**
 - **Workspaces and worktrees are where work runs** (Herdr, git). They are not entities; the work item records them.
 - **Work distils upward when it closes:** worktree, then workspace, then work item, then project, then onto the persisting entities.

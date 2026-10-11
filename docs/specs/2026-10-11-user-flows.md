@@ -46,7 +46,7 @@ flowchart LR
         INBOX -->|2 Triage| VAULT[(Projects, work items,<br/>topics, people)]
         RES[11 Research] -->|knowledge for later decisions| VAULT
         VAULT -->|5 Browse| OBS[Read in Obsidian:<br/>notes and the board]
-        TYPES[12 Add a kind] -.->|new shapes| VAULT
+        TYPES[12 Add a type or kind] -.->|new shapes| VAULT
         VAULT -->|6 Ask| ANS[Answer with links]
         VAULT -->|7 Start work| WS[Herdr workspace]
         WS -->|8 Checkpoint| VAULT
@@ -204,7 +204,7 @@ Open questions:
 
 **Trigger:** I open a project, work item, topic or person in Obsidian, or the board. **Result:** the page tells me the current state and shows everything related, without asking Claude. The board shows status across projects.
 
-Current direction: the board is a kanban view over a Base (the previous vault used the Kanban Bases View community plugin), not kiln code.
+Current direction: the board is Bases' built-in kanban layout (Obsidian 1.14), not kiln code.
 
 ```mermaid
 %%{init: {"theme": "default", "sequence": {"mirrorActors": false}}}%%
@@ -232,7 +232,7 @@ sequenceDiagram
 
 Open questions:
 
-- What must each kind show at a glance? (This becomes the note-shape work.)
+- What must each type show at a glance? (This becomes the note-shape work.)
 - Hand edits are normal. What checks a note's shape after I edit it?
 - Is there a home note: what is active, inbox count, today?
 - What are the board's columns, and are personal tasks cards alongside work items?
@@ -448,13 +448,13 @@ Open questions:
 - Does a topic carry a verified-on date, and does start of day flag stale ones?
 - Long research as its own Herdr workspace, or inline in Claudian?
 
-## 12. Add a kind
+## 12. Add a type or kind
 
-**Trigger:** I need a kind of note that does not exist yet (a runbook, an RFC, a vendor), or Claude notices notes that keep taking the same shape. **Result:** the new kind has a template, its own icon and styling, views, and the rest of the process knows it: Claude's skills, triage and the checks.
+**Trigger:** I need a kind of note that does not exist yet (a runbook, an RFC, a vendor), or Claude notices notes that keep taking the same shape. **Result:** the new type or kind has a template, its own icon and styling, views, and the rest of the process knows it: Claude's skills, triage and the checks.
 
-v1 fixed its types in code. The previous vault made new kinds easy but nothing checked them. This flow wants both: easy to add, and fully hooked in.
+v1 fixed its types in code. The previous vault made new types easy but nothing checked them. This flow wants both: easy to add, and fully hooked in.
 
-Agreed: every note is an entity of one kind. See [entities and kinds](../vision.md#entities-and-kinds).
+Agreed: every note is an entity with a type, and optionally a kind within it. See [entities, types and kinds](../vision.md#entities-types-and-kinds).
 
 ```mermaid
 %%{init: {"theme": "default", "sequence": {"mirrorActors": false}}}%%
@@ -465,24 +465,24 @@ sequenceDiagram
     participant V as Vault
     rect rgb(250, 250, 250)
         alt I ask
-            Me->>C: add a kind: runbook
+            Me->>C: add a type: runbook
         else Claude spots a pattern
-            C-->>Me: these notes look like a new kind, add it?
+            C-->>Me: these notes look like a new type, add it?
         end
         C-->>Me: proposed definition: name, fields, sections,<br/>folder, icon, colour, views
         Me->>C: approve or edit
-        C->>V: add the kind definition to the vault
+        C->>V: add the type definition to the vault
         V->>O: template, icon and styling, views, from the definition
-        Note over C,V: skills, templates and checks know the kind
+        Note over C,V: skills, templates and checks know the type
         Me->>O: new note from the template, with its icon and views
     end
 ```
 
 Open questions:
 
-- Where does a kind definition live? Probably in the vault itself, as a note I can read and edit in Obsidian.
-- How are icons and styling applied: an icon plugin, a CSS snippet keyed on the kind property, or both?
-- What does "hooked in" include: template, views, triage outcome, which fields are hidden, check rules?
+- Where does a type definition live? Probably in the vault itself, as a note I can read and edit in Obsidian.
+- How are icons and styling applied: an icon plugin, a CSS snippet keyed on the type and kind properties, or both?
+- What does "hooked in" include: template, views, triage outcome, check rules?
 - At layer 1 this is configuration (a definition plus generated template, CSS and views). A kiln plugin takes it over later.
 
 ## Story order
@@ -491,8 +491,9 @@ Agreed 2026-10-11. Each step makes something usable in Obsidian.
 
 | Step | Flows | Delivers |
 |---|---|---|
-| 1 | Note shapes, Add a kind (12), Browse (5) | Notes that read well, kinds that are easy to add, the board |
+| 1 | Note shapes, Add a type or kind (12), Browse (5) | Notes that read well, types and kinds that are easy to add, the board |
 | 1a | Migration slice | One real project with its topics, people and meetings, moved by hand into the new shapes to test them on real content |
+| 1b | kiln plugin | Generates the configuration from the type definitions, so adding a type is one step. Icons beside links and custom views come later |
 | 2 | Capture (1), Triage (2) | Reshaped to write the new shapes, including new topics, people and projects |
 | 3 | Research (11) | Knowledge brought in for later decisions |
 | 4 | Ask (6) | From Claudian, starting from the open note |
