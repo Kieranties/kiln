@@ -24,7 +24,7 @@ A condensed record of the session that produced the vision, research, spec and p
 |---|---|---|
 | Name | **kiln** | "Unshaped in, finished out". `forge` clashed with an existing forge plugin and with Atlassian Forge |
 | Repo | Private `Kieranties/kiln` at `D:\src\kiln`, holding all the code, specs and research | |
-| Work model | anchors ← project ← work item ← workspace ← worktree. Anchors hold current truth; projects hold history; things that end are projects, things that persist are anchors (e.g. LFC All Red is an anchor, and its v1/v2 are projects) | Thrashed out with the owner |
+| Work model | anchors ← project ← work item ← workspace ← worktree. Anchors hold current truth; projects hold history; things that end are projects, things that persist are anchors (e.g. the Fan App is an anchor, and its v1/v2 are projects) | Thrashed out with the owner |
 | Work item vs ticket | The ticket is the team's record; the work item is the owner's notebook. Work items are created lazily, link to the ticket and never copy it | |
 | Sync | Remote truth, selective local context: live (nothing stored) → pointer → snapshot. Writes back to external systems happen only when explicitly approved | Owner: don't mirror 500 tickets |
 | Storage | Markdown is the truth, with our own derived SQLite index | Research and spikes: no PKM app or memory layer beat this at 100k |

@@ -6,25 +6,20 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 
 | What | Where |
 |---|---|
-| Why kiln exists, principles, work model | [docs/vision.md](docs/vision.md) |
-| **Current design (lean v1)** | [docs/specs/2026-10-10-kb-core-design.md](docs/specs/2026-10-10-kb-core-design.md) |
-| **Implementation plan** | [docs/plans/2026-10-10-kb-core-v1.md](docs/plans/2026-10-10-kb-core-v1.md) |
-| **Build and release** | [docs/specs/2026-10-11-build-and-release-design.md](docs/specs/2026-10-11-build-and-release-design.md) |
-| How we got here: decisions, preferences, open questions | [docs/context/2026-10-10-decision-log.md](docs/context/2026-10-10-decision-log.md) |
-| Evidence | [landscape research](docs/research/2026-10-10-knowledge-landscape.md), [spike results](docs/research/2026-10-10-spike-results.md) |
+| **Why kiln exists, principles, entities and kinds, layers** | [docs/vision.md](docs/vision.md) |
+| **User flows and the agreed story order** | [docs/specs/2026-10-11-user-flows.md](docs/specs/2026-10-11-user-flows.md) |
+| The v1 engine (MCP server, SQLite index, CLI, plugin): retired direction, code still in `src/`, released as v0.1.1 | [design](docs/specs/2026-10-10-kb-core-design.md), [plan](docs/plans/2026-10-10-kb-core-v1.md), [build and release](docs/specs/2026-10-11-build-and-release-design.md) |
+| How v1 was decided | [decision log](docs/context/2026-10-10-decision-log.md), [landscape research](docs/research/2026-10-10-knowledge-landscape.md), [spike results](docs/research/2026-10-10-spike-results.md) |
 
 ## Working rules
 
 - **Everything is exploratory.** Present choices as current direction, never as final, and revisit them when the evidence changes.
 - **Confirm scope before broad changes.** When asked to investigate, investigate; don't jump to fixes.
-- **No real knowledge in this repo or its tests.** Realistic test data is generated, using the fictional "Northwind Arena" organisation in `tests/fixtures/`. Never copy notes from the owner's own vault into the repo.
-- **The kiln core is deterministic.** No LLM calls, no network, no external credentials in kiln code. Judgement lives in the Claude skills.
-- **No deletes.** kiln archives via `status` and dismisses via `triage`.
-- **Writes are byte-preserving.** Change only the targeted frontmatter keys and sections.
-- **Before building, check the plan's stop conditions.** Stop and report instead of working around:
-  - `node:sqlite` lacks FTS5 or contentless delete;
-  - a golden-set category has recall@5 below 0.6 at baseline;
-  - a scale target is missed.
+- **Obsidian first, then Claude, then everything else.** New work follows the layers in the vision. Notes are shaped for a person reading them in Obsidian.
+- **The v1 engine stays as built.** Leave `src/`, `plugin/` and their tests as they are until layer work replaces them.
+- **No real knowledge in this repo, its tests or its docs.** Test data and doc examples use the fictional "Northwind Arena" organisation in `tests/fixtures/`. Never copy notes from the owner's own vault into the repo.
+- **Archive, never delete.** Notes are retired through their `status`.
+- **Writes are targeted.** Change only the frontmatter keys and sections you mean to change.
 
 ## Environment
 

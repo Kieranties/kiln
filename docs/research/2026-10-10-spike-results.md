@@ -101,7 +101,7 @@ Test sample: 3,000 chunks of about 353 tokens, roughly 2.7 chunks per note, whic
 |---|---|---|
 | Answer quality (/40) | 36 | **37** |
 | Characters to read for the top 5 (20 questions) | ~1.12M | **~0.41M** |
-| Misleading or outdated sets | present (e.g. stale LFC "stuck users" count) | none |
+| Misleading or outdated sets | present (e.g. a stale "stuck users" count) | none |
 | Factual errors in distilled notes | n/a | **0** (4 overstatements, such as a plan worded as if it were done) |
 
 **Findings**
