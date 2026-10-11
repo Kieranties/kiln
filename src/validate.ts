@@ -22,7 +22,10 @@ type NoteRow = { path: string; type: string | null; title: string; fields_json: 
 
 /** Lowercase file name without its extension. */
 function stemOf(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '').toLowerCase();
+  return path
+    .slice(path.lastIndexOf('/') + 1)
+    .replace(/\.md$/i, '')
+    .toLowerCase();
 }
 
 /**
@@ -71,7 +74,11 @@ function schemaFindings(notes: NoteRow[], index: Index, out: Finding[]): void {
       parseFields(fmText);
     } catch (e) {
       if (!(e instanceof KilnError && e.code === 'validation')) throw e;
-      out.push({ path: n.path, kind: 'schema', message: `frontmatter: ${e.message} (fix the YAML between the --- lines)` });
+      out.push({
+        path: n.path,
+        kind: 'schema',
+        message: `frontmatter: ${e.message} (fix the YAML between the --- lines)`,
+      });
     }
   }
 }
@@ -86,7 +93,8 @@ function noteNames(notes: NoteRow[], index: Index): Names {
     if (paths) paths.add(path);
     else names.set(name, new Set([path]));
   };
-  for (const row of index.db.prepare('SELECT name_lc, path FROM aliases').all() as { name_lc: string; path: string }[]) add(row.name_lc, row.path);
+  for (const row of index.db.prepare('SELECT name_lc, path FROM aliases').all() as { name_lc: string; path: string }[])
+    add(row.name_lc, row.path);
   for (const n of notes) {
     add(stemOf(n.path), n.path);
     add(n.path.replace(/\.md$/i, '').toLowerCase(), n.path);
@@ -123,7 +131,11 @@ function brokenLinkFindings(names: Names, index: Index, out: Finding[]): void {
     if (seen.has(key)) continue;
     seen.add(key);
     if (!resolves(l.target)) {
-      out.push({ path: l.src_path, kind: 'broken_link', message: `[[${l.target}]] does not match any note title, alias or file name` });
+      out.push({
+        path: l.src_path,
+        kind: 'broken_link',
+        message: `[[${l.target}]] does not match any note title, alias or file name`,
+      });
     }
   }
 }
@@ -178,7 +190,8 @@ function enrichmentFindings(notes: NoteRow[], out: Finding[]): void {
     const missing: string[] = [];
     if (typeof fields.summary !== 'string' || fields.summary.trim() === '') missing.push('summary');
     if (!Array.isArray(fields.aliases) || fields.aliases.length === 0) missing.push('aliases');
-    if (missing.length > 0) out.push({ path: n.path, kind: 'missing_enrichment', message: `missing ${missing.join(' and ')}` });
+    if (missing.length > 0)
+      out.push({ path: n.path, kind: 'missing_enrichment', message: `missing ${missing.join(' and ')}` });
   }
 }
 
@@ -251,14 +264,22 @@ function duplicateFindings(notes: NoteRow[], out: Finding[]): void {
   const byType = new Map<string, Titled[]>();
   for (const n of notes) {
     if (n.type === null || n.type === 'source') continue;
-    const entry: Titled = { path: n.path, title: n.title, norm: n.title.trim().toLowerCase(), tokens: [...titleTokens(n.title)] };
+    const entry: Titled = {
+      path: n.path,
+      title: n.title,
+      norm: n.title.trim().toLowerCase(),
+      tokens: [...titleTokens(n.title)],
+    };
     const list = byType.get(n.type);
     if (list) list.push(entry);
     else byType.set(n.type, [entry]);
   }
   for (const group of byType.values()) {
     for (const [first, ...others] of identicalGroups(group)) {
-      const shown = others.slice(0, GROUP_SHOWN).map((o) => o.path).join(', ');
+      const shown = others
+        .slice(0, GROUP_SHOWN)
+        .map((o) => o.path)
+        .join(', ');
       const more = others.length > GROUP_SHOWN ? ` … and ${others.length - GROUP_SHOWN} more` : '';
       out.push({
         path: first!.path,

@@ -157,7 +157,9 @@ async function hookInput(): Promise<Record<string, unknown> | null> {
   for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
   try {
     const value: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
   } catch {
     return null;
   }

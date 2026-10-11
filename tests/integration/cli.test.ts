@@ -103,7 +103,14 @@ describe('kiln CLI', () => {
   it('reindex prints stats JSON', () => {
     const base = join(root, 'stats');
     expect(kiln(['init', base, '--name', 'stats']).code).toBe(0);
-    writeNote(base, 'notes/Concourse Layout.md', ['---', 'type: reference', 'title: Concourse Layout', '---', '', 'Level 2 concourse.']);
+    writeNote(base, 'notes/Concourse Layout.md', [
+      '---',
+      'type: reference',
+      'title: Concourse Layout',
+      '---',
+      '',
+      'Level 2 concourse.',
+    ]);
     const r = kiln(['reindex', '--base', 'stats']);
     expect(r.code, r.stderr).toBe(0);
     const stats = JSON.parse(r.stdout);

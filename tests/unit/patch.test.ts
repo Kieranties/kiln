@@ -43,23 +43,25 @@ describe('patchFields', () => {
       'Gate B scanners fail on phone screens.',
     );
     const out = patchFields(input, { status: 'done' });
-    expect(out).toBe(lf(
-      '---',
-      'id: 01JTEST0000000000000000001',
-      'type: work',
-      'kind: bug',
-      'title: Gate scanners reject QR codes',
-      'status: done',
-      'created: 2026-10-01',
-      'updated: 2026-10-02',
-      'summary: Scanners at gate B reject mobile QR codes.',
-      'confidence: verbatim',
-      'ticket: NW-12',
-      '---',
-      '',
-      '## Summary',
-      'Gate B scanners fail on phone screens.',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'id: 01JTEST0000000000000000001',
+        'type: work',
+        'kind: bug',
+        'title: Gate scanners reject QR codes',
+        'status: done',
+        'created: 2026-10-01',
+        'updated: 2026-10-02',
+        'summary: Scanners at gate B reject mobile QR codes.',
+        'confidence: verbatim',
+        'ticket: NW-12',
+        '---',
+        '',
+        '## Summary',
+        'Gate B scanners fail on phone screens.',
+      ),
+    );
     expect(changedLines(input, out)).toBe(1);
   });
 
@@ -81,22 +83,24 @@ describe('patchFields', () => {
       'body',
     );
     const out = patchFields(input, { status: 'done' });
-    expect(out).toBe(lf(
-      '---',
-      '# Northwind Arena ticket',
-      'id: a',
-      '',
-      'title: Old title   # shown in lists',
-      '# lifecycle',
-      'status: done',
-      '',
-      '',
-      'tags:',
-      '  # the first tag matters',
-      '  - gate',
-      '---',
-      'body',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        '# Northwind Arena ticket',
+        'id: a',
+        '',
+        'title: Old title   # shown in lists',
+        '# lifecycle',
+        'status: done',
+        '',
+        '',
+        'tags:',
+        '  # the first tag matters',
+        '  - gate',
+        '---',
+        'body',
+      ),
+    );
     expect(changedLines(input, out)).toBe(1);
   });
 
@@ -116,20 +120,22 @@ describe('patchFields', () => {
       '---',
     );
     const out = patchFields(input, { status: 'done', id: 'b' });
-    expect(out).toBe(lf(
-      '---',
-      'id: b',
-      'description: |',
-      '  Line one',
-      '    indented: not a key',
-      '',
-      '  after a blank line',
-      'status: done',
-      'notes: >-',
-      '  folded',
-      '  text',
-      '---',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'id: b',
+        'description: |',
+        '  Line one',
+        '    indented: not a key',
+        '',
+        '  after a blank line',
+        'status: done',
+        'notes: >-',
+        '  folded',
+        '  text',
+        '---',
+      ),
+    );
     expect(fieldsOf(out)).toEqual({
       id: 'b',
       description: 'Line one\n  indented: not a key\n\nafter a blank line\n',
@@ -141,13 +147,15 @@ describe('patchFields', () => {
   it('keeps flow-list style when replacing a flow list', () => {
     const input = lf('---', 'id: a', 'keywords:  [gate, "QR code", scanner]  # search terms', 'status: active', '---');
     const out = patchFields(input, { keywords: ['gate', 'a, b', '[[QR]]', 'plain words', 'true', 'x{y}'] });
-    expect(out).toBe(lf(
-      '---',
-      'id: a',
-      'keywords:  [gate, "a, b", "[[QR]]", plain words, "true", "x{y}"]  # search terms',
-      'status: active',
-      '---',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'id: a',
+        'keywords:  [gate, "a, b", "[[QR]]", plain words, "true", "x{y}"]  # search terms',
+        'status: active',
+        '---',
+      ),
+    );
     expect(fieldsOf(out).keywords).toEqual(['gate', 'a, b', '[[QR]]', 'plain words', 'true', 'x{y}']);
   });
 
@@ -163,18 +171,24 @@ describe('patchFields', () => {
       '---',
     );
     const out = patchFields(input, { anchors: ['[[Gate B]]', 'plain'], sources: ['jira:NW-2', 'web'] });
-    expect(out).toBe(lf(
-      '---',
-      'anchors:',
-      '    - "[[Gate B]]"',
-      '    - plain',
-      'sources:',
-      '-   "jira:NW-2"',
-      '-   web',
-      'status: active',
-      '---',
-    ));
-    expect(fieldsOf(out)).toEqual({ anchors: ['[[Gate B]]', 'plain'], sources: ['jira:NW-2', 'web'], status: 'active' });
+    expect(out).toBe(
+      lf(
+        '---',
+        'anchors:',
+        '    - "[[Gate B]]"',
+        '    - plain',
+        'sources:',
+        '-   "jira:NW-2"',
+        '-   web',
+        'status: active',
+        '---',
+      ),
+    );
+    expect(fieldsOf(out)).toEqual({
+      anchors: ['[[Gate B]]', 'plain'],
+      sources: ['jira:NW-2', 'web'],
+      status: 'active',
+    });
   });
 
   it("preserves single-quoted style for a scalar ('x' -> 'y')", () => {
@@ -210,34 +224,38 @@ describe('patchFields', () => {
       '---',
     );
     const out = patchFields(input, { status: 'done', title: 'New', owner: 'gate', tags: ['b'], review: 'needed' });
-    expect(out).toBe(lf(
-      '---',
-      'status: done # lifecycle',
-      'title: "New" # display',
-      "owner: 'gate'  # team",
-      'tags: [b] # flow',
-      'review: needed   # set by triage',
-      '---',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'status: done # lifecycle',
+        'title: "New" # display',
+        "owner: 'gate'  # team",
+        'tags: [b] # flow',
+        'review: needed   # set by triage',
+        '---',
+      ),
+    );
     expect(fieldsOf(out)).toEqual({ status: 'done', title: 'New', owner: 'gate', tags: ['b'], review: 'needed' });
   });
 
   it('appends a new key before closing fence', () => {
     const input = lf('---', 'id: a', '', '---', 'body');
     const out = patchFields(input, { zeta: 1, review: 'needed', anchors: ['[[A]]'], aliases: [], status: 'active' });
-    expect(out).toBe(lf(
-      '---',
-      'id: a',
-      '',
-      'status: active',
-      'aliases: []',
-      'anchors:',
-      '  - "[[A]]"',
-      'zeta: 1',
-      'review: needed',
-      '---',
-      'body',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'id: a',
+        '',
+        'status: active',
+        'aliases: []',
+        'anchors:',
+        '  - "[[A]]"',
+        'zeta: 1',
+        'review: needed',
+        '---',
+        'body',
+      ),
+    );
   });
 
   it('appends into an empty frontmatter block', () => {
@@ -296,22 +314,24 @@ describe('patchFields', () => {
       notes: 'short',
       extra: ['x'],
     });
-    expect(out).toBe(lf(
-      '---',
-      'keywords: # was a scalar',
-      '  - a',
-      '  - b',
-      'anchors: Single',
-      'aliases:',
-      '  - Gate B',
-      'sources: []',
-      'review: needed',
-      'summary: Now set',
-      'notes: short',
-      'extra:',
-      '  - x',
-      '---',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'keywords: # was a scalar',
+        '  - a',
+        '  - b',
+        'anchors: Single',
+        'aliases:',
+        '  - Gate B',
+        'sources: []',
+        'review: needed',
+        'summary: Now set',
+        'notes: short',
+        'extra:',
+        '  - x',
+        '---',
+      ),
+    );
     expect(fieldsOf(out)).toEqual({
       keywords: ['a', 'b'],
       anchors: 'Single',
@@ -338,25 +358,29 @@ describe('patchFields', () => {
       'Body.',
     );
     const out = patchFields(input, { status: 'done', anchors: ['[[B]]', '[[C]]'], tags: ['x'] }, ['review']);
-    expect(out).toBe(crlf(
-      '---',
-      'id: a',
-      'status: done',
-      'anchors:',
-      '  - "[[B]]"',
-      '  - "[[C]]"',
-      'tags:',
-      '  - x',
-      '---',
-      '',
-      '## Summary',
-      'Body.',
-    ));
+    expect(out).toBe(
+      crlf(
+        '---',
+        'id: a',
+        'status: done',
+        'anchors:',
+        '  - "[[B]]"',
+        '  - "[[C]]"',
+        'tags:',
+        '  - x',
+        '---',
+        '',
+        '## Summary',
+        'Body.',
+      ),
+    );
     expect(out.replaceAll('\r\n', '')).not.toMatch(/[\r\n]/);
   });
 
   it('creates frontmatter when none exists', () => {
-    expect(patchFields('# Title\n\nBody\n', { type: 'note', id: 'x' })).toBe('---\nid: x\ntype: note\n---\n# Title\n\nBody\n');
+    expect(patchFields('# Title\n\nBody\n', { type: 'note', id: 'x' })).toBe(
+      '---\nid: x\ntype: note\n---\n# Title\n\nBody\n',
+    );
     expect(patchFields('# Title\r\nBody\r\n', { id: 'x' })).toBe('---\r\nid: x\r\n---\r\n# Title\r\nBody\r\n');
     expect(patchFields('', { id: 'x' })).toBe('---\nid: x\n---\n');
     // nothing to set: the text is returned unchanged rather than gaining an empty block
@@ -376,17 +400,19 @@ describe('patchFields', () => {
       '---',
     );
     const out = patchFields(input, { status: 'done' });
-    expect(out).toBe(lf(
-      '---',
-      'defaults: &d',
-      '  owner: ops',
-      '  tier: 1',
-      'venue: *d',
-      'status: done',
-      'pair: &p [a, b]',
-      'copy: *p',
-      '---',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'defaults: &d',
+        '  owner: ops',
+        '  tier: 1',
+        'venue: *d',
+        'status: done',
+        'pair: &p [a, b]',
+        'copy: *p',
+        '---',
+      ),
+    );
     expect(changedLines(input, out)).toBe(1);
     expect(fieldsOf(out).venue).toEqual({ owner: 'ops', tier: 1 });
   });
@@ -422,19 +448,21 @@ describe('patchFields', () => {
       'body',
     );
     const out = patchFields(odd, { status: 'done', title: 'T', added: 'yes' });
-    expect(out).toBe(lf(
-      '---',
-      'id: a',
-      'plain line without a colon',
-      ': no key',
-      '- stray item',
-      '   ',
-      'status: done',
-      'title: T',
-      'added: "yes"',
-      '---',
-      'body',
-    ));
+    expect(out).toBe(
+      lf(
+        '---',
+        'id: a',
+        'plain line without a colon',
+        ': no key',
+        '- stray item',
+        '   ',
+        'status: done',
+        'title: T',
+        'added: "yes"',
+        '---',
+        'body',
+      ),
+    );
     // an unterminated opening fence is not frontmatter: a new block goes on top and the old text is body
     const unterminated = lf('---', 'id: a', 'body forever');
     const fixed = patchFields(unterminated, { id: 'x' });
@@ -444,7 +472,14 @@ describe('patchFields', () => {
 
   it('finds keys whose values contain U+2028 or a lone CR, for set and unset', () => {
     for (const sep of [String.fromCharCode(0x2028), '\r']) {
-      const input = lf('---', `title: a${sep}b`, `summary: c${sep}d # note`, `kind: "e${sep}f" # q`, 'status: active', '---');
+      const input = lf(
+        '---',
+        `title: a${sep}b`,
+        `summary: c${sep}d # note`,
+        `kind: "e${sep}f" # q`,
+        'status: active',
+        '---',
+      );
       expect(patchFields(input, { title: 'New', summary: 'S', kind: 'K' })).toBe(
         lf('---', 'title: New', 'summary: S # note', 'kind: "K" # q', 'status: active', '---'),
       );

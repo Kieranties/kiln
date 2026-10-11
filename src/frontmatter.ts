@@ -108,8 +108,19 @@ export function renderScalar(v: string | number | boolean | null): string {
 }
 
 const KEY_ORDER = [
-  'id', 'type', 'kind', 'title', 'status', 'created', 'updated',
-  'aliases', 'summary', 'keywords', 'anchors', 'sources', 'confidence',
+  'id',
+  'type',
+  'kind',
+  'title',
+  'status',
+  'created',
+  'updated',
+  'aliases',
+  'summary',
+  'keywords',
+  'anchors',
+  'sources',
+  'confidence',
 ];
 const LAST_KEYS = ['review', 'review_reason'];
 
@@ -125,7 +136,10 @@ function scalarOf(key: string, v: unknown): string {
   if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
     return renderScalar(v);
   }
-  throw new KilnError('validation', `Field "${key}" has an unsupported value; only scalars and lists of scalars are allowed`);
+  throw new KilnError(
+    'validation',
+    `Field "${key}" has an unsupported value; only scalars and lists of scalars are allowed`,
+  );
 }
 
 function renderKey(key: string): string {
@@ -137,11 +151,7 @@ function renderKey(key: string): string {
  * last), then `## <heading>` sections separated by blank lines. Arrays are block lists (`key: []` when empty).
  * Undefined values are skipped. Throws `KilnError('validation')` for nested objects.
  */
-export function renderNote(
-  fields: Fields,
-  sections: { heading: string; text: string }[],
-  eol: Eol = '\n',
-): string {
+export function renderNote(fields: Fields, sections: { heading: string; text: string }[], eol: Eol = '\n'): string {
   const lines = ['---'];
   for (const key of orderedKeys(fields)) {
     const v = fields[key];

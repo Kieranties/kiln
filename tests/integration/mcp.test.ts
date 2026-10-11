@@ -134,7 +134,14 @@ beforeAll(async () => {
   ]);
   for (let i = 1; i <= 205; i++) {
     const n = String(i).padStart(3, '0');
-    writeNote(ops, `notes/Shift log ${n}.md`, ['---', 'type: note', `title: Shift log ${n}`, '---', '', `Concourse shift ${n} was quiet.`]);
+    writeNote(ops, `notes/Shift log ${n}.md`, [
+      '---',
+      'type: note',
+      `title: Shift log ${n}`,
+      '---',
+      '',
+      `Concourse shift ${n} was quiet.`,
+    ]);
   }
 
   client = await connect(join(northwind.path, 'projects'));
@@ -157,7 +164,14 @@ describe('kiln mcp', () => {
 
   it('status reports the base resolved from cwd', async () => {
     const s = await ok(client, 'status');
-    expect(s).toMatchObject({ base: 'northwind', path: northwind.path, cwd: join(northwind.path, 'projects'), notes: 3, inbox: 0, needsReview: 0 });
+    expect(s).toMatchObject({
+      base: 'northwind',
+      path: northwind.path,
+      cwd: join(northwind.path, 'projects'),
+      notes: 3,
+      inbox: 0,
+      needsReview: 0,
+    });
     const explicit = await ok(client, 'status', { base: 'ops' });
     expect(explicit).toMatchObject({ base: 'ops', path: ops.path, notes: 206 });
   });
@@ -182,7 +196,9 @@ describe('kiln mcp', () => {
     const limited = await ok<any[]>(client, 'search', { q: 'turnstile', base: 'all', auto_scope: false, limit: 2 });
     expect(limited).toEqual(hits.slice(0, 2));
 
-    expect(await fail(client, 'get', { id_or_path: 'notes/Turnstile maintenance rota.md', base: 'all' })).toMatch(/^validation: /);
+    expect(await fail(client, 'get', { id_or_path: 'notes/Turnstile maintenance rota.md', base: 'all' })).toMatch(
+      /^validation: /,
+    );
   });
 
   it('clamps limits to 200 and rejects a limit that is not a positive integer', async () => {
@@ -210,7 +226,11 @@ describe('kiln mcp', () => {
     expect(clamped).toMatchObject({ total: 206, truncated: false });
     expect(clamped.findings).toHaveLength(206);
 
-    expect(await ok(client, 'validate', { base: 'ops', kinds: ['possible_duplicate', 'schema'] })).toEqual({ total: 0, truncated: false, findings: [] });
+    expect(await ok(client, 'validate', { base: 'ops', kinds: ['possible_duplicate', 'schema'] })).toEqual({
+      total: 0,
+      truncated: false,
+      findings: [],
+    });
     expect(await fail(client, 'validate', { base: 'ops', kinds: ['typo'] })).toMatch(/validation/i);
     expect(await fail(client, 'validate', { base: 'ops', limit: 0 })).toMatch(/validation/i);
   });

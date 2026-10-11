@@ -79,10 +79,25 @@ describe('editSections', () => {
 
   it('ignores headings inside fenced code blocks', () => {
     const text = [
-      '---', 'id: a', '---', '',
-      '## Real', 'before', '```md', '## Real', '## Fake', '```', 'after', '',
-      '~~~', '## Tilde', '~~~', '',
-      '## Other', 'o', '',
+      '---',
+      'id: a',
+      '---',
+      '',
+      '## Real',
+      'before',
+      '```md',
+      '## Real',
+      '## Fake',
+      '```',
+      'after',
+      '',
+      '~~~',
+      '## Tilde',
+      '~~~',
+      '',
+      '## Other',
+      'o',
+      '',
     ].join('\n');
 
     // The fenced "## Real" does not match, and the fenced "## Fake" does not end the section.
@@ -132,7 +147,9 @@ describe('editSections', () => {
   });
 
   it('handles a section at EOF without a trailing newline', () => {
-    expect(editSections(`${FM}\n## A\nold`, [{ heading: 'A', mode: 'append', text: 'new' }])).toBe(`${FM}\n## A\nold\nnew\n`);
+    expect(editSections(`${FM}\n## A\nold`, [{ heading: 'A', mode: 'append', text: 'new' }])).toBe(
+      `${FM}\n## A\nold\nnew\n`,
+    );
     expect(editSections(`${FM}\n## A`, [{ heading: 'A', mode: 'replace', text: 'new' }])).toBe(`${FM}\n## A\nnew\n`);
     expect(editSections(`${FM}\n## A\nold`, [{ heading: 'B', mode: 'append', text: 'b' }])).toBe(
       `${FM}\n## A\nold\n\n## B\nb\n`,
@@ -169,7 +186,11 @@ describe('editSections', () => {
       ]);
       const expected = renderNote(
         fields,
-        [{ heading: 'Summary', text: 's' }, { heading: 'Log', text: 'l1' }, { heading: 'Extra', text: 'e1\ne2' }],
+        [
+          { heading: 'Summary', text: 's' },
+          { heading: 'Log', text: 'l1' },
+          { heading: 'Extra', text: 'e1\ne2' },
+        ],
         eol,
       );
       expect(edited).toBe(expected);

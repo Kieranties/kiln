@@ -22,7 +22,7 @@ function filesUnder(dir: string): string[] {
 
 const GOLDEN_CATEGORIES = ['exact_term', 'vocab_mismatch', 'decision_temporal', 'multi_hop', 'resume_status'];
 
-type Capture ={ file: string; expected_outcome: string; targets: string[] };
+type Capture = { file: string; expected_outcome: string; targets: string[] };
 
 describe('fixtures', () => {
   it('fixture base passes validateBase with zero schema findings', () => {
@@ -49,7 +49,10 @@ describe('fixtures', () => {
       expect(q.primary.length, q.id).toBeGreaterThan(0);
     }
     for (const c of GOLDEN_CATEGORIES) {
-      expect(golden.questions.filter((q) => q.category === c), c).toHaveLength(4);
+      expect(
+        golden.questions.filter((q) => q.category === c),
+        c,
+      ).toHaveLength(4);
     }
     const missing = golden.questions.flatMap((q) =>
       [...q.primary, ...q.secondary].filter((p) => !existsSync(join(BASE, p))).map((p) => `${q.id}: ${p}`),
@@ -59,7 +62,9 @@ describe('fixtures', () => {
 
   it('answer key covers every capture file and uses TRIAGE_OUTCOMES', () => {
     const key = JSON.parse(readFileSync(join(FIXTURES, 'day', 'answer-key.json'), 'utf8')) as { captures: Capture[] };
-    const files = readdirSync(CAPTURES).filter((f) => f.endsWith('.md')).sort();
+    const files = readdirSync(CAPTURES)
+      .filter((f) => f.endsWith('.md'))
+      .sort();
     expect(files).toHaveLength(12);
     expect(key.captures.map((c) => c.file).sort()).toEqual(files);
 
@@ -84,7 +89,9 @@ describe('fixtures', () => {
 
   it("fixtures contain no real names from the owner's organisation", (ctx) => {
     if (!existsSync(DENYLIST)) {
-      ctx.skip('tests/fixtures/denylist.txt is absent (it is local-only and never committed); create it to run this check');
+      ctx.skip(
+        'tests/fixtures/denylist.txt is absent (it is local-only and never committed); create it to run this check',
+      );
     }
     const terms = readFileSync(DENYLIST, 'utf8')
       .replace(/^﻿/, '')

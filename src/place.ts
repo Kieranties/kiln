@@ -55,7 +55,8 @@ function yearOf(fields: Fields, field: string): string {
 function datePartOf(fields: Fields, field: string): string {
   const value = fields[field];
   const m = typeof value === 'string' ? /^(\d{4}-\d{2}-\d{2})(?:T|$)/.exec(value) : null;
-  if (!m) throw invalid(field, `needed to place the note; expected an ISO date or datetime, got ${JSON.stringify(value)}`);
+  if (!m)
+    throw invalid(field, `needed to place the note; expected an ISO date or datetime, got ${JSON.stringify(value)}`);
   return m[1]!;
 }
 

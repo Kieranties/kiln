@@ -204,7 +204,8 @@ function analyse(rest: string, continuation: Line[]): Original {
   }
   if (continuation.length > 0) return result('other', '');
 
-  const quotedEnd = v[0] === '"' ? scanDouble(v, 0) : v[0] === "'" ? scanSingle(v, 0) : v[0] === '[' ? scanFlow(v) : null;
+  const quotedEnd =
+    v[0] === '"' ? scanDouble(v, 0) : v[0] === "'" ? scanSingle(v, 0) : v[0] === '[' ? scanFlow(v) : null;
   if (quotedEnd !== null) {
     const after = v.slice(quotedEnd);
     if (quotedEnd < 0 || !AFTER_VALUE.test(after)) return result('other', '');
@@ -309,5 +310,8 @@ function hasControl(s: string): boolean {
 
 function asScalar(key: string, v: unknown): Scalar {
   if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return v;
-  throw new KilnError('validation', `Field "${key}" has an unsupported value; only scalars and lists of scalars are allowed`);
+  throw new KilnError(
+    'validation',
+    `Field "${key}" has an unsupported value; only scalars and lists of scalars are allowed`,
+  );
 }

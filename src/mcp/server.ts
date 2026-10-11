@@ -29,7 +29,12 @@ const NOTE_TYPES = Object.keys(KINDS) as [NoteType, ...NoteType[]];
 const KNOWLEDGE_TYPES = NOTE_TYPES.filter((t) => t !== 'source') as [NoteType, ...NoteType[]];
 
 const base = z.string().optional().describe('Base name; defaults to the base matched from the working folder');
-const limit = z.number().int().min(1).optional().describe(`Maximum results (1-${MAX_LIMIT}; larger values are clamped)`);
+const limit = z
+  .number()
+  .int()
+  .min(1)
+  .optional()
+  .describe(`Maximum results (1-${MAX_LIMIT}; larger values are clamped)`);
 const idOrPath = z.string().describe('Note id, or base-relative path such as "work/2026/Fix turnstile firmware.md"');
 const ifRevision = z.string().describe('The revision from your last get of this note');
 const fields = z.record(z.string(), z.unknown());
@@ -49,13 +54,15 @@ class Bases {
 
   /** The named base, or the one matched from the working folder. `all` is refused: only `search` spans bases. */
   one(explicit: string | undefined): Opened {
-    if (explicit === ALL) throw new KilnError('validation', 'base "all" is only supported by search; name a single base');
+    if (explicit === ALL)
+      throw new KilnError('validation', 'base "all" is only supported by search; name a single base');
     return this.#opened(resolveBase(loadConfig(), { explicit, cwd: this.cwd }));
   }
 
   every(): Opened[] {
     const { bases } = loadConfig();
-    if (bases.length === 0) throw new KilnError('no_base', 'No bases are configured; run "kiln init <path> --name <base>"');
+    if (bases.length === 0)
+      throw new KilnError('no_base', 'No bases are configured; run "kiln init <path> --name <base>"');
     return bases.map((b) => this.#opened(b));
   }
 
@@ -184,12 +191,21 @@ function register(server: McpServer, bases: Bases): void {
         scope_anchors: z.array(z.string()).optional().describe('Anchor names or [[links]] to search within first'),
         auto_scope: z.boolean().optional(),
         limit,
-        base: z.string().optional().describe('Base name, or "all" for every base; defaults to the base matched from the working folder'),
+        base: z
+          .string()
+          .optional()
+          .describe('Base name, or "all" for every base; defaults to the base matched from the working folder'),
       },
     },
     (a) =>
       run(() => {
-        const p = { q: a.q, variants: a.variants, scopeAnchors: a.scope_anchors, autoScope: a.auto_scope, limit: clamp(a.limit) };
+        const p = {
+          q: a.q,
+          variants: a.variants,
+          scopeAnchors: a.scope_anchors,
+          autoScope: a.auto_scope,
+          limit: clamp(a.limit),
+        };
         return a.base === ALL ? searchAll(bases, p) : reading(a.base).index.search(p);
       }),
   );
@@ -207,7 +223,8 @@ function register(server: McpServer, bases: Bases): void {
   server.registerTool(
     'get',
     {
-      description: 'Read a full note: fields, body and revision. Pass the revision as if_revision when you then update it.',
+      description:
+        'Read a full note: fields, body and revision. Pass the revision as if_revision when you then update it.',
       inputSchema: { id_or_path: idOrPath, base },
     },
     (a) => run(() => reading(a.base).index.get(a.id_or_path)),
@@ -225,14 +242,22 @@ function register(server: McpServer, bases: Bases): void {
   server.registerTool(
     'status',
     {
-      description: 'The base this session uses (matched from the working folder unless base is given), with its note, inbox and needs-review counts.',
+      description:
+        'The base this session uses (matched from the working folder unless base is given), with its note, inbox and needs-review counts.',
       inputSchema: { base },
     },
     (a) =>
       run(() => {
         const o = reading(a.base);
         const s = o.index.status();
-        return { base: o.base.name, path: o.base.path, cwd: bases.cwd, notes: s.notes, inbox: s.inbox, needsReview: s.needsReview };
+        return {
+          base: o.base.name,
+          path: o.base.path,
+          cwd: bases.cwd,
+          notes: s.notes,
+          inbox: s.inbox,
+          needsReview: s.needsReview,
+        };
       }),
   );
 
@@ -252,7 +277,14 @@ function register(server: McpServer, bases: Bases): void {
     },
     (a) =>
       run(() =>
-        bases.one(a.base).store.capture({ kind: a.kind, title: a.title, content: a.content, url: a.url, sourceId: a.source_id, why: a.why }),
+        bases.one(a.base).store.capture({
+          kind: a.kind,
+          title: a.title,
+          content: a.content,
+          url: a.url,
+          sourceId: a.source_id,
+          why: a.why,
+        }),
       ),
   );
 
@@ -264,7 +296,9 @@ function register(server: McpServer, bases: Bases): void {
       inputSchema: {
         type: z.enum(KNOWLEDGE_TYPES),
         kind: z.string().optional(),
-        fields: fields.describe('Frontmatter fields; a link is "[[<file stem>|<title>]]", where the stem is the path basename of the linked note, without .md'),
+        fields: fields.describe(
+          'Frontmatter fields; a link is "[[<file stem>|<title>]]", where the stem is the path basename of the linked note, without .md',
+        ),
         sections: newSections.optional().describe('Body sections, in order'),
         new_reason: z.string().optional().describe('Why this is not a duplicate of the conflicting note'),
         base,
@@ -272,7 +306,13 @@ function register(server: McpServer, bases: Bases): void {
     },
     (a) =>
       run(() =>
-        bases.one(a.base).store.createNote({ type: a.type, kind: a.kind, fields: a.fields, sections: a.sections ?? [], newReason: a.new_reason }),
+        bases.one(a.base).store.createNote({
+          type: a.type,
+          kind: a.kind,
+          fields: a.fields,
+          sections: a.sections ?? [],
+          newReason: a.new_reason,
+        }),
       ),
   );
 
@@ -286,13 +326,21 @@ function register(server: McpServer, bases: Bases): void {
         if_revision: ifRevision,
         set: fields.optional(),
         unset: z.array(z.string()).optional(),
-        sections: z.array(z.object({ heading: z.string(), mode: z.enum(['append', 'replace']), text: z.string() })).optional(),
+        sections: z
+          .array(z.object({ heading: z.string(), mode: z.enum(['append', 'replace']), text: z.string() }))
+          .optional(),
         base,
       },
     },
     (a) =>
       run(() =>
-        bases.one(a.base).store.updateNote({ idOrPath: a.id_or_path, ifRevision: a.if_revision, set: a.set, unset: a.unset, sections: a.sections }),
+        bases.one(a.base).store.updateNote({
+          idOrPath: a.id_or_path,
+          ifRevision: a.if_revision,
+          set: a.set,
+          unset: a.unset,
+          sections: a.sections,
+        }),
       ),
   );
 
@@ -300,7 +348,7 @@ function register(server: McpServer, bases: Bases): void {
     'supersede',
     {
       description:
-        'Replace a decision: creates new_decision (fields as for create_note), marks the old one superseded with links both ways, and flags the new one review: needed. Guarded by the old decision\'s if_revision: on conflict, re-read it with get and retry.',
+        "Replace a decision: creates new_decision (fields as for create_note), marks the old one superseded with links both ways, and flags the new one review: needed. Guarded by the old decision's if_revision: on conflict, re-read it with get and retry.",
       inputSchema: {
         old_id_or_path: idOrPath,
         if_revision: ifRevision,
@@ -328,13 +376,23 @@ function register(server: McpServer, bases: Bases): void {
         if_revision: ifRevision,
         triage: z.enum(['linked', 'dismissed']),
         outcome: z.enum(TRIAGE_OUTCOMES as [string, ...string[]]),
-        linked_to: wikilinks.optional().describe('Links such as "[[2026-10-08 Patch turnstile firmware|Patch turnstile firmware]]": "[[<file stem>|<title>]]", with the stem taken from the path of the note'),
+        linked_to: wikilinks
+          .optional()
+          .describe(
+            'Links such as "[[2026-10-08 Patch turnstile firmware|Patch turnstile firmware]]": "[[<file stem>|<title>]]", with the stem taken from the path of the note',
+          ),
         base,
       },
     },
     (a) =>
       run(() =>
-        bases.one(a.base).store.markSource({ idOrPath: a.id_or_path, ifRevision: a.if_revision, triage: a.triage, outcome: a.outcome, linkedTo: a.linked_to }),
+        bases.one(a.base).store.markSource({
+          idOrPath: a.id_or_path,
+          ifRevision: a.if_revision,
+          triage: a.triage,
+          outcome: a.outcome,
+          linkedTo: a.linked_to,
+        }),
       ),
   );
 
@@ -344,7 +402,12 @@ function register(server: McpServer, bases: Bases): void {
       description: `Check a base for schema problems (including supersession recorded on one side only), broken links, notes missing a summary or aliases, and likely duplicates. Reports only; fixes nothing. kinds keeps only those finding kinds. Returns { total, truncated, findings }: the first limit findings (default ${VALIDATE_LIMIT}, max ${VALIDATE_MAX}) of total, sorted by path.`,
       inputSchema: {
         kinds: z.array(z.enum(FINDING_KINDS)).optional().describe('Finding kinds to report; all when omitted'),
-        limit: z.number().int().min(1).optional().describe(`Maximum findings (default ${VALIDATE_LIMIT}; larger than ${VALIDATE_MAX} is clamped)`),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe(`Maximum findings (default ${VALIDATE_LIMIT}; larger than ${VALIDATE_MAX} is clamped)`),
         base,
       },
     },

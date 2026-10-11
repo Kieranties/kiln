@@ -9,7 +9,14 @@ const FIXTURES = fileURLToPath(new URL('../fixtures/', import.meta.url));
 const THRESHOLDS = fileURLToPath(new URL('./thresholds.json', import.meta.url));
 const RECORD = process.env.KILN_EVAL_RECORD === '1';
 
-type Question = { id: string; category: string; question: string; variants: string[]; primary: string[]; secondary: string[] };
+type Question = {
+  id: string;
+  category: string;
+  question: string;
+  variants: string[];
+  primary: string[];
+  secondary: string[];
+};
 type Metrics = { recall5: number; mrr: number };
 type Mode = 'raw' | 'variants';
 type Thresholds = Record<Mode, Record<string, Metrics>>;
@@ -63,7 +70,10 @@ describe('retrieval regression (golden set)', () => {
       const categories = [...new Set(results[mode].map((r) => r.category))];
       const rows = categories.map((category) => {
         const rs = results[mode].filter((r) => r.category === category);
-        const m: Metrics = { recall5: mean(rs.map((r) => r.recall5)), mrr: mean(rs.map((r) => (r.rank > 0 ? 1 / r.rank : 0))) };
+        const m: Metrics = {
+          recall5: mean(rs.map((r) => r.recall5)),
+          mrr: mean(rs.map((r) => (r.rank > 0 ? 1 / r.rank : 0))),
+        };
         measured[mode][category] = m;
         return { category, n: rs.length, recall5: round(m.recall5), mrr: round(m.mrr) };
       });
@@ -72,7 +82,10 @@ describe('retrieval regression (golden set)', () => {
       console.log(
         `\nPer question (${mode})\n` +
           results[mode]
-            .map((r) => `${r.id}  recall@5=${round(r.recall5)}  first-primary-rank=${r.rank || '-'}  top5=${JSON.stringify(r.top5)}`)
+            .map(
+              (r) =>
+                `${r.id}  recall@5=${round(r.recall5)}  first-primary-rank=${r.rank || '-'}  top5=${JSON.stringify(r.top5)}`,
+            )
             .join('\n'),
       );
     }
@@ -89,7 +102,9 @@ describe('retrieval regression (golden set)', () => {
     }
 
     if (!existsSync(THRESHOLDS)) {
-      expect.fail('tests/eval/thresholds.json is missing: record a baseline first with KILN_EVAL_RECORD=1 npx vitest run tests/eval/retrieval.test.ts');
+      expect.fail(
+        'tests/eval/thresholds.json is missing: record a baseline first with KILN_EVAL_RECORD=1 npx vitest run tests/eval/retrieval.test.ts',
+      );
     }
     const thresholds = JSON.parse(readFileSync(THRESHOLDS, 'utf8')) as Thresholds;
     for (const mode of MODES) {

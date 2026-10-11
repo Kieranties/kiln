@@ -93,9 +93,7 @@ export class IndexWriter {
     this.#deleteLinks = db.prepare('DELETE FROM links WHERE src_path = ?');
     this.#deleteAliases = db.prepare('DELETE FROM aliases WHERE path = ?');
     this.#deleteFts = db.prepare('DELETE FROM fts WHERE rowid = ?');
-    this.#insertFile = db.prepare(
-      'INSERT OR REPLACE INTO files(path, size, mtime, hash, id) VALUES (?, ?, ?, ?, ?)',
-    );
+    this.#insertFile = db.prepare('INSERT OR REPLACE INTO files(path, size, mtime, hash, id) VALUES (?, ?, ?, ?, ?)');
     this.#insertNote = db.prepare(
       'INSERT INTO notes(path, id, type, kind, title, status, triage, review, created, updated, fields_json) ' +
         'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -121,7 +119,9 @@ export class IndexWriter {
 
   /** Empty every table (in place; the caller holds the transaction). */
   clear(): void {
-    this.#db.exec("DELETE FROM files; DELETE FROM notes; DELETE FROM links; DELETE FROM aliases; INSERT INTO fts(fts) VALUES('delete-all');");
+    this.#db.exec(
+      "DELETE FROM files; DELETE FROM notes; DELETE FROM links; DELETE FROM aliases; INSERT INTO fts(fts) VALUES('delete-all');",
+    );
   }
 
   /**
@@ -195,7 +195,12 @@ function readScanned(f: ScannedFile): Buffer | null {
  * Files with unchanged size and mtime are skipped; others are read, hashed and re-parsed only when the hash differs.
  * Rebuilds every table in place when `force` is set or churn exceeds 30% of the previously indexed files.
  */
-export function reconcileFiles(db: DatabaseSync, root: string, writer: IndexWriter, force: boolean): Omit<ReconcileStats, 'ms'> {
+export function reconcileFiles(
+  db: DatabaseSync,
+  root: string,
+  writer: IndexWriter,
+  force: boolean,
+): Omit<ReconcileStats, 'ms'> {
   const known = new Map<string, KnownFile>();
   for (const row of db.prepare('SELECT path, size, mtime, hash FROM files').all() as (KnownFile & { path: string })[]) {
     known.set(row.path, { size: row.size, mtime: row.mtime, hash: row.hash });

@@ -22,19 +22,30 @@ beforeEach(() => {
   // Targets: one resolvable by title, one only by its file stem (no title field).
   write('work/2026/Fix the turnstiles.md', '---\ntype: work\ntitle: Fix the turnstiles\n---\n');
   write('anchors/organisation/Kingsport FC.md', '---\ntype: anchor\nkind: organisation\n---\n');
-  write('decisions/2026/2026-03-04 Card only.md', '---\ntype: decision\ntitle: Card only\ndecided_on: 2026-03-04\n---\n');
+  write(
+    'decisions/2026/2026-03-04 Card only.md',
+    '---\ntype: decision\ntitle: Card only\ndecided_on: 2026-03-04\n---\n',
+  );
 
   // Correct, linked to the expected work note by title.
-  write('sources/jira/a.md', source('triage: linked\ntriage_outcome: update-work-item\nlinked_to:\n  - "[[Fix the turnstiles]]"'));
+  write(
+    'sources/jira/a.md',
+    source('triage: linked\ntriage_outcome: update-work-item\nlinked_to:\n  - "[[Fix the turnstiles]]"'),
+  );
   // Wrong outcome: expected supersede, recorded new-decision.
-  write('sources/meeting/b.md', source('triage: linked\ntriage_outcome: new-decision\nlinked_to:\n  - "[[Something new]]"'));
+  write(
+    'sources/meeting/b.md',
+    source('triage: linked\ntriage_outcome: new-decision\nlinked_to:\n  - "[[Something new]]"'),
+  );
   // Still pending: wrong even though an outcome is present.
   write('sources/email/c.md', source('triage: pending\ntriage_outcome: link-to-anchor'));
   // d.md is missing from the base entirely.
   // Correct, linked to the anchor by its file stem, plus one extra link that is not a target.
   write(
     'sources/slack/nested/e.md',
-    source('triage: linked\ntriage_outcome: link-to-anchor\nlinked_to:\n  - "[[Kingsport FC]]"\n  - "[[Fix the turnstiles]]"'),
+    source(
+      'triage: linked\ntriage_outcome: link-to-anchor\nlinked_to:\n  - "[[Kingsport FC]]"\n  - "[[Fix the turnstiles]]"',
+    ),
   );
 });
 
@@ -87,7 +98,10 @@ describe('score-triage', () => {
     expect(isEntry(file.replaceAll('\\', '/'), url)).toBe(true);
     expect(isEntry(file.replace(/\.ts$/, ''), url)).toBe(true);
     if (process.platform === 'win32') {
-      const flipped = file[0] === file[0]!.toUpperCase() ? file[0].toLowerCase() + file.slice(1) : file[0]!.toUpperCase() + file.slice(1);
+      const flipped =
+        file[0] === file[0]!.toUpperCase()
+          ? file[0].toLowerCase() + file.slice(1)
+          : file[0]!.toUpperCase() + file.slice(1);
       expect(isEntry(flipped, url)).toBe(true);
       expect(isEntry(file.toUpperCase(), url)).toBe(true);
     }

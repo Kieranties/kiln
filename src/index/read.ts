@@ -40,7 +40,13 @@ export type Brief = {
 
 export type NoteRecord = { id: string | null; path: string; fields: Fields; body: string; revision: string };
 
-export type SearchParams = { q: string; variants?: string[]; scopeAnchors?: string[]; autoScope?: boolean; limit?: number };
+export type SearchParams = {
+  q: string;
+  variants?: string[];
+  scopeAnchors?: string[];
+  autoScope?: boolean;
+  limit?: number;
+};
 
 export type QueryFilter = {
   type?: string;
@@ -94,7 +100,9 @@ function stmt(ix: Index, sql: string): StatementSync {
   let cache = statements.get(ix.db);
   if (!cache) {
     ix.db.function('kiln_lower', { deterministic: true }, (v) => (typeof v === 'string' ? v.toLowerCase() : v));
-    ix.db.function('kiln_link_target', { deterministic: true }, (v) => (typeof v === 'string' ? stripLink(v).toLowerCase() : v));
+    ix.db.function('kiln_link_target', { deterministic: true }, (v) =>
+      typeof v === 'string' ? stripLink(v).toLowerCase() : v,
+    );
     cache = new Map();
     statements.set(ix.db, cache);
   }
@@ -160,7 +168,9 @@ function ftsQuery(terms: string[]): string {
 
 /** Every lowercased name a link can use to reach the note at `path`: its title, its aliases and its file stem. */
 function namesOf(ix: Index, path: string): string[] {
-  const names = new Set(all<{ name_lc: string }>(ix, 'SELECT name_lc FROM aliases WHERE path = ?', path).map((r) => r.name_lc));
+  const names = new Set(
+    all<{ name_lc: string }>(ix, 'SELECT name_lc FROM aliases WHERE path = ?', path).map((r) => r.name_lc),
+  );
   names.add(stemOf(path).toLowerCase());
   return [...names];
 }
@@ -360,7 +370,11 @@ function findNote(ix: Index, idOrPath: string): NoteRow {
   const byPath =
     all<NoteRow>(ix, `SELECT ${cols} FROM notes n WHERE n.path = ?`, path)[0] ??
     (process.platform === 'win32'
-      ? all<NoteRow>(ix, `SELECT ${cols} FROM notes n WHERE kiln_lower(n.path) = ? ORDER BY n.path LIMIT 1`, path.toLowerCase())[0]
+      ? all<NoteRow>(
+          ix,
+          `SELECT ${cols} FROM notes n WHERE kiln_lower(n.path) = ? ORDER BY n.path LIMIT 1`,
+          path.toLowerCase(),
+        )[0]
       : undefined);
   if (!byPath) throw new KilnError('not_found', `No note with id or path "${idOrPath}"`);
   return byPath;
@@ -376,9 +390,13 @@ export function brief(ix: Index, idOrPath: string): Brief {
   const section = text === null ? null : readSection(text, 'Summary');
   const names = JSON.stringify(namesOf(ix, row.path));
   const linking = (where: string, limit: number) =>
-    all<NoteRef>(ix, `SELECT ${REF_COLS} FROM notes n WHERE ${LINKS_ANY} AND n.path <> ? ${where} ${NEWEST_FIRST} LIMIT ?`, names, row.path, limit).map(
-      toRef,
-    );
+    all<NoteRef>(
+      ix,
+      `SELECT ${REF_COLS} FROM notes n WHERE ${LINKS_ANY} AND n.path <> ? ${where} ${NEWEST_FIRST} LIMIT ?`,
+      names,
+      row.path,
+      limit,
+    ).map(toRef);
   return {
     note: toRef(row),
     summary: summaryOf(row.fields_json),
@@ -428,7 +446,8 @@ export function get(ix: Index, idOrPath: string): NoteRecord {
   try {
     bytes = readFileSync(join(ix.base.path, row.path));
   } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new KilnError('not_found', `Note file "${row.path}" no longer exists`);
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT')
+      throw new KilnError('not_found', `Note file "${row.path}" no longer exists`);
     throw e;
   }
   const split = splitNote(bytes.toString('utf8'));
@@ -447,9 +466,11 @@ const PENDING = "n.type = 'source' AND n.triage = 'pending'";
 /** Pending sources, oldest capture first (`captured_at`, else `created`). */
 export function inbox(ix: Index, limit = 50): NoteRef[] {
   const when = "COALESCE(json_extract(n.fields_json, '$.captured_at'), n.created)";
-  return all<NoteRef>(ix, `SELECT ${REF_COLS} FROM notes n WHERE ${PENDING} ORDER BY ${when} IS NULL, ${when}, n.path LIMIT ?`, limit).map(
-    toRef,
-  );
+  return all<NoteRef>(
+    ix,
+    `SELECT ${REF_COLS} FROM notes n WHERE ${PENDING} ORDER BY ${when} IS NULL, ${when}, n.path LIMIT ?`,
+    limit,
+  ).map(toRef);
 }
 
 export function status(ix: Index): IndexStatus {

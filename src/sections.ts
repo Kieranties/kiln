@@ -96,7 +96,14 @@ function applyEdit(body: string, edit: SectionEdit, eol: Eol, blankAfterFence: b
   if (edit.mode === 'replace') {
     const headingLine = lines[start]!;
     const headingEol = headingLine.term === '' && text !== '' ? eol : '';
-    return join(lines.slice(0, start)) + headingLine.content + headingLine.term + headingEol + text + join(lines.slice(contentEnd));
+    return (
+      join(lines.slice(0, start)) +
+      headingLine.content +
+      headingLine.term +
+      headingEol +
+      text +
+      join(lines.slice(contentEnd))
+    );
   }
 
   if (text === '') return body;

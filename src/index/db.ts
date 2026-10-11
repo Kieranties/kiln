@@ -4,7 +4,16 @@ import { DatabaseSync } from 'node:sqlite';
 import { KilnError, type Base } from '../types.js';
 import { IndexWriter, reconcileFiles, sha256, type FileStat, type ReconcileStats } from './reconcile.js';
 import * as read from './read.js';
-import type { Brief, IndexStatus, NoteRecord, NoteRef, QueryFilter, ResolveResult, SearchHit, SearchParams } from './read.js';
+import type {
+  Brief,
+  IndexStatus,
+  NoteRecord,
+  NoteRef,
+  QueryFilter,
+  ResolveResult,
+  SearchHit,
+  SearchParams,
+} from './read.js';
 
 export type { ReconcileStats } from './reconcile.js';
 
@@ -101,9 +110,13 @@ function setAside(file: string): void {
       const code = (e as NodeJS.ErrnoException).code;
       if (code === 'ENOENT' && suffix !== '') continue;
       if (code === 'EBUSY' || code === 'EPERM') {
-        throw new KilnError('busy', 'The kiln index is corrupt and is held open by another session; close it and try again', {
-          cause: e,
-        });
+        throw new KilnError(
+          'busy',
+          'The kiln index is corrupt and is held open by another session; close it and try again',
+          {
+            cause: e,
+          },
+        );
       }
       throw e;
     }
@@ -193,7 +206,9 @@ export class Index {
     try {
       this.db.exec('BEGIN IMMEDIATE');
     } catch (e) {
-      throw isBusy(e) ? new KilnError('busy', 'Another kiln session is writing to this base; try again shortly', { cause: e }) : e;
+      throw isBusy(e)
+        ? new KilnError('busy', 'Another kiln session is writing to this base; try again shortly', { cause: e })
+        : e;
     }
     this.#depth = 1;
     try {
@@ -239,7 +254,10 @@ export class Index {
   upsertText(rel: string, text: string, stat: FileStat): void {
     const bytes = Buffer.from(text, 'utf8');
     this.transaction(() =>
-      this.#getWriter().upsert(rel.replace(/\\/g, '/'), text, sha256(bytes), { size: stat.size, mtimeMs: stat.mtimeMs }),
+      this.#getWriter().upsert(rel.replace(/\\/g, '/'), text, sha256(bytes), {
+        size: stat.size,
+        mtimeMs: stat.mtimeMs,
+      }),
     );
   }
 

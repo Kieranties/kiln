@@ -26,7 +26,17 @@ import type { Fields, NoteType } from '../src/types.js';
 const FIXTURES = fileURLToPath(new URL('../tests/fixtures/', import.meta.url));
 const MARKER = '.kiln-scale';
 /** Top-level entries this script creates in `<dir>`; nothing else is ever removed. */
-const GENERATED = new Set([MARKER, '.kiln', 'anchors', 'projects', 'work', 'decisions', 'references', 'notes', 'sources']);
+const GENERATED = new Set([
+  MARKER,
+  '.kiln',
+  'anchors',
+  'projects',
+  'work',
+  'decisions',
+  'references',
+  'notes',
+  'sources',
+]);
 const SEED = 20261010;
 const QUERIES = 50;
 
@@ -77,7 +87,14 @@ const TRIAGE_WEIGHTS: [string, number][] = [
   ['dismissed', 12],
   ['pending', 3],
 ];
-const LINKED_OUTCOMES = ['link-to-anchor', 'update-work-item', 'new-work-item', 'new-decision', 'supersede', 'new-reference'];
+const LINKED_OUTCOMES = [
+  'link-to-anchor',
+  'update-work-item',
+  'new-work-item',
+  'new-decision',
+  'supersede',
+  'new-reference',
+];
 
 // ---------------------------------------------------------------------------------------------------------------
 // Seeded PRNG
@@ -131,7 +148,14 @@ class Rng {
 // Fixture corpus
 
 type Section = { heading: string; text: string };
-type Template = { type: string; kind: string | null; title: string; fields: Fields; sections: Section[] | null; paragraphs: string[] };
+type Template = {
+  type: string;
+  kind: string | null;
+  title: string;
+  fields: Fields;
+  sections: Section[] | null;
+  paragraphs: string[];
+};
 
 type Corpus = {
   templates: Map<string, Template[]>;
@@ -179,7 +203,13 @@ function paragraphsOf(body: string): string[] {
 
 function loadCorpus(): Corpus {
   const files = [...scanVault(join(FIXTURES, 'base')), ...scanVault(join(FIXTURES, 'day', 'captures'))];
-  const corpus: Corpus = { templates: new Map(), sectionTexts: new Map(), paragraphs: [], summaries: new Map(), whys: [] };
+  const corpus: Corpus = {
+    templates: new Map(),
+    sectionTexts: new Map(),
+    paragraphs: [],
+    summaries: new Map(),
+    whys: [],
+  };
   for (const f of files) {
     const split = splitNote(readFileSync(f.abs, 'utf8').replace(/\r\n/g, '\n'));
     const fields = parseFields(split.fmText);
@@ -207,7 +237,15 @@ function loadCorpus(): Corpus {
 // ---------------------------------------------------------------------------------------------------------------
 // Generation
 
-type Plan = { n: number; type: NoteType; kind: string | null; template: Template | null; title: string; created: string; updated: string };
+type Plan = {
+  n: number;
+  type: NoteType;
+  kind: string | null;
+  template: Template | null;
+  title: string;
+  created: string;
+  updated: string;
+};
 
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const DAY_MS = 86_400_000;
@@ -317,7 +355,9 @@ function fieldsFor(plan: Plan, corpus: Corpus, rng: Rng, pools: Pools): Fields {
         : rng.float() < 0.9
           ? 'active'
           : rng.pick(STATUSES[plan.type].filter((s) => s !== 'active'));
-  const aliases = strings(t.aliases).slice(0, rng.int(1, 3)).map((a) => `${a} ${plan.n}`);
+  const aliases = strings(t.aliases)
+    .slice(0, rng.int(1, 3))
+    .map((a) => `${a} ${plan.n}`);
   Object.assign(fields, {
     status,
     created: plan.created,
@@ -336,7 +376,11 @@ function fieldsFor(plan: Plan, corpus: Corpus, rng: Rng, pools: Pools): Fields {
 
   if (plan.type === 'anchor' && plan.kind === 'organisation') fields.role = rng.pick(['client', 'vendor', 'partner']);
   if (plan.type === 'work') {
-    Object.assign(fields, { project: link(rng.pick(pools.project)), ticket: `NWA-${10_000 + plan.n}`, last_checkpoint: plan.updated });
+    Object.assign(fields, {
+      project: link(rng.pick(pools.project)),
+      ticket: `NWA-${10_000 + plan.n}`,
+      last_checkpoint: plan.updated,
+    });
   }
   if (plan.type === 'decision') {
     fields.decided_on = plan.created;
@@ -352,7 +396,8 @@ function generate(out: string, total: number): Record<string, number> {
   const rng = new Rng(SEED);
   const fixtureBase = join(FIXTURES, 'base');
   const fixtureFiles = scanVault(fixtureBase);
-  if (total < fixtureFiles.length) throw new Error(`--notes must be at least ${fixtureFiles.length} (the fixture base size)`);
+  if (total < fixtureFiles.length)
+    throw new Error(`--notes must be at least ${fixtureFiles.length} (the fixture base size)`);
   for (const entry of readdirSync(fixtureBase)) cpSync(join(fixtureBase, entry), join(out, entry), { recursive: true });
 
   const counts: Record<string, number> = {};
@@ -406,9 +451,13 @@ function prepareOut(out: string): void {
   if (existsSync(out)) {
     const entries = readdirSync(out);
     if (entries.length > 0) {
-      if (!entries.includes(MARKER)) throw new Error(`${out} is not empty and has no ${MARKER} marker; refusing to write into it`);
+      if (!entries.includes(MARKER))
+        throw new Error(`${out} is not empty and has no ${MARKER} marker; refusing to write into it`);
       const foreign = entries.filter((e) => !GENERATED.has(e));
-      if (foreign.length > 0) throw new Error(`${out} holds entries this script did not create (${foreign.join(', ')}); refusing to clear it`);
+      if (foreign.length > 0)
+        throw new Error(
+          `${out} holds entries this script did not create (${foreign.join(', ')}); refusing to clear it`,
+        );
       for (const e of entries) rmSync(join(out, e), { recursive: true, force: true });
     }
   }
@@ -433,11 +482,16 @@ function percentile(xs: number[], p: number): number {
 
 type Row = { measure: string; ms: number; target: number; unit: 's' | 'ms' };
 
-const fmt = (ms: number, unit: 's' | 'ms'): string => (unit === 's' ? `${(ms / 1000).toFixed(2)} s` : `${ms.toFixed(1)} ms`);
+const fmt = (ms: number, unit: 's' | 'ms'): string =>
+  unit === 's' ? `${(ms / 1000).toFixed(2)} s` : `${ms.toFixed(1)} ms`;
 
 /** Exit codes: 0 every target met; 1 a target missed; 2 bad usage or an error. */
 function main(argv: string[]): number {
-  const { values } = parseArgs({ args: argv, options: { notes: { type: 'string' }, out: { type: 'string' } }, strict: true });
+  const { values } = parseArgs({
+    args: argv,
+    options: { notes: { type: 'string' }, out: { type: 'string' } },
+    strict: true,
+  });
   const total = Number(values.notes);
   if (!values.out || !Number.isInteger(total) || total <= 0) {
     process.stderr.write('Usage: npx tsx scripts/scale.ts --notes <N> --out <dir>\n');
@@ -467,17 +521,25 @@ function main(argv: string[]): number {
     const recheck = time(() => ix.reconcile());
     const status = ix.status();
     const r = recheck.result;
-    process.stdout.write(`indexed notes: ${status.notes}; inbox ${status.inbox}; forced rebuild scanned ${forced.result.scanned}\n`);
+    process.stdout.write(
+      `indexed notes: ${status.notes}; inbox ${status.inbox}; forced rebuild scanned ${forced.result.scanned}\n`,
+    );
     process.stdout.write(
       `re-check stats: scanned ${r.scanned}, added ${r.added}, changed ${r.changed}, removed ${r.removed}, rebuilt ${r.rebuilt}\n\n`,
     );
 
-    const golden = JSON.parse(readFileSync(join(FIXTURES, 'golden.json'), 'utf8')) as { questions: { question: string; variants: string[] }[] };
+    const golden = JSON.parse(readFileSync(join(FIXTURES, 'golden.json'), 'utf8')) as {
+      questions: { question: string; variants: string[] }[];
+    };
     const latencies = (withVariants: boolean): number[] => {
       const ms: number[] = [];
       for (let i = 0; i < QUERIES; i++) {
         const q = golden.questions[i % golden.questions.length]!;
-        ms.push(time(() => ix.search({ q: q.question, ...(withVariants ? { variants: q.variants } : {}), autoScope: true, limit: 20 })).ms);
+        ms.push(
+          time(() =>
+            ix.search({ q: q.question, ...(withVariants ? { variants: q.variants } : {}), autoScope: true, limit: 20 }),
+          ).ms,
+        );
       }
       return ms;
     };
@@ -488,18 +550,33 @@ function main(argv: string[]): number {
       { measure: 'cold build (`Index.open`, fresh base)', ms: cold.ms, target: TARGET_BUILD_MS, unit: 's' },
       { measure: 'forced rebuild (`reconcile({ force: true })`)', ms: forced.ms, target: TARGET_BUILD_MS, unit: 's' },
       { measure: 'no-change re-check (`reconcile()`)', ms: recheck.ms, target: TARGET_RECHECK_MS, unit: 's' },
-      { measure: `query p95, raw \`q\` (${QUERIES} searches)`, ms: percentile(raw, 0.95), target: TARGET_P95_MS, unit: 'ms' },
-      { measure: `query p95, \`q\` + variants (${QUERIES} searches)`, ms: percentile(variants, 0.95), target: TARGET_P95_MS, unit: 'ms' },
+      {
+        measure: `query p95, raw \`q\` (${QUERIES} searches)`,
+        ms: percentile(raw, 0.95),
+        target: TARGET_P95_MS,
+        unit: 'ms',
+      },
+      {
+        measure: `query p95, \`q\` + variants (${QUERIES} searches)`,
+        ms: percentile(variants, 0.95),
+        target: TARGET_P95_MS,
+        unit: 'ms',
+      },
     ];
     let failed = false;
     process.stdout.write('| Measure | Result | Target | |\n|---|---|---|---|\n');
     for (const row of rows) {
       const pass = row.ms < row.target;
       failed ||= !pass;
-      process.stdout.write(`| ${row.measure} | ${fmt(row.ms, row.unit)} | < ${fmt(row.target, row.unit)} | ${pass ? 'PASS' : 'FAIL'} |\n`);
+      process.stdout.write(
+        `| ${row.measure} | ${fmt(row.ms, row.unit)} | < ${fmt(row.target, row.unit)} | ${pass ? 'PASS' : 'FAIL'} |\n`,
+      );
     }
     process.stdout.write('\nquery latency (ms):\n');
-    for (const [name, xs] of [['raw q', raw], ['q + variants', variants]] as const) {
+    for (const [name, xs] of [
+      ['raw q', raw],
+      ['q + variants', variants],
+    ] as const) {
       process.stdout.write(
         `  ${name.padEnd(13)} p50 ${percentile(xs, 0.5).toFixed(1)}  p95 ${percentile(xs, 0.95).toFixed(1)}  max ${Math.max(...xs).toFixed(1)}\n`,
       );
