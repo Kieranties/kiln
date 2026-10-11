@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { KIT, loadDefinitions, loadJson, SHARED_PROPERTIES } from './load.js';
+import { KIT, loadDefinitions, loadJson, loadProperties, SHARED_PROPERTIES } from './load.js';
 
 const defs = loadDefinitions();
 
@@ -78,6 +78,36 @@ describe('Iconic rules', () => {
   it('the apply procedure merges folder icons and switches on minimal folder icons', () => {
     const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
     for (const part of ['fileIcons', 'minimalFolderIcons']) expect(readme, part).toContain(part);
+  });
+
+  it('the property list covers every property, each with an icon or the type it links to', () => {
+    const { types } = loadJson<{ types: Record<string, string> }>('settings/types.json');
+    const catalogue = loadProperties();
+    expect(Object.keys(catalogue).sort()).toEqual(Object.keys(types).sort());
+    for (const [prop, entry] of Object.entries(catalogue)) {
+      if (entry.links) {
+        expect(defs.map((d) => d.name), prop).toContain(entry.links);
+        expect(types[prop], `${prop} links, so it is a list`).toBe('multitext');
+      } else {
+        expect(entry.icon, prop).toMatch(/^lucide-[a-z0-9-]+$/);
+      }
+    }
+    for (const d of defs) {
+      for (const [prop, type] of Object.entries(d.properties)) {
+        if (type === 'links') expect(catalogue[prop]?.links, `${d.name}.${prop}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('every property has an icon, and relationships show the type they link to', () => {
+    const { propertyIcons } = loadJson<{ propertyIcons: Record<string, { icon: string; color?: string }> }>(
+      'settings/plugins/iconic.json',
+    );
+    for (const [prop, entry] of Object.entries(loadProperties())) {
+      const target = defs.find((d) => d.name === entry.links);
+      const expected = target ? { icon: target.icon, color: target.color } : { icon: entry.icon, color: entry.color };
+      expect(propertyIcons[prop], prop).toEqual(JSON.parse(JSON.stringify(expected)));
+    }
   });
 
   it('rules have the shape Iconic writes', () => {

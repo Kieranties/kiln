@@ -56,6 +56,114 @@
       "color": "#ffb86c"
     }
   },
+  "propertyIcons": {
+    "type": {
+      "icon": "lucide-shapes"
+    },
+    "kind": {
+      "icon": "lucide-tag"
+    },
+    "status": {
+      "icon": "lucide-circle-dot"
+    },
+    "created": {
+      "icon": "lucide-calendar-plus"
+    },
+    "summary": {
+      "icon": "lucide-text"
+    },
+    "aliases": {
+      "icon": "lucide-at-sign"
+    },
+    "keywords": {
+      "icon": "lucide-key-round"
+    },
+    "tags": {
+      "icon": "lucide-tags"
+    },
+    "review": {
+      "icon": "lucide-flag",
+      "color": "#ff5555"
+    },
+    "organisations": {
+      "icon": "lucide-building",
+      "color": "#6272a4"
+    },
+    "people": {
+      "icon": "lucide-user",
+      "color": "#50fa7b"
+    },
+    "attendees": {
+      "icon": "lucide-user",
+      "color": "#50fa7b"
+    },
+    "products": {
+      "icon": "lucide-box",
+      "color": "#69c8db"
+    },
+    "topics": {
+      "icon": "lucide-book-open",
+      "color": "#f1fa8c"
+    },
+    "projects": {
+      "icon": "lucide-rocket",
+      "color": "#a371f9"
+    },
+    "work": {
+      "icon": "lucide-square-check",
+      "color": "#8be9fd"
+    },
+    "research": {
+      "icon": "lucide-flask-conical",
+      "color": "#bd93f9"
+    },
+    "supersedes": {
+      "icon": "lucide-gavel",
+      "color": "#ffb86c"
+    },
+    "role": {
+      "icon": "lucide-briefcase"
+    },
+    "email": {
+      "icon": "lucide-mail"
+    },
+    "url": {
+      "icon": "lucide-link"
+    },
+    "verified": {
+      "icon": "lucide-badge-check"
+    },
+    "jira": {
+      "icon": "lucide-ticket"
+    },
+    "github": {
+      "icon": "lucide-github"
+    },
+    "priority": {
+      "icon": "lucide-signal"
+    },
+    "question": {
+      "icon": "lucide-circle-help"
+    },
+    "decided": {
+      "icon": "lucide-calendar-check"
+    },
+    "date": {
+      "icon": "lucide-calendar"
+    },
+    "author": {
+      "icon": "lucide-pen-line"
+    },
+    "published": {
+      "icon": "lucide-calendar"
+    },
+    "captured": {
+      "icon": "lucide-clock"
+    },
+    "from": {
+      "icon": "lucide-log-in"
+    }
+  },
   "fileRules": [
     {
       "id": "kiln-organisation-client",

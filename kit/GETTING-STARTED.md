@@ -56,7 +56,7 @@ Each step is something you'll do every day. Check the result as you go.
 **Capture something**
 
 - [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A note appears in `Inbox` with an inbox icon, and Home's Inbox lists it.
-- [ ] Open it: there is no properties block in the text. Properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open), filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase.
+- [ ] Open it: there is no properties block in the text. Properties are in the properties view in the right sidebar (search the command palette for "properties" if it isn't open), filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase. Each property has an icon; relationships such as `projects` show the icon and colour of the type they link to.
 - [ ] Create a note with **New note**: it lands in `Inbox` as a capture too.
 
 **Log your day**

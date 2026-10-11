@@ -9,6 +9,7 @@ The kit is kiln's vault structure for Obsidian: what kinds of notes exist, how e
 | Folder | Holds | Goes to |
 |---|---|---|
 | `types/` | One **definition** per type: its folder, icon, colour, statuses, properties, kinds, sections and related views. The single source of truth | `_kiln/types/` in the vault |
+| `properties.md` | Every property, with its icon. A relationship takes the icon and colour of the type it links to | `_kiln/properties.md` |
 | `templates/` | One Templater template per type, written from its definition | `_kiln/templates/` |
 | `views/` | Bases views: each type's related views, and the inbox, review, project and today views | `_kiln/views/` |
 | `root/` | `Home.md` and `Board.base` | The vault root |
@@ -34,7 +35,7 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
 
 1. **Check the plugins are installed and Obsidian is closed.** `<vault>/.obsidian/plugins/` has `iconic`, `templater-obsidian`, `quickadd` and `homepage`. Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up. Confirm with the owner that they turned on **Trigger Templater on new file creation** in Templater's settings: Templater keeps that switch per device in Obsidian's local storage, so no settings file can set it, and without it no folder template runs.
 2. **Create the type folders** in `<vault>`: the `folder` of every definition in `types/`.
-3. **Copy the kit in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The sample notes in `tests/fixtures/layer1` are copied only when asked for (see `TRY-THE-SAMPLE.md`).
+3. **Copy the kit in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md`, this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The sample notes in `tests/fixtures/layer1` are copied only when asked for (see `TRY-THE-SAMPLE.md`).
 4. **Merge each settings fragment.** Keep every setting the vault already has unless the rule says otherwise. When a target file is missing, write the fragment as it is.
 
    | Fragment | Target in `<vault>/.obsidian/` | Rule |
@@ -46,7 +47,7 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
    | `community-plugins.json` | `community-plugins.json` | Add the four ids that are missing |
    | `snippets/kiln.css` | `snippets/kiln.css` | Copy the file. It shows property names, values and board columns with capitals; notes stay lowercase |
    | `appearance.json` | `appearance.json` | Add `kiln` to `enabledCssSnippets` |
-   | `plugins/iconic.json` | `plugins/iconic/data.json` | Set `showAllFileIcons`, `showAllFolderIcons` and `minimalFolderIcons` (folder icons replace the folder arrows). Set the `fileIcons` entries for the kit's folders and `_kiln`, keeping the rest. Remove `fileRules` entries whose `id` starts with `kiln-`, then put the kit's rules first, so they win over older rules |
+   | `plugins/iconic.json` | `plugins/iconic/data.json` | Set `showAllFileIcons`, `showAllFolderIcons` and `minimalFolderIcons` (folder icons replace the folder arrows). Set the `fileIcons` entries for the kit's folders and `_kiln`, and the `propertyIcons` entries for the properties in `properties.md`, keeping the rest. Remove `fileRules` entries whose `id` starts with `kiln-`, then put the kit's rules first, so they win over older rules |
    | `plugins/templater.json` | `plugins/templater-obsidian/data.json` | Set `templates_folder` and `trigger_on_file_creation_mode`; replace `folder_templates` entries for the kit's folders and keep the rest |
    | `plugins/quickadd.json` | `plugins/quickadd/data.json` | Remove `choices` entries whose `id` starts with `kiln-`, then add the kit's |
    | `plugins/homepage.json` | `plugins/homepage/data.json` | Set `homepages["Main Homepage"]` and `version` |
@@ -62,7 +63,8 @@ The steps for whoever applies the kit, usually Claude. `<vault>` is the vault fo
    - a Base in `views/` for each view (`<type>-<view>.base`);
    - the type's Iconic rules in `settings/plugins/iconic.json`, kind rules before the type rule;
    - its folder and template in `settings/plugins/templater.json`;
-   - its properties in `settings/types.json`.
+   - its properties in `settings/types.json`;
+   - any new property in `properties.md` (an icon, or the type it links to) and in `propertyIcons` in `settings/plugins/iconic.json`.
 3. Update the tests, which pin the starting set:
    - `tests/kit/definitions.test.ts`: the type list and the folder, status, kind, property and section tables;
    - `tests/fixtures/layer1`: add an example note of the new type in its folder, since every type needs one.

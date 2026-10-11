@@ -40,6 +40,13 @@ describe('kit docs', () => {
     for (const part of ['snippets/kiln.css', 'appearance.json']) expect(steps, part).toContain(part);
   });
 
+  it('the property list is copied, merged and kept up to date', () => {
+    expect(section(readme, 'What the kit is')).toContain('properties.md');
+    const setup = section(readme, 'Setting up a vault');
+    for (const part of ['properties.md', 'propertyIcons']) expect(setup, part).toContain(part);
+    expect(section(readme, 'Adding or changing a type')).toContain('properties.md');
+  });
+
   it('setting up a vault copies all three kit docs', () => {
     const steps = section(readme, 'Setting up a vault');
     for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);

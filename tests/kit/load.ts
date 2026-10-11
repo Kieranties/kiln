@@ -70,6 +70,15 @@ export function loadDefinitions(): Definition[] {
     });
 }
 
+/** A property's icon: its own, or (for a relationship) the type it links to. */
+export type PropertyEntry = { icon?: string; color?: string; links?: string };
+
+/** kit/properties.md: every property, with its icon or the type it links to. */
+export function loadProperties(): Record<string, PropertyEntry> {
+  const { frontmatter } = splitFrontmatter(readFileSync(join(KIT, 'properties.md'), 'utf8'));
+  return ((parse(frontmatter) ?? {}) as { properties?: Record<string, PropertyEntry> }).properties ?? {};
+}
+
 /** A JSON file in the kit, parsed. `path` is relative to kit/, e.g. 'settings/app.json'. */
 export function loadJson<T = Record<string, unknown>>(path: string): T {
   return JSON.parse(readFileSync(join(KIT, path), 'utf8')) as T;
