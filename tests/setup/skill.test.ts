@@ -118,9 +118,18 @@ describe('/kiln:setup', () => {
       '"The CLI is unable to find Obsidian" means Obsidian isn\'t running, not that a plugin is missing',
       '`install.uri`',
       "Start-Process '<install.uri>'",
-      "explorer.exe '<install.uri>'",
+      // explorer.exe didn't start Obsidian from Git Bash (#114); rundll32 did, from Git Bash and from WSL.
+      "rundll32.exe url.dll,FileProtocolHandler '<install.uri>'",
+      'WSL',
+      '`WSL_DISTRO_NAME`',
       "open '<install.uri>'",
       "xdg-open '<install.uri>'",
+      'judge by the retry',
+      // Right after Claude opened Obsidian, the vault may still be loading: "not found" then means wait.
+      '"command not found"',
+      'still loading',
+      'only right after you opened',
+      'really is missing',
       'up to three times',
       'open the vault in Obsidian',
       'Never write plugin files yourself',
@@ -131,6 +140,7 @@ describe('/kiln:setup', () => {
     ]) {
       expect(step3, part).toContain(part);
     }
+    expect(body).not.toContain('explorer.exe');
     // Every CLI call in the skill is in step 3, and names the vault first with a single-quoted value.
     const calls = [...body.matchAll(/^\s*(obsidian .*)$/gm)].map((m) => m[1]);
     expect(calls).toEqual([

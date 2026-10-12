@@ -42,13 +42,15 @@ Only when `install` isn't `null`. `install.plugins` are the ids of the plugins t
   obsidian vault='<install.vault>' plugins filter=community versions
   ```
 
-  "The CLI is unable to find Obsidian" means Obsidian isn't running, not that a plugin is missing. The CLI doesn't start Obsidian itself, so open the vault by its URI, `install.uri`, which needs no escaping. Wait about five seconds while it loads, then run the command again, up to three times:
+  "The CLI is unable to find Obsidian" means Obsidian isn't running, not that a plugin is missing. The CLI doesn't start Obsidian itself, so open the vault by its URI, `install.uri`, which needs no escaping:
   - pwsh: `Start-Process '<install.uri>'`
-  - Git Bash on Windows: `explorer.exe '<install.uri>'` (its exit code is 1 even when it worked)
+  - Git Bash on Windows, and WSL with Obsidian installed on Windows: `rundll32.exe url.dll,FileProtocolHandler '<install.uri>'`. You are in WSL when `uname -r` contains `microsoft` or `WSL_DISTRO_NAME` is set.
   - macOS: `open '<install.uri>'`
   - Linux: `xdg-open '<install.uri>'`
 
-  The URI opens only a vault Obsidian already knows, one opened in it before. If the command still fails, ask the owner to open the vault in Obsidian, then run it again. For any other failure, or a command that doesn't return, stop, tell the owner what happened, and ask them to install the rest in Obsidian. Never write plugin files yourself. Then plan again: each plugin should now be installed.
+  Don't go by the open command's exit code (`rundll32` can't report whether the link opened: the functions it runs return nothing); judge by the retry. Wait about five seconds, then run the CLI command again, up to three times. The vault may still be loading: the CLI can say "unable to find Obsidian" again, or "command not found" (Obsidian words it `Command "<name>" not found`). Both mean still loading, so wait and retry. That holds only right after you opened the vault: at any other time, "not found" means the command, or the plugin that provides it, really is missing.
+
+  The URI opens only a vault Obsidian already knows, one opened in it before. If the command still fails after three tries, ask the owner to open the vault in Obsidian, then run it again. From WSL, the CLI itself is untested: a forum report says some of its commands exit with code 255 there. For any other failure, or a command that doesn't return, stop, tell the owner what happened, and ask them to install the rest in Obsidian. Never write plugin files yourself. Then plan again: each plugin should now be installed.
 - **A plugin older than the blueprint's minimum** (a warning says so) isn't in `install`, because the CLI can't update one. Ask the owner to update it in Obsidian: Settings → Community plugins → Check for updates.
 
 Obsidian is now open. Step 5 asks the owner to close it.
