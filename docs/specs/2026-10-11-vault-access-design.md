@@ -17,7 +17,7 @@ Claude reads and edits notes as plain files. Anything Obsidian does better goes 
 | Bases queries (`base:query`) | The kit's views, without re-implementing their filters |
 | Creating a note | Through QuickAdd (below) |
 
-The CLI needs the app running. If Obsidian is closed, the first command launches it, and that is acceptable for now. Two steps need Obsidian **closed**, so they never call the CLI: setting up a vault and adding a type ([vault setup](2026-10-11-vault-setup-design.md)).
+The CLI needs the app running. If Obsidian is closed, the first command launches it, and that is acceptable for now. (2026-10-12: on Windows, with Obsidian 1.14.4, it doesn't. The call fails with "The CLI is unable to find Obsidian". Opening the vault by its URI, `obsidian://open?vault=<name>`, starts it; `/kiln:setup` does that and retries, and the vault rules ask the owner to open it.) Two steps need Obsidian **closed**, so they never call the CLI while they write: setting up a vault and adding a type ([vault setup](2026-10-11-vault-setup-design.md)). Setup calls it only before that, to install the plugins.
 
 In Git Bash, call `obsidian.com`. Bare `obsidian` resolves to `Obsidian.exe`, the app itself, not the command-line wrapper. In pwsh, `obsidian` works.
 

@@ -23,7 +23,7 @@ The helper writes JSON the way Obsidian does: LF line endings and no final newli
 
 ### The steps
 
-1. **Check the plugins.** Each of `iconic`, `templater-obsidian`, `quickadd` and `homepage` has `manifest.json` and `main.js`, at or above the blueprint's minimum versions.
+1. **Check the plugins.** Each of `iconic`, `templater-obsidian`, `quickadd` and `homepage` has `manifest.json` and `main.js`, at or above the blueprint's minimum versions. Missing ones can be installed through the Obsidian CLI (below).
 2. **Check the Obsidian CLI is registered** ([vault access](2026-10-11-vault-access-design.md)).
 3. **Plan.** Show what will change. In a vault already in use, show every kit setting that would override the owner's (below).
 4. **Check Obsidian is closed,** at this step and only here, because QuickAdd and Homepage read some settings at start-up. If Obsidian is running, say why it must close and how. With Run in Background installed, that means the tray's Close Vault, because quitting only hides it. Then check again. The check is a process check: in Git Bash that is `tasklist //FI "IMAGENAME eq Obsidian.exe"` (double slash, or MSYS rewrites it). It can't tell which vault is open. Obsidian's `obsidian.json` can say `open: true` when the app is closed, so it isn't used.
@@ -38,6 +38,25 @@ The helper writes JSON the way Obsidian does: LF line endings and no final newli
    - the permission settings;
    - Templater's per-device "Trigger Templater on new file creation", as a suggestion, not a requirement. It only gives notes made by hand in a type's folder their template. It lives in Obsidian's local storage, so no settings file can set it.
 8. **Report** what changed.
+
+### Installing the plugins through the Obsidian CLI (2026-10-12)
+
+Added for [#112](https://github.com/Kieranties/kiln/issues/112), found while trialling #72. Current direction, not final.
+
+The Obsidian CLI can install and switch on community plugins (`plugins:restrict off`, then `plugin:install id=<id> enable`), so setup no longer leaves that to the owner. That takes Obsidian **open**, and the apply step needs it **closed**, so installing comes first:
+
+1. The owner opens the folder as a vault in Obsidian, which also creates `.obsidian/`, and keeps it open.
+2. `plan` reports `install`: the ids of the missing plugins, and `vault`, the folder name to pass as `vault=`. It is `null` when nothing is missing. The helper still never runs `obsidian`, because that would start the app.
+3. Claude says what installing does (it turns off restricted mode and downloads community plugin code) and asks. With a yes, it runs the CLI as the vault rules say: `vault='<name>'` first, single-quoted values, `obsidian.com` in Git Bash. Then it plans again.
+4. Claude asks the owner to close Obsidian, and setup carries on at the closed check.
+
+Choices within this:
+
+- **Restricted mode is always turned off before installing.** The helper can't tell whether it is on. Obsidian doesn't document where it keeps the setting; forum reports put it in the app's local storage (`enable-plugin-<app id>`), not in `.obsidian/`. `community-plugins.json` only lists the plugins that are switched on.
+- **Older plugins stay a manual update** (Settings → Community plugins → Check for updates). The CLI has no update command, and whether `plugin:install` updates an installed plugin isn't documented. Worth trying in a trial vault.
+- **Without the CLI** on PATH, the owner installs the plugins in Obsidian, as before.
+- **The CLI may not start Obsidian.** Obsidian's docs say the first command launches the app. On Windows, with Obsidian 1.14.4, it doesn't: every command fails at once with "The CLI is unable to find Obsidian. Please make sure Obsidian is running and try again." Whether that is a known Obsidian issue is still being checked. Until then, nothing relies on the CLI to launch Obsidian: the owner opens the vault first. Claude reads that message as "Obsidian is closed", never as a missing plugin, and never writes plugin files by hand.
+- **Current direction: open the vault by its URI, then retry.** The owner found that opening `obsidian://open?vault=<name>` starts Obsidian on that vault, and CLI calls then work after a few seconds. `plan` gives the URI as `install.uri`, with every character but letters, digits and `-_.~` percent-encoded, `'` included, so it needs no escaping in single quotes. Claude opens it, waits about five seconds, and tries again up to three times before asking the owner to open Obsidian. The open command differs by shell and OS: `Start-Process` in pwsh, `explorer.exe` in Git Bash, `open` on macOS and `xdg-open` on Linux. `explorer.exe` was chosen over `cmd.exe //c start "" '<uri>'` because it gets the URI as one argument, as a check from Git Bash showed, while `cmd` would also read `%` in the encoded name. The URI opens only a vault Obsidian already knows, one opened in it before; setup's first stop already asks for that.
 
 ### A vault already in use
 

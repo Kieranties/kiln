@@ -6,14 +6,14 @@ Use a separate trial vault, so the sample never mixes with your own notes.
 
 ## 1. Make a trial vault
 
-1. Follow [Getting started](GETTING-STARTED.md) **sections 1 and 2 only**, with a new empty folder, for example `D:\tmp\kiln-sample`. Stop when Obsidian is closed.
+1. Follow [Getting started](GETTING-STARTED.md) **sections 1 and 2 only**, with a new empty folder, for example `D:\tmp\kiln-sample`. Keep the trial vault open in Obsidian: Claude installs the plugins through it, then asks you to close it.
 2. Come back here instead of going on to Getting started section 3. Start Claude in any folder (`claude`) and give it this prompt, with your trial folder filled in:
 
    ```text
    /kiln:setup <trial vault folder> with the Northwind Arena sample
    ```
 
-   It applies the blueprint and adds the sample: the notes in `tests/fixtures/layer1` in the kiln repo, at the same version as your plugin. It fetches them from GitHub, so it needs a connection.
+   It installs any missing plugins, as Getting started section 3 describes, applies the blueprint and adds the sample: the notes in `tests/fixtures/layer1` in the kiln repo, at the same version as your plugin. It fetches them from GitHub, so it needs a connection.
 
 3. Open Obsidian on the trial vault and carry on with section 3 below. The right sidebar shows **File properties**; if it doesn't, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
 

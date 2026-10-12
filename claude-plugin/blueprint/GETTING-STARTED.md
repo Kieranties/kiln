@@ -14,12 +14,10 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 ## 2. Make your vault
 
 1. Create an empty folder for your vault, for example `D:\notes`.
-2. In Obsidian, choose **Open folder as vault** and pick the folder.
-3. Go to Settings → Community plugins and select **Exit restricted mode**. (Before Obsidian 1.14.4, the button was **Turn on community plugins**.)
-4. Select **Browse** and install each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**. Installing does not turn a plugin on.
-5. Back in Settings → Community plugins, find each of the four under **Installed plugins** and switch it on.
-6. **Optional:** in Settings → Templater, turn on **Trigger Templater on new file creation**. It gives notes you create by hand in a type's folder their template. Templater keeps this switch on your device, so the blueprint can't set it. Claude doesn't need it: it creates notes through QuickAdd.
-7. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts. If you use Run in Background, use its tray icon's **Close Vault**: quitting only hides Obsidian.
+2. In Obsidian, choose **Open folder as vault** and pick the folder, and keep it open: Claude installs the blueprint's plugins through Obsidian in section 3.
+3. In Settings → General, check **Command line interface** is on. It lets Claude install the plugins. Turning it on takes effect in terminals you start afterwards, so start Claude in a new one.
+
+**Without the Obsidian CLI,** install the four plugins yourself. In Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd** and **Homepage**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on.
 
 ## 3. Apply the blueprint
 
@@ -29,7 +27,13 @@ Start Claude in any folder (`claude`) and give it this prompt, with your folder 
 /kiln:setup <vault folder>
 ```
 
-Claude checks the four plugins, shows what it will change, and asks before changing any setting of yours (a new vault has none). It applies the blueprint, records the vault so Claude finds it from any folder, and offers to let Claude write to the vault without asking each time.
+Claude checks the four plugins. If any is missing, it installs and switches them on through the Obsidian CLI. That turns off restricted mode, so community plugins can run, and downloads each plugin from Obsidian's community directory, so Claude asks first.
+
+Then Claude asks you to **close Obsidian**, because QuickAdd and Homepage only read their settings when Obsidian starts. If you use Run in Background, use its tray icon's **Close Vault**: quitting only hides Obsidian.
+
+Claude shows what it will change, and asks before changing any setting of yours (a new vault has none). It applies the blueprint, records the vault so Claude finds it from any folder, and offers to let Claude write to the vault without asking each time.
+
+It also suggests turning on **Trigger Templater on new file creation**, in Obsidian's Settings → Templater. That's optional: it gives notes you create by hand in a type's folder their template. Templater keeps this switch on your device, so the blueprint can't set it. Claude doesn't need it: it creates notes through QuickAdd.
 
 ## 4. Check it
 
@@ -47,7 +51,7 @@ Each step is something you'll do every day. Check the result as you go.
 
 - [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A note appears in `Inbox` with an inbox icon, and Home's Inbox lists it.
 - [ ] Open it: there is no properties block in the text. Its properties show in the file properties view in the right sidebar, filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase. Each property has an icon; relationships such as `projects` show the icon and colour of the type they link to.
-- [ ] Create a note with **New note**: it lands in `Inbox` as a capture too. Notes you create by hand need Templater's trigger (section 2, step 6); without it, ask Claude to create the note.
+- [ ] Create a note with **New note**: it lands in `Inbox` as a capture too. Notes you create by hand need Templater's trigger (section 3); without it, ask Claude to create the note.
 
 **Log your day**
 
@@ -57,7 +61,7 @@ Each step is something you'll do every day. Check the result as you go.
 
 **Start a project**
 
-Creating a note in a folder needs Templater's trigger (section 2, step 6). Without it, ask Claude to create the note, or run **QuickAdd: Run QuickAdd** and choose **New project**.
+Creating a note in a folder needs Templater's trigger (section 3). Without it, ask Claude to create the note, or run **QuickAdd: Run QuickAdd** and choose **New project**.
 
 - [ ] Create a note in `Projects`: it gets the project's properties and the sections Goal, Current state, Scope and Done when, with a rocket icon. Set its `status` to `active`: Home's Active projects lists it.
 - [ ] Create a note in `Work`: Templater asks for its kind. Choose **task**, and in its `projects` property link your project.
