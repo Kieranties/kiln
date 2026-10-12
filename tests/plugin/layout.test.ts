@@ -109,3 +109,36 @@ describe('the living docs', () => {
     expect(stale).toEqual([]);
   });
 });
+
+describe('the README', () => {
+  const readme = readFileSync(join(REPO, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
+  const commands = [...readme.matchAll(/^claude plugin .+$/gm)].map((m) => m[0].trim());
+  const id = `${catalog.plugins[0]?.name}@${catalog.name}`;
+
+  it('installs, updates and turns off kiln by the names in the catalog', () => {
+    for (const command of [
+      'claude plugin marketplace add Kieranties/kiln',
+      `claude plugin install ${id}`,
+      `claude plugin marketplace update ${catalog.name}`,
+      `claude plugin update ${id}`,
+      `claude plugin disable ${id} --scope local`,
+    ]) {
+      expect(commands, command).toContain(command);
+    }
+  });
+
+  it('turns kiln off only in one repo, never at user scope', () => {
+    const off = commands.filter((c) => c.startsWith(`claude plugin disable ${id}`));
+    expect(off).toEqual([`claude plugin disable ${id} --scope local`]);
+  });
+
+  it('gives commands that read the same in Bash and pwsh', () => {
+    // No variables, quoting, pipes, separators or backslash paths that differ between the shells.
+    for (const command of commands) expect(command, command).not.toMatch(/[$`'"|;&\\]/);
+  });
+
+  it('documents the companion Obsidian skills and Claudian', () => {
+    expect(commands).toContain('claude plugin install obsidian@obsidian-skills');
+    expect(readme).toContain('Load user Claude Code settings');
+  });
+});
