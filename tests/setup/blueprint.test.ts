@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { installedFiles, isLive, NOT_INSTALLED, readRequires, SETTINGS } from '../../src/setup/blueprint.js';
 import { blueprintHash, hash } from '../../src/setup/hash.js';
-import { BLUEPRINT } from '../kit/load.js';
+import { BLUEPRINT } from '../support/blueprint.js';
 import { cleanupAll, pluginCopy } from './fixture.js';
 
 afterAll(cleanupAll);

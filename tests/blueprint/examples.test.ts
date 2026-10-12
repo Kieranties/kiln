@@ -6,9 +6,9 @@ import { parse } from 'yaml';
 import { checkNote } from '../../src/check/check-note.js';
 import { formatResult } from '../../src/check/format.js';
 import { openVault } from '../../src/check/vault.js';
-import { BLUEPRINT, loadDefinitions, sectionsOf, splitFrontmatter } from './load.js';
+import { BLUEPRINT, loadDefinitions, sectionsOf, splitFrontmatter } from '../support/blueprint.js';
 
-const EXAMPLES = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
+const EXAMPLES = fileURLToPath(new URL('../fixtures/sample/', import.meta.url));
 const DENYLIST = fileURLToPath(new URL('../fixtures/denylist.txt', import.meta.url));
 const REPO = fileURLToPath(new URL('../../', import.meta.url));
 const DOCS = join(REPO, 'docs');

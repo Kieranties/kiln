@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { loadDefinitions, loadTemplates, SHARED_PROPERTIES, viewFile, type Definition, type Template } from './load.js';
+import {
+  loadDefinitions,
+  loadTemplates,
+  SHARED_PROPERTIES,
+  viewFile,
+  type Definition,
+  type Template,
+} from '../support/blueprint.js';
 
 const defs = loadDefinitions();
 const templates = loadTemplates();

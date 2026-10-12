@@ -140,7 +140,7 @@ export function testVault(o: { plugins?: Record<string, string | null>; fresh?: 
   };
 }
 
-const SAMPLE_DIR = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'layer1');
+const SAMPLE_DIR = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'sample');
 
 /** An answer with a JSON body or a text body. */
 function answer(body: { json: unknown } | { text: string }): FetchResponse {
@@ -154,7 +154,7 @@ function answer(body: { json: unknown } | { text: string }): FetchResponse {
 
 /**
  * GitHub for the sample at commit `version` (the full SHA is `version` padded with `0`s): the commits,
- * tree and raw endpoints, served from `tests/fixtures/layer1`; the API ones only with GitHub's headers. Records every URL in `urls`.
+ * tree and raw endpoints, served from `tests/fixtures/sample`; the API ones only with GitHub's headers. Records every URL in `urls`.
  * `options.extra` adds files (sample path to text) after the real ones. A URL containing `options.fail`
  * answers 403; any other URL rejects.
  */
@@ -172,10 +172,10 @@ export function fakeGitHub(
   const tree = [
     { path: 'README.md', type: 'blob' },
     { path: 'tests/fixtures', type: 'tree' },
-    { path: 'tests/fixtures/layer1', type: 'tree' },
-    ...folders.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'tree' })),
-    ...files.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
-    ...Object.keys(options.extra ?? {}).map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
+    { path: 'tests/fixtures/sample', type: 'tree' },
+    ...folders.map((f) => ({ path: `tests/fixtures/sample/${f}`, type: 'tree' })),
+    ...files.map((f) => ({ path: `tests/fixtures/sample/${f}`, type: 'blob' })),
+    ...Object.keys(options.extra ?? {}).map((f) => ({ path: `tests/fixtures/sample/${f}`, type: 'blob' })),
   ];
   const urls: string[] = [];
   const fetch: Fetch = (url, init) => {
@@ -196,7 +196,7 @@ export function fakeGitHub(
     if (api && url === `https://api.github.com/repos/${repo}/git/trees/${sha}?recursive=1`) {
       return Promise.resolve(answer({ json: { sha, truncated: false, tree } }));
     }
-    const prefix = `${raw}tests/fixtures/layer1/`;
+    const prefix = `${raw}tests/fixtures/sample/`;
     if (url.startsWith(prefix)) {
       const path = url.slice(prefix.length).split('/').map(decodeURIComponent);
       if (files.includes(path.join('/'))) {

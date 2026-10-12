@@ -3,9 +3,9 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { installedFiles } from '../../src/setup/blueprint.js';
-import { BLUEPRINT } from './load.js';
+import { BLUEPRINT } from '../support/blueprint.js';
 
-const SAMPLE = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
+const SAMPLE = fileURLToPath(new URL('../fixtures/sample/', import.meta.url));
 
 const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');
 const guide = readFileSync(join(BLUEPRINT, 'GETTING-STARTED.md'), 'utf8');
@@ -40,7 +40,7 @@ describe('blueprint docs', () => {
   });
 
   it('the sample page names every sample note', () => {
-    expect(sample).toContain('tests/fixtures/layer1');
+    expect(sample).toContain('tests/fixtures/sample');
     const notes = readdirSync(SAMPLE, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
     for (const note of notes) expect(sample, note.name).toContain(basename(note.name, '.md'));
   });
@@ -79,8 +79,8 @@ describe('blueprint docs', () => {
       'settings/plugins/iconic.json',
       'settings/plugins/templater.json',
       'settings/types.json',
-      'tests/kit/definitions.test.ts',
-      'tests/fixtures/layer1',
+      'tests/blueprint/definitions.test.ts',
+      'tests/fixtures/sample',
       'folder',
     ]) {
       expect(steps, place).toContain(place);

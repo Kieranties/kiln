@@ -16,7 +16,7 @@ The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist,
 | `settings/` | Obsidian and plugin settings, as fragments to merge | `.obsidian/` |
 | `requires.json` | The oldest Obsidian and plugin versions the blueprint is written for. Setup warns when a plugin is older | Read by setup; not copied |
 
-In the kiln repo, `tests/kit/` checks every blueprint file against the definitions: `npx vitest run tests/kit`.
+In the kiln repo, `tests/blueprint/` checks every blueprint file against the definitions: `npx vitest run tests/blueprint`.
 
 ## Conventions
 
@@ -45,7 +45,7 @@ In the kiln repo, `tests/kit/` checks every blueprint file against the definitio
 
    Without the CLI, the owner installs them in Obsidian ([Getting started](GETTING-STARTED.md), section 2). The CLI can't update a plugin: warn about older ones, and ask the owner to update them in Obsidian, under Settings → Community plugins → Check for updates. Then Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up; with Run in Background installed, that means the tray's Close Vault. Suggest, but don't require, **Trigger Templater on new file creation**: it is kept per device, so no settings file can set it, and it only matters for notes made by hand.
 2. **Create the type folders** in `<vault>`: the `folder` of every definition in `types/`.
-3. **Copy the blueprint in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md`, this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The Northwind Arena sample (`tests/fixtures/layer1` in the kiln repo) is added only when asked for, at the plugin's version (see `TRY-THE-SAMPLE.md`).
+3. **Copy the blueprint in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md`, this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The Northwind Arena sample (`tests/fixtures/sample` in the kiln repo) is added only when asked for, at the plugin's version (see `TRY-THE-SAMPLE.md`).
 4. **Merge each settings fragment.** Keep every setting the vault already has unless the rule says otherwise. When a target file is missing, write the fragment as it is. Before changing a file that is there, copy it to `<vault>/.kiln/backup/<date and time>/`, as for any file setup replaces; a run never reuses an earlier run's backup folder. In a vault already in use, ask before changing the owner's Homepage, new-note folder, new-link format, where properties show in a note (`propertiesInDocument`), daily-note folder, format or template, Templater template folder or folder templates, and property types, and before replacing an existing `Home.md`.
 
    | Fragment | Target in `<vault>/.obsidian/` | Rule |
@@ -91,7 +91,7 @@ Claude creates notes by running a QuickAdd choice, so every kind has one. They c
    - its properties in `settings/types.json`;
    - any new property in `properties.md` (an icon, or the type it links to) and in `propertyIcons` in `settings/plugins/iconic.json`.
 3. Update the tests, which pin the starting set:
-   - `tests/kit/definitions.test.ts`: the type list; the folder, naming, status, kind, property and section tables; which type keeps a section `last`; and the shared and optional properties in `properties.md`;
-   - `tests/fixtures/layer1`: add an example note of the new type in its folder, since every type needs one.
-4. Run `npx vitest run tests/kit` until it passes. The tests name anything that is out of step.
+   - `tests/blueprint/definitions.test.ts`: the type list; the folder, naming, status, kind, property and section tables; which type keeps a section `last`; and the shared and optional properties in `properties.md`;
+   - `tests/fixtures/sample`: add an example note of the new type in its folder, since every type needs one.
+4. Run `npx vitest run tests/blueprint` until it passes. The tests name anything that is out of step.
 5. In the vault, run `/kiln:setup`. An installed plugin carries the blueprint from its own commit, so a local edit reaches the vault only when Claude runs with the plugin loaded from your checkout (`claude --plugin-dir D:/src/kiln/claude-plugin`); otherwise it applies once the change is released and installed with `claude plugin update kiln@kiln`. With Obsidian open it updates `_kiln/`, Iconic and Templater, and the rest waits until Obsidian is closed and setup runs again.

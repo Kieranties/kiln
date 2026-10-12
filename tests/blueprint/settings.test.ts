@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BLUEPRINT, loadDefinitions, loadJson, loadProperties, SHARED_PROPERTIES } from './load.js';
+import { BLUEPRINT, loadDefinitions, loadJson, loadProperties, SHARED_PROPERTIES } from '../support/blueprint.js';
 
 const defs = loadDefinitions();
 

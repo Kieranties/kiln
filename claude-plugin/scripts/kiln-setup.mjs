@@ -8315,7 +8315,7 @@ function writeRecord(vault, record) {
 import { readFileSync as readFileSync6 } from "node:fs";
 import { basename as basename2, join as join10, resolve as resolve5 } from "node:path";
 var REPO = "Kieranties/kiln";
-var SAMPLE_PATH = "tests/fixtures/layer1";
+var SAMPLE_PATH = "tests/fixtures/sample";
 var API = { Accept: "application/vnd.github+json", "User-Agent": "kiln-setup" };
 var COMMIT = /^[0-9a-f]{7,40}$/;
 var FULL_SHA = /^[0-9a-f]{40}$/;

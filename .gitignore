@@ -3,8 +3,6 @@ dist/
 *.log
 .env
 .env.*
-*.sqlite
-*.sqlite-*
 .DS_Store
 Thumbs.db
 tests/fixtures/denylist.txt

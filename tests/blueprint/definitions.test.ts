@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { NAMINGS } from '../../src/blueprint/load.js';
-import { loadDefinitions, OPTIONAL_PROPERTIES, PROP_TYPES, SHARED_PROPERTIES, type Definition } from './load.js';
+import {
+  loadDefinitions,
+  OPTIONAL_PROPERTIES,
+  PROP_TYPES,
+  SHARED_PROPERTIES,
+  type Definition,
+} from '../support/blueprint.js';
 
 const TYPES = [
   'organisation',

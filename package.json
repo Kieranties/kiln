@@ -1,8 +1,7 @@
 {
   "name": "kiln",
-  "version": "0.0.0-placeholder",
   "private": true,
-  "description": "kiln: a personal knowledge and work process built on Obsidian. This package builds and tests kiln's scripts; the plugin is claude-plugin/.",
+  "description": "Builds and tests kiln. Never published, so it has no version: releases are numbered from version.json (ADR 0006), and the plugin is claude-plugin/.",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -2,9 +2,9 @@ import { cpSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BLUEPRINT } from '../kit/load.js';
+import { BLUEPRINT } from './blueprint.js';
 
-export const SAMPLE = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
+export const SAMPLE = fileURLToPath(new URL('../fixtures/sample/', import.meta.url));
 export const BROKEN = fileURLToPath(new URL('../fixtures/check/', import.meta.url));
 
 /** A new temporary vault: the sample with the blueprint in `_kiln/`, and with `broken` the broken notes laid over it. Callers remove it. */

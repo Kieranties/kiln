@@ -10,7 +10,7 @@ import {
   sectionsOf,
   viewFile,
   viewFiles,
-} from './load.js';
+} from '../support/blueprint.js';
 
 const defs = loadDefinitions();
 const STANDALONE = ['inbox.base', 'needs-review.base', 'active-projects.base', 'today.base'];
