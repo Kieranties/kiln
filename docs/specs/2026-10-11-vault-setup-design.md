@@ -41,7 +41,7 @@ The helper writes JSON the way Obsidian does: LF line endings and no final newli
 
 ### A vault already in use
 
-The kit's settings can collide with the owner's: Homepage, the new-note folder, the daily-note folder and format, Templater's template folder and folder templates, and property types. Setup shows each override and asks before writing. A fresh vault has nothing to ask, so setup stays one prompt. An existing `Home.md` is never replaced without asking.
+The kit's settings can collide with the owner's: Homepage, the new-note folder, the new-link format, where properties show in a note, the daily-note folder and format, Templater's template folder and folder templates, and property types. Setup shows each override and asks before writing. A fresh vault has nothing to ask, so setup stays one prompt. An existing `Home.md` is never replaced without asking.
 
 ### The version record
 

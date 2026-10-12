@@ -65,6 +65,18 @@ describe('the Obsidian settings', () => {
     });
   });
 
+  it("asks before changing the owner's link format and where their properties show", () => {
+    const { value, overrides } = merge('settings/app.json', {
+      newLinkFormat: 'relative',
+      propertiesInDocument: 'visible',
+    });
+    expect(overrides.map((o) => o.id)).toEqual([
+      '.obsidian/app.json#propertiesInDocument',
+      '.obsidian/app.json#newLinkFormat',
+    ]);
+    expect(value).toMatchObject({ newLinkFormat: 'relative', propertiesInDocument: 'visible' });
+  });
+
   it('does not ask again about an override the owner kept, until the blueprint changes it', () => {
     const current = { newFileFolderPath: 'Notes' };
     expect(

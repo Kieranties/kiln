@@ -8032,7 +8032,7 @@ function union(current, add) {
   return out;
 }
 var OWNED = {
-  "settings/app.json": ["newFileLocation", "newFileFolderPath"],
+  "settings/app.json": ["newFileLocation", "newFileFolderPath", "newLinkFormat", "propertiesInDocument"],
   "settings/daily-notes.json": ["folder", "format", "template"]
 };
 function setKeys(fragment) {
