@@ -84,4 +84,17 @@ describe('hashes', () => {
     expect(blueprintHash(join(a, 'blueprint'))).toBe(blueprintHash(BLUEPRINT));
     expect(blueprintHash(join(b, 'blueprint'))).not.toBe(blueprintHash(BLUEPRINT));
   });
+
+  it('ignore line endings', () => {
+    const file = join('views', 'today.base');
+    const crlf = pluginCopy('cccccccccccc', (dir) => {
+      const path = join(dir, file);
+      writeFileSync(path, readFileSync(path, 'utf8').replaceAll('\r\n', '\n').replaceAll('\n', '\r\n'));
+    });
+    const original = readFileSync(join(BLUEPRINT, file), 'utf8');
+    const rewritten = readFileSync(join(crlf, 'blueprint', file), 'utf8');
+    expect(rewritten).toContain('\r\n');
+    expect(hash(rewritten)).toBe(hash(original));
+    expect(blueprintHash(join(crlf, 'blueprint'))).toBe(blueprintHash(BLUEPRINT));
+  });
 });

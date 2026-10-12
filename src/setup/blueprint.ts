@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readDefinitions } from '../blueprint/load.js';
+import { filesUnder } from './hash.js';
+import { isObject } from './json.js';
 import { kindTemplates } from './quickadd.js';
 
 export type Requires = { obsidian: string; plugins: Record<string, string> };
@@ -12,12 +14,10 @@ export function readRequires(dir: string): Requires {
   } catch (error) {
     throw new Error(`requires.json: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw new Error('requires.json: expected an object');
-  }
-  const { obsidian, plugins } = value as Record<string, unknown>;
+  if (!isObject(value)) throw new Error('requires.json: expected an object');
+  const { obsidian, plugins } = value;
   if (typeof obsidian !== 'string') throw new Error('requires.json: "obsidian" must be text');
-  if (typeof plugins !== 'object' || plugins === null || Array.isArray(plugins)) {
+  if (!isObject(plugins)) {
     throw new Error('requires.json: "plugins" must be a map of plugin id to version');
   }
   const versions: Record<string, string> = {};
@@ -26,14 +26,6 @@ export function readRequires(dir: string): Requires {
     versions[id] = version;
   }
   return { obsidian, plugins: versions };
-}
-
-/** Every file under `dir` as `/` paths relative to it, sorted. */
-function filesUnder(dir: string): string[] {
-  return readdirSync(dir, { recursive: true, withFileTypes: true })
-    .filter((e) => e.isFile())
-    .map((e) => join(e.parentPath, e.name).slice(dir.length).split(/[\\/]/).filter(Boolean).join('/'))
-    .sort();
 }
 
 /** Vault path to text, for every blueprint file setup copies, sorted by path. */
