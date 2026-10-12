@@ -1,0 +1,114 @@
+import { rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterAll, describe, expect, it } from 'vitest';
+import { applySetup, planSetup } from '../../src/setup/setup.js';
+import { cleanupAll, pluginCopy, testVault } from './fixture.js';
+
+afterAll(cleanupAll);
+
+describe('re-applying a changed blueprint', () => {
+  it('sorts every case three ways', async () => {
+    const t = testVault();
+    await applySetup(t.options({ pluginRoot: pluginCopy('a1b2c3d4e5f6') }));
+    t.write('_kiln/templates/Topic.md', 'my topic template\n');
+    t.write('_kiln/views/today.base', 'my today\n');
+    t.write(
+      '_kiln/types/runbook.md',
+      '---\ntype: kiln-type\nname: runbook\nfolder: Runbooks\nnaming: title\n---\nA how-to.\n',
+    );
+    // Project has no kinds, so its template has no picker to keep.
+    const next = pluginCopy('0f9e8d7c6b5a', (bp) => {
+      writeFileSync(join(bp, 'templates', 'Project.md'), 'new project template\n');
+      writeFileSync(join(bp, 'views', 'today.base'), 'new today\n');
+      writeFileSync(join(bp, 'views', 'new-view.base'), 'filters: {}\n');
+      rmSync(join(bp, 'views', 'inbox.base'));
+    });
+    const plan = planSetup(t.options({ pluginRoot: next }));
+    const action = (path: string) => plan.files.find((f) => f.path === path);
+    expect(action('_kiln/templates/Project.md')).toEqual({ path: '_kiln/templates/Project.md', action: 'update' });
+    expect(action('_kiln/templates/Topic.md')).toEqual({ path: '_kiln/templates/Topic.md', action: 'keep' });
+    expect(action('_kiln/views/today.base')).toEqual({ path: '_kiln/views/today.base', action: 'ask' });
+    expect(action('_kiln/views/new-view.base')).toEqual({ path: '_kiln/views/new-view.base', action: 'add' });
+    expect(action('_kiln/views/inbox.base')).toEqual({
+      path: '_kiln/views/inbox.base',
+      action: 'dropped',
+      usedBy: ['Home.md'],
+    });
+    expect(plan.asks).toEqual([{ id: '_kiln/views/today.base', current: 'my today\n', blueprint: 'new today\n' }]);
+    expect(plan.vaultOnlyTypes).toEqual(['runbook']);
+
+    await applySetup(t.options({ pluginRoot: next }));
+    expect(t.read('_kiln/views/today.base')).toBe('my today\n');
+    expect(t.read('_kiln/views/inbox.base')).not.toBe('');
+    expect(t.json('.kiln/blueprint.json')).toMatchObject({ plugin: '0f9e8d7c6b5a' });
+    // The owner's two edits stay theirs, and nothing is asked again; the dropped view is reported once.
+    expect(planSetup(t.options({ pluginRoot: next }))).toMatchObject({
+      asks: [],
+      files: [
+        { path: '_kiln/templates/Topic.md', action: 'keep' },
+        { path: '_kiln/views/today.base', action: 'keep' },
+      ],
+    });
+  });
+
+  it('with Obsidian open, changes only _kiln/, Iconic and Templater, and the rest waits', async () => {
+    const t = testVault();
+    await applySetup(t.options({ pluginRoot: pluginCopy('a1b2c3d4e5f6') }));
+    const next = pluginCopy('0f9e8d7c6b5a', (bp) => {
+      writeFileSync(join(bp, 'templates', 'Project.md'), 'new project template\n');
+      writeFileSync(join(bp, 'root', 'Home.md'), 'new home\n');
+    });
+    t.write('.obsidian/app.json', '{}');
+    const open = await applySetup(t.options({ pluginRoot: next, obsidianRunning: true }));
+    expect(open.stop).toEqual([]);
+    expect(open.files).toEqual([
+      { path: 'Home.md', action: 'wait' },
+      { path: '_kiln/templates/Project.md', action: 'update' },
+    ]);
+    const app = open.settings.filter((s) => s.file === '.obsidian/app.json');
+    expect(app.length).toBeGreaterThan(0);
+    expect(app.every((s) => s.action === 'wait')).toBe(true);
+    expect(t.read('_kiln/templates/Project.md')).toBe('new project template\n');
+    expect(t.read('Home.md')).not.toBe('new home\n');
+
+    const closed = await applySetup(t.options({ pluginRoot: next }));
+    expect(closed.files).toEqual([{ path: 'Home.md', action: 'update' }]);
+    expect(t.read('Home.md')).toBe('new home\n');
+  });
+
+  it('a vault set up by hand, with no record: _kiln/ is the blueprint’s, Home.md is asked about', async () => {
+    const t = testVault();
+    await applySetup(t.options());
+    rmSync(join(t.vault, '.kiln'), { recursive: true });
+    t.write('_kiln/types/work.md', 'an older definition\n');
+    t.write('Home.md', 'edited home\n');
+    const plan = planSetup(t.options());
+    expect(plan.files).toEqual(
+      expect.arrayContaining([
+        {
+          path: '_kiln/types/work.md',
+          action: 'replace',
+          backup: '.kiln/backup/2026-10-12T09-30-00/_kiln/types/work.md',
+        },
+        { path: 'Home.md', action: 'ask' },
+      ]),
+    );
+  });
+
+  it('with Obsidian open, what the owner kept in a waiting file stays kept', async () => {
+    const t = testVault();
+    t.write('.obsidian/app.json', '{\n  "newFileFolderPath": "Notes"\n}');
+    await applySetup(t.options());
+    await applySetup(t.options({ obsidianRunning: true }));
+    expect(planSetup(t.options()).asks).toEqual([]);
+    expect(t.json('.obsidian/app.json')).toMatchObject({ newFileFolderPath: 'Notes' });
+  });
+
+  it('reads a copy saved with CRLF endings as unchanged', async () => {
+    const t = testVault();
+    await applySetup(t.options());
+    const lf = t.read('_kiln/types/work.md').replaceAll('\r\n', '\n');
+    t.write('_kiln/types/work.md', lf.replaceAll('\n', '\r\n'));
+    expect(planSetup(t.options()).files).toEqual([]);
+  });
+});
