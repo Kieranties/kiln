@@ -122,14 +122,13 @@ describe('setting up from any folder', () => {
     expect(sample).toContain('/kiln:setup <trial vault folder> with the Northwind Arena sample');
   });
 
-  it('Claude installs the five plugins through the Obsidian CLI, and the owner does it by hand only without the CLI', () => {
+  it('Claude installs the five plugins through the Obsidian CLI, which is required: there is no by-hand route', () => {
     const make = section(guide, '2. Make your vault');
-    for (const part of ['Command line interface', 'keep it open', 'Without the Obsidian CLI', 'Exit restricted mode']) {
+    for (const part of ['turn on **Command line interface**', 'kiln needs it', 'keep it open']) {
       expect(make, part).toContain(part);
     }
-    // The manual steps are the fallback, after the CLI, not numbered steps of their own.
-    expect(make.indexOf('Without the Obsidian CLI')).toBeLessThan(make.indexOf('Exit restricted mode'));
-    expect(make).not.toMatch(/^\d+\. .*Exit restricted mode/m);
+    for (const doc of [guide, readme]) expect(doc).not.toMatch(/Without the (Obsidian )?CLI|Exit restricted mode/);
+    expect(section(guide, '1. What you need')).toContain('offers to install it');
     const apply = section(guide, '3. Apply the blueprint');
     for (const part of [
       'installs',
@@ -154,8 +153,7 @@ describe('setting up from any folder', () => {
 
   it('Claudian: named by its author, its consent said, and checked by running /kiln:check in it', () => {
     expect(section(guide, '1. What you need')).toContain('Claudian');
-    const make = section(guide, '2. Make your vault');
-    for (const part of ['**Claudian**', 'Yishen Tu']) expect(make, part).toContain(part);
+    expect(section(guide, '1. What you need')).toContain('Yishen Tu');
     expect(section(guide, '3. Apply the blueprint')).toContain("haven't reviewed");
     const check = section(guide, '4. Check it');
     for (const part of ['Open Claudian', '/kiln:check', 'Load user Claude Code settings']) {
@@ -177,7 +175,7 @@ describe('setting up from any folder', () => {
     }
   });
 
-  it('the README is the manual fallback: the record, overrides, generated choices and minimum versions', () => {
+  it('the README says what setup does: the record, overrides, generated choices and minimum versions', () => {
     const steps = section(readme, 'Setting up a vault');
     for (const part of [
       '/kiln:setup',

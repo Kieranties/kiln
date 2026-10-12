@@ -1,13 +1,18 @@
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { delimiter, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runSetup, USAGE, type RunContext } from '../../src/setup/run.js';
 import { cleanupAll, PLUGIN_ROOT, testVault } from './fixture.js';
 
 afterAll(cleanupAll);
 const t = testVault();
+// A stand-in Obsidian CLI on PATH: setup only looks for it, never runs it.
+const bin = join(t.root, 'bin');
+mkdirSync(bin, { recursive: true });
+writeFileSync(join(bin, process.platform === 'win32' ? 'Obsidian.com' : 'obsidian'), '');
 const context = (o: Partial<RunContext> = {}): RunContext => ({
   cwd: t.root,
-  env: { KILN_HOME: join(t.root, 'kiln-home') },
+  env: { KILN_HOME: join(t.root, 'kiln-home'), PATH: [bin, process.env.PATH].join(delimiter) },
   home: t.root,
   platform: process.platform,
   pluginRoot: PLUGIN_ROOT,

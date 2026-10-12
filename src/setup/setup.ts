@@ -91,7 +91,7 @@ const SETUP_NEEDS_CLOSED =
 const SETUP_UNSURE =
   "Couldn't tell whether Obsidian is running. Ask the owner, and pass --confirm-closed once it is closed.";
 const NO_CLI =
-  "The Obsidian CLI isn't on PATH. kiln's other skills need it: in Obsidian, turn on Settings → General → Command line interface, then restart the terminal and Claude.";
+  "The Obsidian CLI isn't on PATH, and kiln needs it to install the plugins and to create and rename notes. In Obsidian, turn on Settings → General → Command line interface, then start Claude again in a new terminal and run setup again.";
 const OPEN =
   'Obsidian is running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.';
 const MAYBE_OPEN =
@@ -489,7 +489,6 @@ function prepare(o: SetupOptions): Prepared {
     writeRecord(vault, { plugin: report.plugin, blueprint: report.blueprint, files: nextFiles, kept: nextKept });
   };
 
-  if (o.cliPath === null) warnings.other.push(NO_CLI);
   if (open) warnings.other.push(o.obsidianRunning === true ? OPEN : MAYBE_OPEN);
   if (!existsSync(join(vault, '.obsidian', 'workspace.json'))) warnings.other.push(NO_WORKSPACE);
   for (const id of take) if (!matched.has(id)) warnings.other.push(`--take ${id} matched nothing`);
@@ -497,6 +496,7 @@ function prepare(o: SetupOptions): Prepared {
   report.warnings = [...warnings.old, ...warnings.other];
 
   report.stop = [
+    ...(o.cliPath === null ? [NO_CLI] : []),
     ...missing,
     ...problems,
     ...(obsidianStop === undefined ? [] : [obsidianStop]),

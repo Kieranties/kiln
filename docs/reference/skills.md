@@ -21,7 +21,7 @@ With no folder named, it finds the vault as [Configuration](./configuration.md#h
 - writes anything, which needs Obsidian closed;
 - adds the vault to your Claude Code permissions, so a session in another folder can write to it.
 
-It suggests turning on Templater's per-device trigger, and reports what changed, what it kept, what waits for Obsidian to close, and where it put the backups (`.kiln/backup/`). Without Node 24, Claude follows "Setting up a vault" in [the blueprint reference](./blueprint.md#setting-up-a-vault) by hand. [Setting up and re-applying](../concepts/setup.md) says how it decides.
+It suggests turning on Templater's per-device trigger, and reports what changed, what it kept, what waits for Obsidian to close, and where it put the backups (`.kiln/backup/`). It needs Node 24 or later, which it offers to install, and the Obsidian CLI turned on in Obsidian; "Setting up a vault" in [the blueprint reference](./blueprint.md#setting-up-a-vault) lists every step it takes. [Setting up and re-applying](../concepts/setup.md) says how it decides.
 
 ## `/kiln:check`
 

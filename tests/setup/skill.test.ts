@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { splitFrontmatter } from '../../src/blueprint/markdown.js';
 import { USAGE } from '../../src/setup/run.js';
-import { permissionRules, planSetup } from '../../src/setup/setup.js';
+import { planSetup } from '../../src/setup/setup.js';
 import { cleanupAll, PLUGIN_ROOT, testVault } from './fixture.js';
 
 afterAll(cleanupAll);
@@ -27,7 +27,8 @@ describe('/kiln:setup', () => {
 
   it('uses only options the helper has', () => {
     const flags = [...new Set([...body.matchAll(/(?<![\w-])--[a-z][a-z-]*/g)].map((m) => m[0]))].filter(
-      (f) => f !== '--version', // node --version
+      // node --version, and winget's flags for installing Node.
+      (f) => !['--version', '--id', '--exact'].includes(f),
     );
     expect(flags.length).toBeGreaterThan(0);
     for (const flag of flags) expect(USAGE, flag).toContain(flag);
@@ -39,7 +40,6 @@ describe('/kiln:setup', () => {
       'stop',
       'warnings',
       'install',
-      'cli',
       'asks',
       'backups',
       'obsidian',
@@ -110,7 +110,6 @@ describe('/kiln:setup', () => {
       '`install`',
       '`install.vault`',
       '`install.plugins`',
-      '`cli` is `null`',
       'restricted mode',
       // Claudian is the one plugin Obsidian staff haven't reviewed, and it runs Claude Code in the vault.
       "When `realclaudian` is in the list, also say that Claudian is the one plugin Obsidian staff haven't reviewed",
@@ -155,13 +154,20 @@ describe('/kiln:setup', () => {
     expect(never).toContain('Call the Obsidian CLI anywhere but step 3');
   });
 
-  it('says how to install the plugins by hand itself, since the guides are on the docs site, not in the plugin', () => {
-    const step3 = body.slice(body.indexOf('## 3.'), body.indexOf('## 4.'));
-    const byHand = step3.slice(step3.indexOf('`cli` is `null`'), step3.indexOf('**Otherwise,**'));
-    for (const part of ['Exit restricted mode', 'Browse', 'Iconic', 'Templater', 'QuickAdd', 'Homepage', 'Claudian']) {
-      expect(byHand, part).toContain(part);
+  it('needs Node and the Obsidian CLI, with no by-hand route: it offers to install Node, and names the CLI switch', () => {
+    const step1 = body.slice(body.indexOf('## 1.'), body.indexOf('## 2.'));
+    for (const part of [
+      'Node 24 or later',
+      'run nothing until the owner says yes',
+      'winget install --id OpenJS.NodeJS.LTS --exact',
+      'brew install node',
+      'new terminal',
+    ]) {
+      expect(step1, part).toContain(part);
     }
-    expect(byHand).toContain('Yishen Tu');
+    const step2 = body.slice(body.indexOf('## 2.'), body.indexOf('## 3.'));
+    expect(step2).toContain('Settings → General → Command line interface');
+    expect(body).not.toMatch(/Without Node|without the CLI|Exit restricted mode/i);
     expect(body).not.toMatch(/GETTING-STARTED|TRY-THE-SAMPLE/);
     // The checks work offline; the guides on the docs site are fetched for the latest when they can be.
     const step8 = body.slice(body.indexOf('## 8.'), body.indexOf('## Never'));
@@ -174,22 +180,10 @@ describe('/kiln:setup', () => {
     expect(body).not.toMatch(/kiln\.kieranties\.com\/[^\s]*#/);
   });
 
-  it('keeps the Never list true without Node, and offers the permission rules by hand', () => {
+  it('keeps the Never list true, and adds only permission entries not already there', () => {
     const never = body.slice(body.indexOf('## Never'));
-    expect(never).toContain('With Node, write to the vault yourself');
+    expect(never).toContain('Write to the vault yourself');
     const step7 = body.slice(body.indexOf('## 7.'), body.indexOf('## 8.'));
-    const template = ['Edit(<rule path>/.obsidian/**)', 'Edit(<rule path>/_kiln/**)'];
-    for (const part of ['only entries not already there', 'Without Node there is no plan', ...template]) {
-      expect(step7, part).toContain(part);
-    }
-    // The examples, filled into the template, are what the helper writes.
-    for (const [vault, platform, rulePath] of [
-      ['D:\\notes', 'win32', '//d/notes'],
-      ['/home/me/notes', 'linux', '//home/me/notes'],
-    ] as const) {
-      expect(step7, rulePath).toContain(`\`${rulePath}\``);
-      expect(step7, vault).toContain(`\`${vault}\``);
-      expect(permissionRules(vault, platform).ask).toEqual(template.map((t) => t.replace('<rule path>', rulePath)));
-    }
+    expect(step7).toContain('only entries not already there');
   });
 });

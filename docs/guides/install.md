@@ -51,4 +51,4 @@ claude plugin install obsidian@obsidian-skills
 
 ## The blueprint on its own
 
-Each release on GitHub also carries the blueprint as `kiln-blueprint-<version>.zip`, for reading or applying by hand. [The blueprint reference](../reference/blueprint.md#setting-up-a-vault) has the steps.
+Each release on GitHub also carries the blueprint as `kiln-blueprint-<version>.zip`, to read. A vault is set up from it by `/kiln:setup`.

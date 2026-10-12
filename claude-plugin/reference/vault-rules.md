@@ -15,7 +15,7 @@ node '<plugin>/scripts/kiln-vault.mjs' '<folder>'
 
 It prints JSON. Exit code 0: `vault` is the vault folder, and `source` says how it was found. Exit code 1: no vault was found. Tell the owner the `reasons`, which may include that the vault they have open isn't set up for kiln. List the `candidates` (each a `path`, with a `name` if the owner recorded one), and ask which vault to use. Offer to record the answer, or to set up the open vault, with `/kiln:setup`, the only writer of `~/.kiln/config.json`; never edit that file yourself. Exit code 2: the arguments were wrong; run it again with only the path (or none).
 
-Without Node 24 (`node --version`), use the current folder if it or a folder above it holds `_kiln/types/`. Otherwise ask the owner.
+kiln's scripts need Node 24 or later (`node --version`). Without it, stop and tell the owner: `/kiln:setup` offers to install it.
 
 ## 2. Read the type definition before changing a note
 
@@ -65,7 +65,7 @@ node '<plugin>/scripts/kiln-check.mjs' '<note>' '<note>'
 node '<plugin>/scripts/kiln-check.mjs' --new '<new note>'
 ```
 
-A flow that touched much of the day's work may check `--today '<vault>'` instead. That lists other notes too: fix only the notes this flow touched, and report the rest. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix. Without Node 24, check each note against its definition, as `/kiln:check` describes.
+A flow that touched much of the day's work may check `--today '<vault>'` instead. That lists other notes too: fix only the notes this flow touched, and report the rest. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix.
 
 ## Calling the Obsidian CLI
 

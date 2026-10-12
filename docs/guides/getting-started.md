@@ -7,17 +7,15 @@ Want to look around before adding anything of your own? [Try the sample](./try-t
 ## 1. What you need
 
 - **Obsidian 1.14 or later.** Check in Settings → About. The board needs Bases' built-in kanban, added in 1.14.
-- **Claude Code** (`claude --version`), on the same computer as Obsidian. Setup installs **Claudian**, which runs it in a panel inside Obsidian. Claudian works only in Obsidian's desktop app.
-- **Node 24** (`node --version`). Setup runs a small Node script. Without Node, Claude follows the steps by hand, more slowly.
+- **Claude Code** (`claude --version`), on the same computer as Obsidian. Setup installs **Claudian**, by Yishen Tu, which runs it in a panel inside Obsidian. Claudian works only in Obsidian's desktop app.
+- **Node 24 or later** (`node --version`). kiln's skills run small Node scripts. If it's missing, `/kiln:setup` offers to install it.
 - **kiln's Claude plugin.** [Install it](./install.md) once. It carries the blueprint, so you need no copy of the kiln repo. If you install it during a Claude session, run `/reload-plugins` or start a new session before `/kiln:setup` exists.
 
 ## 2. Make your vault
 
 1. Create an empty folder for your vault, for example `D:\notes`.
 2. In Obsidian, choose **Open folder as vault** and pick the folder, and keep it open: Claude installs the blueprint's plugins through Obsidian in section 3.
-3. In Settings → General, check **Command line interface** is on. It lets Claude install the plugins. Turning it on takes effect in terminals you start afterwards, so start Claude in a new one.
-
-**Without the Obsidian CLI,** install the five plugins yourself. In Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd**, **Homepage** and **Claudian**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on. Choose the Claudian by Yishen Tu: several other plugins have similar names.
+3. In Settings → General, turn on **Command line interface**. kiln needs it: Claude installs the plugins through it, and creates and renames notes with it. Turning it on takes effect in terminals you start afterwards, so start Claude in a new one.
 
 ## 3. Apply the blueprint
 

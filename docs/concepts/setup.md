@@ -9,7 +9,7 @@ Most of setting up is mechanical: create the type folders, copy the blueprint to
 - `plan` shows what would change; `apply` writes it. That's one approved run rather than dozens of write prompts, and the same result every time.
 - Merging the JSON in pwsh corrupted data silently in a trial (nested values flattened, one-item lists turned into strings), hence Node.
 - The helper writes JSON the way Obsidian does: LF line endings and no final newline.
-- Without Node, Claude follows the steps by hand, which works but is slow.
+- Node 24 and the Obsidian CLI are required, with no by-hand fallback ([ADR 0010](../adr/0010-kiln-needs-node-and-the-obsidian-cli.md)). Setup offers to install Node; the CLI is a switch in Obsidian's settings, which setup asks you to turn on.
 
 ## Obsidian open, then closed
 

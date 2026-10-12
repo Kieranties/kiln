@@ -13,7 +13,7 @@ This skill is the only one that changes a vault's `_kiln/` and `.obsidian/`, rec
 
 - **The vault folder.** The one the owner named. With no folder named, find it by rule 1 of the vault rules and confirm the answer with the owner. If the resolver stops because a folder is an Obsidian vault without kiln, that folder is the one to set up. A new vault is the folder they opened in Obsidian.
 - **The sample.** Load it only when the owner asks for the Northwind Arena sample, and only into a trial vault.
-- **Node.** Run `node --version`. Without Node 24, follow "Setting up a vault" by hand instead, then go to step 7. Its step 1 says how to install missing plugins through the CLI, as step 3 here does.
+- **Node.** Run `node --version`. Setup needs Node 24 or later. If it is missing or older, offer to install it, and run nothing until the owner says yes: on Windows `winget install --id OpenJS.NodeJS.LTS --exact`, on macOS `brew install node`. Elsewhere, or if that fails, ask the owner to install Node 24 or later from nodejs.org. Then ask them to start Claude again in a new terminal, which finds the new `node`, and run setup again.
 
 ## 2. Plan
 
@@ -23,8 +23,8 @@ node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-setup.mjs' plan --vault '<vault>'
 
 Add `--sample` if the owner asked for the sample. The commands are the same in Bash and pwsh. Put every value you fill in (the vault, each `--take` id, a `--name`) in single quotes; a `'` inside one is written `'\''` in Bash and `''` in pwsh. The helper prints JSON:
 
-- `stop`: tell the owner each reason and how to fix it, then plan again. Exit code 1 means there is at least one. A stop that says a plugin isn't installed is handled at step 3. A stop that says Obsidian is running, or that it can't tell, is not handled here: carry on to step 4 with the plan's `asks`, and deal with it at step 5, the only place Obsidian is checked. If the output has `error` instead, report it and stop. Exit code 2 prints usage text, not JSON: run it again with only the options listed here.
-- `warnings`: pass each one on. One says the Obsidian CLI isn't registered; step 3 and kiln's other skills need it.
+- `stop`: tell the owner each reason and how to fix it, then plan again. Exit code 1 means there is at least one. A stop that says a plugin isn't installed is handled at step 3. A stop that says the Obsidian CLI isn't on PATH needs the owner to turn on Settings → General → Command line interface in Obsidian, then start Claude again in a new terminal; nothing else works until then. A stop that says Obsidian is running, or that it can't tell, is not handled here: carry on to step 4 with the plan's `asks`, and deal with it at step 5, the only place Obsidian is checked. If the output has `error` instead, report it and stop. Exit code 2 prints usage text, not JSON: run it again with only the options listed here.
+- `warnings`: pass each one on.
 - Summarise the plan: the folders, the files by action, the settings that change. Files with action `wait` wait for Obsidian to close. Files with action `deleted` are ones setup installed that the owner has since deleted: setup leaves them deleted. Offer to put one back, which is `--take '<path>'` at step 6.
 - `vaultOnlyTypes`: types the owner added to `_kiln/types/` themselves. Setup leaves them alone and generates nothing for them.
 - `sample`: with `notes` above 0, the vault already has the owner's own notes. Ask before loading the sample there.
@@ -33,8 +33,7 @@ Add `--sample` if the owner asked for the sample. The commands are the same in B
 
 Only when `install` isn't `null`. `install.plugins` are the ids of the plugins that are missing, and `install.vault` is the vault's name for the Obsidian CLI.
 
-- **`cli` is `null`:** the CLI isn't on PATH. Ask the owner to install and switch on the plugins in Obsidian, then plan again. Tell them how: in Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd**, **Homepage** and **Claudian**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on. Choose the Claudian by Yishen Tu: several other plugins have similar names. If you can fetch web pages, "Make your vault" in https://kiln.kieranties.com/guides/getting-started has the latest steps.
-- **Otherwise,** offer to install and switch them on through the CLI. Say what that does first: it turns off restricted mode, which lets community plugins run, then downloads each plugin from Obsidian's community directory and turns it on. When `realclaudian` is in the list, also say that Claudian is the one plugin Obsidian staff haven't reviewed, and that it runs Claude Code inside Obsidian with the vault as its working folder. Run nothing until the owner says yes. The CLI needs Obsidian running with this vault open: ask the owner to open the vault in Obsidian and keep it open until the commands are done. Call it as "Calling the Obsidian CLI" in the vault rules says: `obsidian.com` in Git Bash, `obsidian` in pwsh, and every value in single quotes. Turn off restricted mode, install each id in `install.plugins`, then list what is installed:
+- **Offer to install** and switch them on through the CLI, which plan has already found on PATH. Say what that does first: it turns off restricted mode, which lets community plugins run, then downloads each plugin from Obsidian's community directory and turns it on. When `realclaudian` is in the list, also say that Claudian is the one plugin Obsidian staff haven't reviewed, and that it runs Claude Code inside Obsidian with the vault as its working folder. Run nothing until the owner says yes. The CLI needs Obsidian running with this vault open: ask the owner to open the vault in Obsidian and keep it open until the commands are done. Call it as "Calling the Obsidian CLI" in the vault rules says: `obsidian.com` in Git Bash, `obsidian` in pwsh, and every value in single quotes. Turn off restricted mode, install each id in `install.plugins`, then list what is installed:
 
   ```
   obsidian vault='<install.vault>' plugins:restrict off
@@ -78,7 +77,7 @@ With the same `--sample`, each `--take '<id>'`, and `--confirm-closed` if step 5
 
 ## 7. Offer, with the owner's consent
 
-- **The permission settings.** A session in another folder asks before every write to the vault, and Claude Code doesn't otherwise protect files that can run code inside Obsidian. Offer to add the plan's `permissions` to the user settings file, `~/.claude/settings.json` (on Windows, in your home folder's `.claude`): append its `additionalDirectories` entries to `permissions.additionalDirectories` and its `ask` entries to `permissions.ask`, adding only entries not already there and keeping everything else. Without Node there is no plan: offer the same shape, with the vault path in `permissions.additionalDirectories`, and `Edit(<rule path>/.obsidian/**)` and `Edit(<rule path>/_kiln/**)` in `permissions.ask`. `<rule path>` is the vault's absolute path with forward slashes and one more `/` in front: on Windows the drive becomes a lowercase folder, so `D:\notes` is `//d/notes`; elsewhere `/home/me/notes` is `//home/me/notes`. Show the owner the exact JSON first, and change the file only if they say yes. Never write to a vault's own `.claude/`.
+- **The permission settings.** A session in another folder asks before every write to the vault, and Claude Code doesn't otherwise protect files that can run code inside Obsidian. Offer to add the plan's `permissions` to the user settings file, `~/.claude/settings.json` (on Windows, in your home folder's `.claude`): append its `additionalDirectories` entries to `permissions.additionalDirectories` and its `ask` entries to `permissions.ask`, adding only entries not already there and keeping everything else. Show the owner the exact JSON first, and change the file only if they say yes. Never write to a vault's own `.claude/`.
 - **Templater's trigger,** as a suggestion: in Obsidian, Settings → Templater, turn on **Trigger Templater on new file creation**. It gives notes made by hand in a type's folder their template. It is kept per device, so no settings file can set it. Claude doesn't need it.
 
 ## 8. Report
@@ -95,8 +94,8 @@ If you can fetch web pages, get the latest from the guides and pass on anything 
 
 ## Never
 
-- With Node, write to the vault yourself. Every change goes through the helper. (Without Node, you follow "Setting up a vault" by hand, and the rest of this list still holds.)
-- With Node, edit `~/.kiln/config.json` yourself; the helper records the vault.
+- Write to the vault yourself. Every change goes through the helper.
+- Edit `~/.kiln/config.json` yourself; the helper records the vault.
 - Take the blueprint's version of the owner's setting or file without asking.
 - Delete or rename anything in the vault. Dropped files stay where they are.
 - Load the sample unless the owner asked for it.
