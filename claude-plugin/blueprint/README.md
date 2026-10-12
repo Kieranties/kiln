@@ -14,6 +14,7 @@ The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist,
 | `views/` | Bases views: each type's related views, and the inbox, review, project and today views | `_kiln/views/` |
 | `root/` | `Home.md` and `Board.base` | The vault root |
 | `settings/` | Obsidian and plugin settings, as fragments to merge | `.obsidian/` |
+| `requires.json` | The oldest Obsidian and plugin versions the blueprint is written for. Setup warns when a plugin is older | Read by setup; not copied |
 
 `tests/kit/` checks every blueprint file against the definitions: `npx vitest run tests/kit`.
 
