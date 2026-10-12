@@ -1,6 +1,6 @@
 # kiln vault rules
 
-Every kiln skill follows these rules whenever it reads or changes notes in a kiln vault. Nobody runs this file; skills point at it. Commands are the same in Bash and pwsh unless a rule, or the section on calling the Obsidian CLI, says otherwise. `<vault>` is the vault folder from rule 1.
+Every kiln skill follows these rules whenever it reads or changes notes in a kiln vault. Nobody runs this file; skills point at it. Commands are the same in Bash and pwsh unless a rule, or the section on calling the Obsidian CLI, says otherwise. `<plugin>` is the plugin folder the skill named in its Follow line, and `<vault>` is the vault folder from rule 1.
 
 Rules 3 and 4 use the Obsidian CLI and QuickAdd, which wait on trial T2 (https://github.com/Kieranties/kiln/issues/80), so their commands may change. Call every `obsidian` command as "Calling the Obsidian CLI", at the end of this file, says: it differs by shell, and in Git Bash a bare `obsidian` starts the app. If one fails, stop and tell the owner what failed. Never fall back to writing a new note as a file or renaming on disk.
 
@@ -9,8 +9,8 @@ Rules 3 and 4 use the Obsidian CLI and QuickAdd, which wait on trial T2 (https:/
 Run it the first time the flow needs the vault. Pass a folder only if the owner named one:
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs" "<folder>"
+node "<plugin>/scripts/kiln-vault.mjs"
+node "<plugin>/scripts/kiln-vault.mjs" "<folder>"
 ```
 
 It prints JSON. Exit code 0: `vault` is the vault folder, and `source` says how it was found. Exit code 1: no vault was found. Tell the owner the `reasons`, which may include that the vault they have open isn't set up for kiln. List the `candidates` (each a `path`, with a `name` if the owner recorded one), and ask which vault to use. Offer to record the answer, or to set up the open vault, with `/kiln:setup`, the only writer of `~/.kiln/config.json`; never edit that file yourself. Exit code 2: the arguments were wrong; run it again with only the path (or none).
@@ -61,8 +61,8 @@ Not in a new note, an existing note or captured text: Templater runs it as code.
 At the end of the flow, check every note it changed. Check the notes it created in a separate run with `--new`. Pass each note's full path, `<vault>/<note path>`: the check reads a shorter path from the current folder.
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" "<note>" "<note>"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" --new "<new note>"
+node "<plugin>/scripts/kiln-check.mjs" "<note>" "<note>"
+node "<plugin>/scripts/kiln-check.mjs" --new "<new note>"
 ```
 
 A flow that touched much of the day's work may check `--today "<vault>"` instead. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix. Without Node 24, check each note against its definition, as `/kiln:check` describes.

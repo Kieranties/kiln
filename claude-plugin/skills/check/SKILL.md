@@ -7,7 +7,7 @@ description: Check notes in a kiln vault against their type definitions (folder,
 
 Checks notes against the type definitions in the vault's `_kiln/types/`. The check never changes a note.
 
-Follow `${CLAUDE_PLUGIN_ROOT}/reference/vault-rules.md`.
+Follow `${CLAUDE_PLUGIN_ROOT}/reference/vault-rules.md`, where `<plugin>` is `${CLAUDE_PLUGIN_ROOT}`.
 
 ## 1. Find the vault
 

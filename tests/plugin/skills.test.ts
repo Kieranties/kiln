@@ -23,6 +23,12 @@ function rule(n: number): string {
 }
 
 describe('the vault rules', () => {
+  it('say <plugin>, which each skill names: Claude Code fills in ${CLAUDE_PLUGIN_ROOT} only in skills', () => {
+    expect(rules).not.toContain('${CLAUDE_PLUGIN_ROOT}');
+    const intro = rules.slice(0, rules.indexOf('\n## 1. '));
+    expect(intro).toContain('`<plugin>` is the plugin folder the skill named in its Follow line');
+  });
+
   it("number the spec's six rules in order, so skills can name them", () => {
     const headings = [...rules.matchAll(/^## (\d)\. (.+)$/gm)].map((m) => `${m[1]}. ${m[2]}`);
     expect(headings.map((h) => h.slice(0, 2))).toEqual(['1.', '2.', '3.', '4.', '5.', '6.']);
@@ -40,8 +46,8 @@ describe('the vault rules', () => {
 
   it('1. run the resolver, and leave the kiln file to setup', () => {
     for (const part of [
-      'node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"',
-      'node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs" "<folder>"',
+      'node "<plugin>/scripts/kiln-vault.mjs"',
+      'node "<plugin>/scripts/kiln-vault.mjs" "<folder>"',
       'Exit code 2: the arguments were wrong; run it again with only the path (or none)',
       'candidates',
       'reasons',
@@ -84,8 +90,8 @@ describe('the vault rules', () => {
 
   it('6. check what the flow touched, by full path, with --new for what it created', () => {
     for (const part of [
-      'node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" "<note>"',
-      'node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" --new "<new note>"',
+      'node "<plugin>/scripts/kiln-check.mjs" "<note>"',
+      'node "<plugin>/scripts/kiln-check.mjs" --new "<new note>"',
       '<vault>/<note path>',
     ]) {
       expect(rule(6), part).toContain(part);
@@ -96,17 +102,21 @@ describe('the vault rules', () => {
 describe('plugin files named by the rules and the skills', () => {
   it('all exist', () => {
     const docs = [RULES, ...SKILLS.map((s) => `skills/${s}/SKILL.md`)];
+    const named: string[] = [];
     const missing: string[] = [];
     for (const doc of docs) {
-      for (const [, path = ''] of read(doc).matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"'`)]+)/g)) {
+      for (const [, path = ''] of read(doc).matchAll(/(?:\$\{CLAUDE_PLUGIN_ROOT\}|<plugin>)\/([^\s"'`)]+)/g)) {
+        named.push(`${doc}: ${path}`);
         if (!existsSync(join(PLUGIN, path))) missing.push(`${doc}: ${path}`);
       }
     }
     expect(missing).toEqual([]);
+    // The rules name their scripts as <plugin>/..., so this check reaches them too.
+    for (const script of ['kiln-vault.mjs', 'kiln-check.mjs']) expect(named).toContain(`${RULES}: scripts/${script}`);
   });
 });
 
-const FOLLOW = 'Follow `${CLAUDE_PLUGIN_ROOT}/reference/vault-rules.md`.';
+const FOLLOW = 'Follow `${CLAUDE_PLUGIN_ROOT}/reference/vault-rules.md`, where `<plugin>` is `${CLAUDE_PLUGIN_ROOT}`.';
 
 describe('every skill', () => {
   it('includes /kiln:check', () => {
@@ -114,7 +124,7 @@ describe('every skill', () => {
   });
 
   it.each(SKILLS)('%s follows the vault rules', (skill) => {
-    expect(read(`skills/${skill}/SKILL.md`)).toContain(FOLLOW);
+    expect(read(`skills/${skill}/SKILL.md`).split('\n')).toContain(FOLLOW);
   });
 
   it.each(SKILLS)('%s is a short verb with a description that keeps to kiln work', (skill) => {
