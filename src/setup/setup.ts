@@ -491,9 +491,14 @@ export async function applySetup(options: SetupOptions): Promise<SetupReport> {
         skipped.push(file.path);
         continue;
       }
-      mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, file.text, { flag: 'wx' });
-      written.push(file.path);
+      try {
+        mkdirSync(dirname(target), { recursive: true });
+        writeFileSync(target, file.text, { flag: 'wx' });
+        written.push(file.path);
+      } catch (error) {
+        // The blueprint and the record are written by now: report the note and carry on.
+        report.warnings.push(`can't write the sample note ${file.path}: ${message(error)}`);
+      }
     }
     report.sample = { source: sample.source, files: written, skipped };
   }

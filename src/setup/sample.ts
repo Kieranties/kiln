@@ -16,6 +16,20 @@ const COMMIT = /^[0-9a-f]{7,40}$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
 
 const byPath = (a: SampleFile, b: SampleFile): number => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+const message = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * True when every segment of a sample-relative `/` path is a plain name: not empty, `.` or `..`, and
+ * without `\`, `:` or control characters, which could lead out of the repo's URL or out of the vault.
+ */
+function isPlainPath(path: string): boolean {
+  const unsafe = (code: number) => code === 0x5c || code === 0x3a || code < 0x20 || code === 0x7f; // \ : controls
+  return path.split('/').every((segment) => {
+    if (segment === '' || segment === '.' || segment === '..') return false;
+    for (let i = 0; i < segment.length; i++) if (unsafe(segment.charCodeAt(i))) return false;
+    return true;
+  });
+}
 
 /** The answer from `url`, which must be `ok`. A request that fails outright names the URL too. */
 async function get(fetch: Fetch, url: string, headers?: Record<string, string>): Promise<FetchResponse> {
@@ -23,22 +37,42 @@ async function get(fetch: Fetch, url: string, headers?: Record<string, string>):
   try {
     response = await fetch(url, headers === undefined ? undefined : { headers });
   } catch (error) {
-    throw new Error(`can't fetch the sample: ${error instanceof Error ? error.message : String(error)} ${url}`, {
-      cause: error,
-    });
+    throw new Error(`can't fetch the sample: ${message(error)} ${url}`, { cause: error });
   }
   if (!response.ok) throw new Error(`can't fetch the sample: ${response.status} ${url}`);
   return response;
 }
 
-/** The sample's files under the commit `sha`, as `/` paths in the repo. */
+/** The body of the answer from `url`, read by `read`; a body that can't be read names the URL. */
+async function body<T>(
+  fetch: Fetch,
+  url: string,
+  read: (r: FetchResponse) => Promise<T>,
+  headers?: Record<string, string>,
+): Promise<T> {
+  const response = await get(fetch, url, headers);
+  try {
+    return await read(response);
+  } catch (error) {
+    throw new Error(`can't read the sample: ${message(error)} ${url}`, { cause: error });
+  }
+}
+
+/**
+ * The sample's files in the listing, as paths relative to the sample. Every path is checked before
+ * any file is fetched: one that isn't plain stops the load.
+ */
 function sampleBlobs(tree: unknown, url: string): string[] {
   if (!isObject(tree) || !Array.isArray(tree.tree)) throw new Error(`can't read the sample's file list: ${url}`);
   if (tree.truncated === true) throw new Error("the sample's file list was cut short");
   const paths: string[] = [];
   for (const entry of tree.tree) {
     if (isObject(entry) && entry.type === 'blob' && typeof entry.path === 'string') {
-      if (entry.path.startsWith(`${SAMPLE_PATH}/`)) paths.push(entry.path);
+      if (!entry.path.startsWith(`${SAMPLE_PATH}/`)) continue;
+      const path = entry.path.slice(SAMPLE_PATH.length + 1);
+      if (!isPlainPath(path))
+        throw new Error(`the sample's file list has a path that isn't safe to use: ${JSON.stringify(entry.path)}`);
+      paths.push(path);
     }
   }
   return paths;
@@ -61,18 +95,19 @@ export async function loadSample(pluginRoot: string, fetch: Fetch): Promise<{ so
   if (!COMMIT.test(version)) throw new Error(`can't pin the sample: the plugin version "${version}" isn't a commit`);
 
   const commitUrl = `https://api.github.com/repos/${REPO}/commits/${version}`;
-  const commit: unknown = await (await get(fetch, commitUrl, API)).json();
+  const commit = await body(fetch, commitUrl, (r) => r.json(), API);
   const sha = isObject(commit) ? commit.sha : undefined;
   if (typeof sha !== 'string' || !FULL_SHA.test(sha)) throw new Error(`can't read the sample's commit: ${commitUrl}`);
 
   const treeUrl = `https://api.github.com/repos/${REPO}/git/trees/${sha}?recursive=1`;
-  const paths = sampleBlobs(await (await get(fetch, treeUrl, API)).json(), treeUrl);
+  const paths = sampleBlobs(await body(fetch, treeUrl, (r) => r.json(), API), treeUrl);
   if (paths.length === 0) throw new Error(`there is no sample at ${REPO}@${sha}`);
 
   const files: SampleFile[] = [];
   for (const path of paths) {
-    const url = `https://raw.githubusercontent.com/${REPO}/${sha}/${path.split('/').map(encodeURIComponent).join('/')}`;
-    files.push({ path: path.slice(SAMPLE_PATH.length + 1), text: await (await get(fetch, url)).text() });
+    const encoded = `${SAMPLE_PATH}/${path}`.split('/').map(encodeURIComponent).join('/');
+    const url = `https://raw.githubusercontent.com/${REPO}/${sha}/${encoded}`;
+    files.push({ path, text: await body(fetch, url, (r) => r.text()) });
   }
   return { source: `github:${REPO}@${sha}`, files: files.sort(byPath) };
 }

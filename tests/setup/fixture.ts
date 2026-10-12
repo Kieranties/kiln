@@ -154,10 +154,14 @@ function answer(body: { json: unknown } | { text: string }): FetchResponse {
 
 /**
  * GitHub for the sample at commit `version` (the full SHA is `version` padded with `0`s): the commits,
- * tree and raw endpoints, served from `tests/fixtures/layer1`; the API ones only with GitHub's headers. Records every URL in `urls`. A URL
- * containing `options.fail` answers 403; any other URL rejects.
+ * tree and raw endpoints, served from `tests/fixtures/layer1`; the API ones only with GitHub's headers. Records every URL in `urls`.
+ * `options.extra` adds files (sample path to text) after the real ones. A URL containing `options.fail`
+ * answers 403; any other URL rejects.
  */
-export function fakeGitHub(version: string, options: { fail?: string } = {}): Fetch & { urls: string[] } {
+export function fakeGitHub(
+  version: string,
+  options: { fail?: string; extra?: Record<string, string> } = {},
+): Fetch & { urls: string[] } {
   const sha = version.padEnd(40, '0');
   const repo = 'Kieranties/kiln';
   const raw = `https://raw.githubusercontent.com/${repo}/${sha}/`;
@@ -171,6 +175,7 @@ export function fakeGitHub(version: string, options: { fail?: string } = {}): Fe
     { path: 'tests/fixtures/layer1', type: 'tree' },
     ...folders.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'tree' })),
     ...files.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
+    ...Object.keys(options.extra ?? {}).map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
   ];
   const urls: string[] = [];
   const fetch: Fetch = (url, init) => {
@@ -197,6 +202,8 @@ export function fakeGitHub(version: string, options: { fail?: string } = {}): Fe
       if (files.includes(path.join('/'))) {
         return Promise.resolve(answer({ text: readFileSync(join(SAMPLE_DIR, ...path), 'utf8') }));
       }
+      const extra = options.extra?.[path.join('/')];
+      if (extra !== undefined) return Promise.resolve(answer({ text: extra }));
     }
     return Promise.reject(new Error(`no such URL in the fake GitHub: ${url}`));
   };

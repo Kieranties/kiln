@@ -1357,10 +1357,10 @@ ${indent}`) + "'";
             literalFallback = true;
           };
         }
-        const body = foldFlowLines.foldFlowLines(`${start}${foldedValue}${end}`, indent, foldFlowLines.FOLD_BLOCK, foldOptions);
+        const body2 = foldFlowLines.foldFlowLines(`${start}${foldedValue}${end}`, indent, foldFlowLines.FOLD_BLOCK, foldOptions);
         if (!literalFallback)
           return `>${header}
-${indent}${body}`;
+${indent}${body2}`;
       }
       value = value.replace(/\n+/g, `$&${indent}`);
       return `|${header}
@@ -3376,13 +3376,13 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body2 = stringify.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
-          body += stringifyComment.lineComment(body, "", commentString(contentComment));
-        if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
-          lines[lines.length - 1] = `--- ${body}`;
+          body2 += stringifyComment.lineComment(body2, "", commentString(contentComment));
+        if ((body2[0] === "|" || body2[0] === ">") && lines[lines.length - 1] === "---") {
+          lines[lines.length - 1] = `--- ${body2}`;
         } else
-          lines.push(body);
+          lines.push(body2);
       } else {
         lines.push(stringify.stringify(doc.contents, ctx));
       }
@@ -3728,22 +3728,22 @@ var require_errors = __commonJS({
   "node_modules/yaml/dist/errors.js"(exports) {
     "use strict";
     var YAMLError = class extends Error {
-      constructor(name, pos, code, message2) {
+      constructor(name, pos, code, message3) {
         super();
         this.name = name;
         this.code = code;
-        this.message = message2;
+        this.message = message3;
         this.pos = pos;
       }
     };
     var YAMLParseError = class extends YAMLError {
-      constructor(pos, code, message2) {
-        super("YAMLParseError", pos, code, message2);
+      constructor(pos, code, message3) {
+        super("YAMLParseError", pos, code, message3);
       }
     };
     var YAMLWarning = class extends YAMLError {
-      constructor(pos, code, message2) {
-        super("YAMLWarning", pos, code, message2);
+      constructor(pos, code, message3) {
+        super("YAMLWarning", pos, code, message3);
       }
     };
     var prettifyError = (src, lc) => (error) => {
@@ -4423,8 +4423,8 @@ var require_compose_collection = __commonJS({
         const { anchor, newlineAfterProp: nl } = props;
         const lastProp = anchor && tagToken ? anchor.offset > tagToken.offset ? anchor : tagToken : anchor ?? tagToken;
         if (lastProp && (!nl || nl.offset < lastProp.offset)) {
-          const message2 = "Missing newline after block sequence props";
-          onError(lastProp, "MISSING_CHAR", message2);
+          const message3 = "Missing newline after block sequence props";
+          onError(lastProp, "MISSING_CHAR", message3);
         }
       }
       const expType = token.type === "block-map" ? "map" : token.type === "block-seq" ? "seq" : token.start.source === "{" ? "map" : "seq";
@@ -4496,15 +4496,15 @@ var require_resolve_block_scalar = __commonJS({
             trimIndent = indent.length;
         } else {
           if (indent.length < trimIndent) {
-            const message2 = "Block scalars with more-indented leading empty lines must use an explicit indentation indicator";
-            onError(offset + indent.length, "MISSING_CHAR", message2);
+            const message3 = "Block scalars with more-indented leading empty lines must use an explicit indentation indicator";
+            onError(offset + indent.length, "MISSING_CHAR", message3);
           }
           if (header.indent === 0)
             trimIndent = indent.length;
           contentStart = i;
           if (trimIndent === 0 && !ctx.atRoot) {
-            const message2 = "Block scalar values in collections must be indented";
-            onError(offset, "BAD_INDENT", message2);
+            const message3 = "Block scalar values in collections must be indented";
+            onError(offset, "BAD_INDENT", message3);
           }
           break;
         }
@@ -4527,8 +4527,8 @@ var require_resolve_block_scalar = __commonJS({
           content = content.slice(0, -1);
         if (content && indent.length < trimIndent) {
           const src = header.indent ? "explicit indentation indicator" : "first line";
-          const message2 = `Block scalar lines must not be less indented than their ${src}`;
-          onError(offset - content.length - (crlf ? 2 : 1), "BAD_INDENT", message2);
+          const message3 = `Block scalar lines must not be less indented than their ${src}`;
+          onError(offset - content.length - (crlf ? 2 : 1), "BAD_INDENT", message3);
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
@@ -4606,8 +4606,8 @@ var require_resolve_block_scalar = __commonJS({
             break;
           case "comment":
             if (strict && !hasSpace) {
-              const message2 = "Comments must be separated from other tokens by white space characters";
-              onError(token, "MISSING_CHAR", message2);
+              const message3 = "Comments must be separated from other tokens by white space characters";
+              onError(token, "MISSING_CHAR", message3);
             }
             length += token.source.length;
             comment = token.source.substring(1);
@@ -4618,8 +4618,8 @@ var require_resolve_block_scalar = __commonJS({
             break;
           /* istanbul ignore next should not happen */
           default: {
-            const message2 = `Unexpected token in block scalar header: ${token.type}`;
-            onError(token, "UNEXPECTED_TOKEN", message2);
+            const message3 = `Unexpected token in block scalar header: ${token.type}`;
+            onError(token, "UNEXPECTED_TOKEN", message3);
             const ts = token.source;
             if (ts && typeof ts === "string")
               length += ts.length;
@@ -5012,13 +5012,13 @@ var require_compose_node = __commonJS({
             if (anchor)
               node.anchor = anchor.source.substring(1);
           } catch (error) {
-            const message2 = error instanceof Error ? error.message : String(error);
-            onError(token, "RESOURCE_EXHAUSTION", message2);
+            const message3 = error instanceof Error ? error.message : String(error);
+            onError(token, "RESOURCE_EXHAUSTION", message3);
           }
           break;
         default: {
-          const message2 = token.type === "error" ? token.message : `Unsupported token (type: ${token.type})`;
-          onError(token, "UNEXPECTED_TOKEN", message2);
+          const message3 = token.type === "error" ? token.message : `Unsupported token (type: ${token.type})`;
+          onError(token, "UNEXPECTED_TOKEN", message3);
           isSrcToken = false;
         }
       }
@@ -5174,12 +5174,12 @@ var require_composer = __commonJS({
         this.prelude = [];
         this.errors = [];
         this.warnings = [];
-        this.onError = (source, code, message2, warning) => {
+        this.onError = (source, code, message3, warning) => {
           const pos = getErrorPos(source);
           if (warning)
-            this.warnings.push(new errors.YAMLWarning(pos, code, message2));
+            this.warnings.push(new errors.YAMLWarning(pos, code, message3));
           else
-            this.errors.push(new errors.YAMLParseError(pos, code, message2));
+            this.errors.push(new errors.YAMLParseError(pos, code, message3));
         };
         this.directives = new directives.Directives({ version: options.version || "1.2" });
         this.options = options;
@@ -5249,10 +5249,10 @@ ${cb}` : comment;
           console.dir(token, { depth: null });
         switch (token.type) {
           case "directive":
-            this.directives.add(token.source, (offset, message2, warning) => {
+            this.directives.add(token.source, (offset, message3, warning) => {
               const pos = getErrorPos(token);
               pos[0] += offset;
-              this.onError(pos, "BAD_DIRECTIVE", message2, warning);
+              this.onError(pos, "BAD_DIRECTIVE", message3, warning);
             });
             this.prelude.push(token.source);
             this.atDirectives = true;
@@ -5341,12 +5341,12 @@ var require_cst_scalar = __commonJS({
     var stringifyString = require_stringifyString();
     function resolveAsScalar(token, strict = true, onError) {
       if (token) {
-        const _onError = (pos, code, message2) => {
+        const _onError = (pos, code, message3) => {
           const offset = typeof pos === "number" ? pos : Array.isArray(pos) ? pos[0] : pos.offset;
           if (onError)
-            onError(offset, code, message2);
+            onError(offset, code, message3);
           else
-            throw new errors.YAMLParseError([offset, offset + 1], code, message2);
+            throw new errors.YAMLParseError([offset, offset + 1], code, message3);
         };
         switch (token.type) {
           case "scalar":
@@ -5375,13 +5375,13 @@ var require_cst_scalar = __commonJS({
         case ">": {
           const he = source.indexOf("\n");
           const head = source.substring(0, he);
-          const body = source.substring(he + 1) + "\n";
+          const body2 = source.substring(he + 1) + "\n";
           const props = [
             { type: "block-scalar-header", offset, indent, source: head }
           ];
           if (!addEndtoBlockProps(props, end))
             props.push({ type: "newline", offset: -1, indent, source: "\n" });
-          return { type: "block-scalar", offset, indent, props, source: body };
+          return { type: "block-scalar", offset, indent, props, source: body2 };
         }
         case '"':
           return { type: "double-quoted-scalar", offset, indent, source, end };
@@ -5438,13 +5438,13 @@ var require_cst_scalar = __commonJS({
     function setBlockScalarValue(token, source) {
       const he = source.indexOf("\n");
       const head = source.substring(0, he);
-      const body = source.substring(he + 1) + "\n";
+      const body2 = source.substring(he + 1) + "\n";
       if (token.type === "block-scalar") {
         const header = token.props[0];
         if (header.type !== "block-scalar-header")
           throw new Error("Invalid block scalar header");
         header.source = head;
-        token.source = body;
+        token.source = body2;
       } else {
         const { offset } = token;
         const indent = "indent" in token ? token.indent : -1;
@@ -5456,7 +5456,7 @@ var require_cst_scalar = __commonJS({
         for (const key of Object.keys(token))
           if (key !== "type" && key !== "offset")
             delete token[key];
-        Object.assign(token, { type: "block-scalar", indent, props, source: body });
+        Object.assign(token, { type: "block-scalar", indent, props, source: body2 });
       }
     }
     function addEndtoBlockProps(props, end) {
@@ -6506,8 +6506,8 @@ var require_parser = __commonJS({
         }
         const type = cst.tokenType(source);
         if (!type) {
-          const message2 = `Not a YAML token: ${source}`;
-          yield* this.pop({ type: "error", offset: this.offset, message: message2, source });
+          const message3 = `Not a YAML token: ${source}`;
+          yield* this.pop({ type: "error", offset: this.offset, message: message3, source });
           this.offset += source.length;
         } else if (type === "scalar") {
           this.atNewLine = false;
@@ -6597,8 +6597,8 @@ var require_parser = __commonJS({
       *pop(error) {
         const token = error ?? this.stack.pop();
         if (!token) {
-          const message2 = "Tried to pop an empty stack";
-          yield { type: "error", offset: this.offset, source: "", message: message2 };
+          const message3 = "Tried to pop an empty stack";
+          yield { type: "error", offset: this.offset, source: "", message: message3 };
         } else if (this.stack.length === 0) {
           yield token;
         } else {
@@ -7708,7 +7708,7 @@ function readDefinitions(dir) {
   if (!existsSync3(typesDir)) throw new Error(`types/ is missing (${typesDir})`);
   return readdirSync(typesDir).filter((f) => f.endsWith(".md")).sort().map((f) => {
     const where = `types/${f}`;
-    const { frontmatter, body } = splitFrontmatter(readFileSync3(join5(typesDir, f), "utf8"));
+    const { frontmatter, body: body2 } = splitFrontmatter(readFileSync3(join5(typesDir, f), "utf8"));
     const data = parseYaml(frontmatter, where);
     const kinds = mapOf(data, "kinds", where, isKind);
     const naming = data.naming;
@@ -7729,7 +7729,7 @@ function readDefinitions(dir) {
       sections,
       ...last ? { last } : {},
       views: mapOf(data, "views", where, isView),
-      body: body.trim()
+      body: body2.trim()
     };
   });
 }
@@ -8236,17 +8236,32 @@ var API = { Accept: "application/vnd.github+json", "User-Agent": "kiln-setup" };
 var COMMIT = /^[0-9a-f]{7,40}$/;
 var FULL_SHA = /^[0-9a-f]{40}$/;
 var byPath = (a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
+var message = (error) => error instanceof Error ? error.message : String(error);
+function isPlainPath(path) {
+  const unsafe = (code) => code === 92 || code === 58 || code < 32 || code === 127;
+  return path.split("/").every((segment) => {
+    if (segment === "" || segment === "." || segment === "..") return false;
+    for (let i = 0; i < segment.length; i++) if (unsafe(segment.charCodeAt(i))) return false;
+    return true;
+  });
+}
 async function get(fetch2, url, headers) {
   let response;
   try {
     response = await fetch2(url, headers === void 0 ? void 0 : { headers });
   } catch (error) {
-    throw new Error(`can't fetch the sample: ${error instanceof Error ? error.message : String(error)} ${url}`, {
-      cause: error
-    });
+    throw new Error(`can't fetch the sample: ${message(error)} ${url}`, { cause: error });
   }
   if (!response.ok) throw new Error(`can't fetch the sample: ${response.status} ${url}`);
   return response;
+}
+async function body(fetch2, url, read, headers) {
+  const response = await get(fetch2, url, headers);
+  try {
+    return await read(response);
+  } catch (error) {
+    throw new Error(`can't read the sample: ${message(error)} ${url}`, { cause: error });
+  }
 }
 function sampleBlobs(tree, url) {
   if (!isObject(tree) || !Array.isArray(tree.tree)) throw new Error(`can't read the sample's file list: ${url}`);
@@ -8254,7 +8269,11 @@ function sampleBlobs(tree, url) {
   const paths = [];
   for (const entry of tree.tree) {
     if (isObject(entry) && entry.type === "blob" && typeof entry.path === "string") {
-      if (entry.path.startsWith(`${SAMPLE_PATH}/`)) paths.push(entry.path);
+      if (!entry.path.startsWith(`${SAMPLE_PATH}/`)) continue;
+      const path = entry.path.slice(SAMPLE_PATH.length + 1);
+      if (!isPlainPath(path))
+        throw new Error(`the sample's file list has a path that isn't safe to use: ${JSON.stringify(entry.path)}`);
+      paths.push(path);
     }
   }
   return paths;
@@ -8268,16 +8287,17 @@ async function loadSample(pluginRoot2, fetch2) {
   const version = basename2(resolve5(pluginRoot2));
   if (!COMMIT.test(version)) throw new Error(`can't pin the sample: the plugin version "${version}" isn't a commit`);
   const commitUrl = `https://api.github.com/repos/${REPO}/commits/${version}`;
-  const commit = await (await get(fetch2, commitUrl, API)).json();
+  const commit = await body(fetch2, commitUrl, (r) => r.json(), API);
   const sha = isObject(commit) ? commit.sha : void 0;
   if (typeof sha !== "string" || !FULL_SHA.test(sha)) throw new Error(`can't read the sample's commit: ${commitUrl}`);
   const treeUrl = `https://api.github.com/repos/${REPO}/git/trees/${sha}?recursive=1`;
-  const paths = sampleBlobs(await (await get(fetch2, treeUrl, API)).json(), treeUrl);
+  const paths = sampleBlobs(await body(fetch2, treeUrl, (r) => r.json(), API), treeUrl);
   if (paths.length === 0) throw new Error(`there is no sample at ${REPO}@${sha}`);
   const files = [];
   for (const path of paths) {
-    const url = `https://raw.githubusercontent.com/${REPO}/${sha}/${path.split("/").map(encodeURIComponent).join("/")}`;
-    files.push({ path: path.slice(SAMPLE_PATH.length + 1), text: await (await get(fetch2, url)).text() });
+    const encoded = `${SAMPLE_PATH}/${path}`.split("/").map(encodeURIComponent).join("/");
+    const url = `https://raw.githubusercontent.com/${REPO}/${sha}/${encoded}`;
+    files.push({ path, text: await body(fetch2, url, (r) => r.text()) });
   }
   return { source: `github:${REPO}@${sha}`, files: files.sort(byPath) };
 }
@@ -8289,8 +8309,8 @@ var NO_CLI = "The Obsidian CLI isn't on PATH. kiln's other skills need it: in Ob
 var OPEN = "Obsidian is running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.";
 var SAMPLE_NEEDS_CLOSED = "The sample is written as plain files, which needs Obsidian closed (Templater would run on new notes). Close Obsidian, then run setup again.";
 var NO_WORKSPACE = ".obsidian/workspace.json doesn't exist yet, so File properties isn't opened in the right sidebar. Getting started, section 4, says how.";
-var message = (error) => error instanceof Error ? error.message : String(error);
-var fix = (error) => `${message(error)}; fix or remove it, then run setup again`;
+var message2 = (error) => error instanceof Error ? error.message : String(error);
+var fix = (error) => `${message2(error)}; fix or remove it, then run setup again`;
 var byPath2 = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 var onDisk = (vault, path) => join11(vault, ...path.split("/"));
 function readText(file) {
@@ -8373,7 +8393,7 @@ function prepare(o) {
   try {
     config = readKilnConfig(o.kilnConfig);
   } catch (error) {
-    unreadable = `can't record the vault: ${o.kilnConfig} ${message(error)}`;
+    unreadable = `can't record the vault: ${o.kilnConfig} ${message2(error)}`;
   }
   const named = vaultName(vault, config, { platform: o.platform, home: o.home }, o.name);
   if (!("error" in named)) {
@@ -8595,7 +8615,7 @@ async function applySetup(options) {
     try {
       sample = await loadSample(options.pluginRoot, options.fetch);
     } catch (error) {
-      report.stop.push(message(error));
+      report.stop.push(message2(error));
       return report;
     }
   }
@@ -8609,9 +8629,13 @@ async function applySetup(options) {
         skipped.push(file.path);
         continue;
       }
-      mkdirSync3(dirname3(target), { recursive: true });
-      writeFileSync3(target, file.text, { flag: "wx" });
-      written.push(file.path);
+      try {
+        mkdirSync3(dirname3(target), { recursive: true });
+        writeFileSync3(target, file.text, { flag: "wx" });
+        written.push(file.path);
+      } catch (error) {
+        report.warnings.push(`can't write the sample note ${file.path}: ${message2(error)}`);
+      }
     }
     report.sample = { source: sample.source, files: written, skipped };
   }
@@ -8620,7 +8644,7 @@ async function applySetup(options) {
       recordVault(options.kilnConfig, report.kiln.name, options.vault, { makeDefault: options.makeDefault === true });
     } catch (error) {
       report.kiln = { ...report.kiln, recorded: "skipped", default: null };
-      report.warnings.push(`can't record the vault: ${message(error)}`);
+      report.warnings.push(`can't record the vault: ${message2(error)}`);
     }
   }
   report.applied = true;
@@ -8685,8 +8709,8 @@ async function runSetup(argv, context) {
     const report = command === "plan" ? planSetup(options) : await applySetup(options);
     return { output: JSON.stringify(report, null, 2), exitCode: report.stop.length > 0 ? 1 : 0 };
   } catch (error) {
-    const message2 = error instanceof Error ? error.message : String(error);
-    return { output: JSON.stringify({ error: message2 }, null, 2), exitCode: 1 };
+    const message3 = error instanceof Error ? error.message : String(error);
+    return { output: JSON.stringify({ error: message3 }, null, 2), exitCode: 1 };
   }
 }
 

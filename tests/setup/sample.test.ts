@@ -53,6 +53,37 @@ describe('loadSample', () => {
       );
     await expect(loadSample(pluginCopy(SHA), cut)).rejects.toThrow("the sample's file list was cut short");
   });
+
+  it.each([
+    ['../../../../../evil/repo/main/x.md'],
+    ['x/..\\..\\y.md'],
+    ['C:/x.md'],
+    ['Work/x.md:stream'],
+    ['Work//x.md'],
+    ['./x.md'],
+    ['Work/x\u0000.md'],
+  ])('refuses the unsafe sample path %j before fetching any file', async (path) => {
+    const github = fakeGitHub(SHA, { extra: { [path]: 'evil\n' } });
+    await expect(loadSample(pluginCopy(SHA), github)).rejects.toThrow(
+      `the sample's file list has a path that isn't safe to use: ${JSON.stringify(`tests/fixtures/layer1/${path}`)}`,
+    );
+    const raw = `https://raw.githubusercontent.com/Kieranties/kiln/${SHA.padEnd(40, '0')}/tests/fixtures/layer1/`;
+    expect(github.urls.every((url) => url.startsWith('https://api.github.com/') || url.startsWith(raw))).toBe(true);
+    expect(github.urls.filter((url) => !url.startsWith('https://api.github.com/'))).toEqual([]);
+  });
+
+  it("names the URL when a file's text can't be read", async () => {
+    const github = fakeGitHub(SHA);
+    const broken: Fetch = (url, init) =>
+      github(url, init).then((response) =>
+        url.endsWith('/Priya%20Raman.md')
+          ? { ...response, text: () => Promise.reject(new Error('connection reset')) }
+          : response,
+      );
+    await expect(loadSample(pluginCopy(SHA), broken)).rejects.toThrow(
+      /^can't read the sample: connection reset https:\/\/raw\.githubusercontent\.com\/.*\/People\/Priya%20Raman\.md$/,
+    );
+  });
 });
 
 describe('setup with the sample', () => {
@@ -80,6 +111,20 @@ describe('setup with the sample', () => {
       /^can't fetch the sample: 403 https:\/\/raw\.githubusercontent\.com\/.*Priya%20Raman\.md$/,
     );
     expect(fingerprint(t.root)).toBe(before);
+  });
+
+  it('reports a sample note it cannot write, and still finishes', async () => {
+    const t = testVault();
+    t.write('Extras', 'a file where the sample wants a folder\n');
+    const github = fakeGitHub(SHA, { extra: { 'Extras/Note.md': 'x\n' } });
+    const report = await applySetup(t.options({ sample: true, pluginRoot: pluginCopy(SHA), fetch: github }));
+    expect(report.applied).toBe(true);
+    expect(report.warnings).toContainEqual(expect.stringMatching(/^can't write the sample note Extras\/Note\.md: /));
+    expect(report.sample).toMatchObject({ skipped: [] });
+    expect((report.sample as { files: string[] }).files).toHaveLength(count);
+    expect((report.sample as { files: string[] }).files).not.toContain('Extras/Note.md');
+    expect(report.kiln.recorded).toBe('new');
+    expect(existsSync(t.configFile)).toBe(true);
   });
 
   it('needs Obsidian closed, even to re-apply', async () => {
