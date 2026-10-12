@@ -7,15 +7,11 @@ description: Check notes in a kiln vault against their type definitions (folder,
 
 Checks notes against the type definitions in the vault's `_kiln/types/`. The check never changes a note.
 
+Follow `${CLAUDE_PLUGIN_ROOT}/reference/vault-rules.md`.
+
 ## 1. Find the vault
 
-If the owner named notes or folders to check, skip to step 2. Otherwise run the resolver:
-
-```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"
-```
-
-It prints JSON, the same in Bash and pwsh. Exit code 0: `vault` is the vault folder to use. Exit code 1: no vault was found. Tell the owner the `reasons`, list the `candidates`, and ask which vault to use. Offer to record the answer through `/kiln:setup`, which is the only writer of `~/.kiln/config.json`; never edit that file yourself. Exit code 2: wrong arguments; run it again without arguments.
+If the owner named notes or folders to check, skip to step 2: the check finds their vault itself. Otherwise find the vault by rule 1 of the vault rules.
 
 ## 2. Run the check
 

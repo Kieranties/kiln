@@ -2,6 +2,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
+import { splitFrontmatter } from '../../src/blueprint/markdown.js';
 
 const PLUGIN = fileURLToPath(new URL('../../claude-plugin/', import.meta.url));
 const RULES = 'reference/vault-rules.md';
@@ -100,5 +102,27 @@ describe('plugin files named by the rules and the skills', () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+});
+
+const FOLLOW = 'Follow `${CLAUDE_PLUGIN_ROOT}/reference/vault-rules.md`.';
+
+describe('every skill', () => {
+  it('includes /kiln:check', () => {
+    expect(SKILLS).toContain('check');
+  });
+
+  it.each(SKILLS)('%s follows the vault rules', (skill) => {
+    expect(read(`skills/${skill}/SKILL.md`)).toContain(FOLLOW);
+  });
+
+  it.each(SKILLS)('%s is a short verb with a description that keeps to kiln work', (skill) => {
+    const meta = parse(splitFrontmatter(read(`skills/${skill}/SKILL.md`)).frontmatter) as Record<string, unknown>;
+    expect(meta.name).toBe(skill);
+    expect(skill).toMatch(/^[a-z]{3,12}$/);
+    expect(typeof meta.description).toBe('string');
+    const description = String(meta.description);
+    expect(description).toMatch(/\bkiln\b/);
+    expect(description.length).toBeLessThanOrEqual(300);
   });
 });
