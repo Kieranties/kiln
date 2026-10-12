@@ -81,7 +81,7 @@ describe('hashes', () => {
   it('hash bytes as the same file read as text: a byte-order mark kept, and bytes that are not UTF-8 refused', () => {
     // readFileSync(file, 'utf8') keeps a byte-order mark, so the bytes must too.
     const withMark = new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode('kiln')]);
-    expect(hash(withMark)).toBe(hash('﻿kiln'));
+    expect(hash(withMark)).toBe(hash(String.fromCharCode(0xfeff) + 'kiln'));
     expect(hash(withMark)).not.toBe(hash('kiln'));
     expect(() => hash(new Uint8Array([0x6b, 0xff, 0x6e]))).toThrow();
   });
