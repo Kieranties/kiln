@@ -1,6 +1,6 @@
 # Layer 1: structure
 
-Status: **built and checked** (2026-10-11), as the kit in `kit/`. Nothing here is final.
+Status: **built and checked** (2026-10-11), as the blueprint in `claude-plugin/blueprint/` (the kit until #105). Nothing here is final.
 
 Layer 1 of the [vision](../vision.md): the vault structure, so that entities are easy to find and read in Obsidian. It covers the flows Browse (5) and Add a type or kind (12) in [kiln user flows](2026-10-11-user-flows.md), and the shapes every later layer writes into.
 
@@ -165,16 +165,16 @@ At layer 1, **Claude applies the definitions** to the configuration. There is no
 
 Adding a type (flow 12) at layer 1 means editing or adding a definition, then having Claude apply it. The kiln plugin makes that one step later.
 
-### The kit
+### The blueprint
 
-The repo holds the kit under `kit/`: the type definitions, templates and view files. It is structure only, with no knowledge. A vault is set up by copying `kit/` into the vault as `_kiln/` and having Claude apply it.
+The repo holds the blueprint under `claude-plugin/blueprint/`, inside kiln's Claude plugin: the type definitions, templates and view files. It is structure only, with no knowledge. A vault is set up by copying the blueprint into the vault as `_kiln/` and having Claude apply it.
 
-Community plugins in the kit: **Iconic** (icons), **Templater** (templates), **QuickAdd** (capture and log), **Homepage** (open on `Home.md`). The board uses Bases' built-in kanban.
+Community plugins in the blueprint: **Iconic** (icons), **Templater** (templates), **QuickAdd** (capture and log), **Homepage** (open on `Home.md`). The board uses Bases' built-in kanban.
 
-Obsidian has no built-in way to install a set of plugins together. The kit ships the plugins' **settings**, not their code: the `community-plugins.json` entries and our settings for each plugin. Setting up a vault:
+Obsidian has no built-in way to install a set of plugins together. The blueprint ships the plugins' **settings**, not their code: the `community-plugins.json` entries and our settings for each plugin. Setting up a vault:
 
 1. Install the four plugins from Obsidian's community plugin browser, then close Obsidian.
-2. Claude copies the kit in as `_kiln/` and applies the definitions and plugin settings.
+2. Claude copies the blueprint in as `_kiln/` and applies the definitions and plugin settings.
 3. Open Obsidian and check the result.
 
 Obsidian must be closed for setup because QuickAdd and Homepage read their settings only at start-up. Iconic and Templater reload theirs when the file changes (`onExternalSettingsChange`), and templates and views are plain files, so applying a type definition later is safe with Obsidian open.
@@ -191,14 +191,14 @@ The kiln Obsidian plugin starts after the migration slice, once real content has
 
 ### Found in the first test vault
 
-Building the kit and checking it in Obsidian 1.14.4 added these decisions:
+Building the kit (now the blueprint) and checking it in Obsidian 1.14.4 added these decisions:
 
 - **Board columns stay when empty.** Both boards list every live status in `groupOrder`, which also fixes their order and keeps `abandoned` off.
-- **Capitals on screen, lowercase in notes.** A kit CSS snippet (`kiln.css`) shows property names, values and board columns with capitals. View columns get readable headers through `displayName`. Notes keep lowercase names and values, so filters and Claude are unaffected.
-- **Icons everywhere.** Each type folder shows its type's icon in place of the folder arrow (Iconic's minimal folder icons). Home and the Board have their own icons. Every property has an icon, listed in the kit's `properties.md`; a relationship takes the icon and colour of the type it links to.
+- **Capitals on screen, lowercase in notes.** A blueprint CSS snippet (`kiln.css`) shows property names, values and board columns with capitals. View columns get readable headers through `displayName`. Notes keep lowercase names and values, so filters and Claude are unaffected.
+- **Icons everywhere.** Each type folder shows its type's icon in place of the folder arrow (Iconic's minimal folder icons). Home and the Board have their own icons. Every property has an icon, listed in the blueprint's `properties.md`; a relationship takes the icon and colour of the type it links to.
 - **File properties in the right sidebar.** Setup adds the file properties view to the right sidebar in `workspace.json`, with Obsidian closed.
 - **Templater's trigger is per device.** "Trigger Templater on new file creation" lives in Obsidian's local storage, not in Templater's settings file, so the owner turns it on once per device.
-- **Kit templates are notes too.** Views that match on type alone (Inbox, Board) leave out `_kiln`.
+- **Blueprint templates are notes too.** Views that match on type alone (Inbox, Board) leave out `_kiln`.
 - **Getting started is about your own vault.** The Northwind Arena sample is a separate page, for a trial vault.
 
 ### Linking before a note exists

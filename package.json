@@ -2,7 +2,7 @@
   "name": "kiln",
   "version": "0.0.0-placeholder",
   "private": true,
-  "description": "kiln: a personal knowledge and work process built on Obsidian. The kit is the vault structure; this package only runs its checks.",
+  "description": "kiln: a personal knowledge and work process built on Obsidian. The blueprint is the vault structure; this package only runs its checks.",
   "license": "MIT",
   "repository": {
     "type": "git",

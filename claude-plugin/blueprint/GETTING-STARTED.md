@@ -1,6 +1,6 @@
-# Getting started with the kiln kit
+# Getting started with the kiln blueprint
 
-This guide sets up your vault with the kiln kit, from an empty folder, then walks you through your first notes. It takes about fifteen minutes. Claude does the copying and settings; you do the parts in Obsidian.
+This guide sets up your vault with the kiln blueprint, from an empty folder, then walks you through your first notes. It takes about fifteen minutes. Claude does the copying and settings; you do the parts in Obsidian.
 
 The commands work in both Bash and PowerShell.
 
@@ -23,10 +23,10 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 3. Go to Settings → Community plugins and select **Exit restricted mode**. (Before Obsidian 1.14.4, the button was **Turn on community plugins**.)
 4. Select **Browse** and install each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**. Installing does not turn a plugin on.
 5. Back in Settings → Community plugins, find each of the four under **Installed plugins** and switch it on.
-6. In Settings → Templater, turn on **Trigger Templater on new file creation**. Templater keeps this switch on your device rather than in the vault, so the kit can't set it for you. Without it, new notes get no template.
-7. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the kit must be applied while it is closed.
+6. In Settings → Templater, turn on **Trigger Templater on new file creation**. Templater keeps this switch on your device rather than in the vault, so the blueprint can't set it for you. Without it, new notes get no template.
+7. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the blueprint must be applied while it is closed.
 
-## 3. Apply the kit
+## 3. Apply the blueprint
 
 Start Claude in the kiln repo:
 
@@ -38,7 +38,7 @@ claude
 Give it this prompt, with your folder filled in:
 
 ```text
-Set up the kiln kit in <vault folder> by following "Setting up a vault" in kit/README.md exactly.
+Set up the kiln blueprint in <vault folder> by following "Setting up a vault" in claude-plugin/blueprint/README.md exactly.
 Report each file you wrote and each setting you merged.
 ```
 
@@ -48,7 +48,7 @@ Open Obsidian.
 
 - [ ] Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review, all empty.
 - [ ] The right sidebar shows **File properties**. Notes keep their properties out of the text, so this is where you read and edit them; it follows whichever note is open. If it isn't there, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
-- [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the kit. Each folder shows its type's icon and colour in place of the `>` arrow.
+- [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the blueprint. Each folder shows its type's icon and colour in place of the `>` arrow.
 
 ## 5. Your first notes
 
@@ -85,8 +85,8 @@ Tell Claude about anything that doesn't match, with the line it failed on.
 - **Add a type:** give Claude a prompt like this:
 
   ```text
-  Add a "runbook" type to the kiln kit: a how-to for operating a product, with sections Purpose, Steps and Rollback, linked to products.
-  Follow "Adding or changing a type" in kit/README.md, then apply it to <vault folder>.
+  Add a "runbook" type to the kiln blueprint: a how-to for operating a product, with sections Purpose, Steps and Rollback, linked to products.
+  Follow "Adding or changing a type" in claude-plugin/blueprint/README.md, then apply it to <vault folder>.
   ```
 
-- **How the kit works:** [The kiln kit](README.md) covers the types, conventions and how the kit is applied.
+- **How the blueprint works:** [The kiln blueprint](README.md) covers the types, conventions and how the blueprint is applied.

@@ -62,7 +62,7 @@ kepano's [Obsidian skills](https://github.com/kepano/obsidian-skills) (`obsidian
 
 ## Trials
 
-To finish #80, run these in a trial vault with the Northwind Arena sample (`kit/TRY-THE-SAMPLE.md`, for example in `D:\tmp\kiln-sample`), with Obsidian 1.12.7 or later.
+To finish #80, run these in a trial vault with the Northwind Arena sample (`claude-plugin/blueprint/TRY-THE-SAMPLE.md`, for example in `D:\tmp\kiln-sample`), with Obsidian 1.12.7 or later.
 
 **T2, QuickAdd and Templater:**
 

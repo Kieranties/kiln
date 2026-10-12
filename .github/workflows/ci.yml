@@ -1,6 +1,6 @@
 # Check every PR and every push to main. A green push to main is a release: version 0.2.<n>
-# (version.json plus the commits since it last changed), tagged v0.2.<n>, with the kit attached
-# as kiln-kit-<version>.zip. main is squash-merge only, so each merged PR is one release.
+# (version.json plus the commits since it last changed), tagged v0.2.<n>, with the blueprint
+# attached as kiln-blueprint-<version>.zip. main is squash-merge only, so each merged PR is one release.
 name: ci
 
 on:
@@ -52,10 +52,10 @@ jobs:
           since=$(git log -1 --format=%H -- version.json)
           patch=$(( $(git rev-list --count "$since..HEAD") + 1 ))
           echo "VERSION=$(jq -r .version version.json).$patch" >> "$GITHUB_ENV"
-      - name: Zip the kit
+      - name: Zip the blueprint
         run: |
           mkdir -p dist
-          (cd kit && zip -r "../dist/kiln-kit-$VERSION.zip" .)
+          (cd claude-plugin/blueprint && zip -r "../../dist/kiln-blueprint-$VERSION.zip" .)
       # Checks before it acts, so a re-run finishes a partial release without failing.
       - name: Create the tag and GitHub Release
         env:
@@ -64,5 +64,5 @@ jobs:
           if gh release view "v$VERSION" >/dev/null 2>&1; then
             echo "Release v$VERSION already exists"
           else
-            gh release create "v$VERSION" "dist/kiln-kit-$VERSION.zip" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
+            gh release create "v$VERSION" "dist/kiln-blueprint-$VERSION.zip" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
           fi

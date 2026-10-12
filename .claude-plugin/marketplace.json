@@ -1,0 +1,14 @@
+{
+  "name": "kiln",
+  "description": "kiln: a personal knowledge and work system built on Obsidian, with the Claude plugin that works in it.",
+  "owner": {
+    "name": "Kieranties",
+    "url": "https://github.com/Kieranties"
+  },
+  "plugins": [
+    {
+      "name": "kiln",
+      "source": "./claude-plugin"
+    }
+  ]
+}

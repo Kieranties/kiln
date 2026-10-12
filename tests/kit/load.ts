@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 
-export const KIT = fileURLToPath(new URL('../../kit/', import.meta.url));
+export const BLUEPRINT = fileURLToPath(new URL('../../claude-plugin/blueprint/', import.meta.url));
 
 export type PropType = 'text' | 'date' | 'datetime' | 'number' | 'links' | 'list';
 export const PROP_TYPES: readonly PropType[] = ['text', 'date', 'datetime', 'number', 'links', 'list'];
@@ -45,10 +45,10 @@ export function splitFrontmatter(text: string): { frontmatter: string; body: str
   return { frontmatter: match[1] ?? '', body: match[2] ?? '' };
 }
 
-/** Every type definition in kit/types, parsed. */
+/** Every type definition in blueprint/types, parsed. */
 export function loadDefinitions(): Definition[] {
-  const dir = join(KIT, 'types');
-  if (!existsSync(dir)) throw new Error(`kit/types is missing (${dir})`);
+  const dir = join(BLUEPRINT, 'types');
+  if (!existsSync(dir)) throw new Error(`blueprint/types is missing (${dir})`);
   return readdirSync(dir)
     .filter((f) => f.endsWith('.md'))
     .map((f) => {
@@ -73,15 +73,15 @@ export function loadDefinitions(): Definition[] {
 /** A property's icon: its own, or (for a relationship) the type it links to. */
 export type PropertyEntry = { icon?: string; color?: string; links?: string };
 
-/** kit/properties.md: every property, with its icon or the type it links to. */
+/** blueprint/properties.md: every property, with its icon or the type it links to. */
 export function loadProperties(): Record<string, PropertyEntry> {
-  const { frontmatter } = splitFrontmatter(readFileSync(join(KIT, 'properties.md'), 'utf8'));
+  const { frontmatter } = splitFrontmatter(readFileSync(join(BLUEPRINT, 'properties.md'), 'utf8'));
   return ((parse(frontmatter) ?? {}) as { properties?: Record<string, PropertyEntry> }).properties ?? {};
 }
 
-/** A JSON file in the kit, parsed. `path` is relative to kit/, e.g. 'settings/app.json'. */
+/** A JSON file in the blueprint, parsed. `path` is relative to blueprint/, e.g. 'settings/app.json'. */
 export function loadJson<T = Record<string, unknown>>(path: string): T {
-  return JSON.parse(readFileSync(join(KIT, path), 'utf8')) as T;
+  return JSON.parse(readFileSync(join(BLUEPRINT, path), 'utf8')) as T;
 }
 
 export type BaseView = {
@@ -97,7 +97,7 @@ export type BaseFile = {
   views: BaseView[];
 };
 
-/** Every Base in the kit, as paths relative to kit/. */
+/** Every Base in the blueprint, as paths relative to blueprint/. */
 export function allBases(): string[] {
   return [...viewFiles().map((f) => `views/${f}`), 'root/Board.base'];
 }
@@ -108,14 +108,14 @@ export function columnLabel(property: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-/** A Bases file, parsed. `path` is relative to kit/, e.g. 'views/inbox.base'. */
+/** A Bases file, parsed. `path` is relative to blueprint/, e.g. 'views/inbox.base'. */
 export function loadBase(path: string): BaseFile {
-  return parse(readFileSync(join(KIT, path), 'utf8')) as BaseFile;
+  return parse(readFileSync(join(BLUEPRINT, path), 'utf8')) as BaseFile;
 }
 
-/** Every .base file in kit/views. */
+/** Every .base file in blueprint/views. */
 export function viewFiles(): string[] {
-  const dir = join(KIT, 'views');
+  const dir = join(BLUEPRINT, 'views');
   return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.base')) : [];
 }
 
@@ -155,12 +155,12 @@ export function sectionsOf(body: string): Map<string, string> {
 }
 
 /**
- * Every template in kit/templates, keyed by file name. Templater tags are not valid YAML, so
+ * Every template in blueprint/templates, keyed by file name. Templater tags are not valid YAML, so
  * frontmatter keys are read line by line, after any leading `<%* ... %>` script blocks.
  */
 export function loadTemplates(): Map<string, Template> {
-  const dir = join(KIT, 'templates');
-  if (!existsSync(dir)) throw new Error(`kit/templates is missing (${dir})`);
+  const dir = join(BLUEPRINT, 'templates');
+  if (!existsSync(dir)) throw new Error(`blueprint/templates is missing (${dir})`);
   const templates = new Map<string, Template>();
   for (const f of readdirSync(dir).filter((name) => name.endsWith('.md'))) {
     const text = readFileSync(join(dir, f), 'utf8');

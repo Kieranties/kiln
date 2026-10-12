@@ -2,12 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { KIT } from './load.js';
+import { BLUEPRINT } from './load.js';
 
 const SAMPLE = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
 
-const readme = readFileSync(join(KIT, 'README.md'), 'utf8');
-const guide = readFileSync(join(KIT, 'GETTING-STARTED.md'), 'utf8');
+const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');
+const guide = readFileSync(join(BLUEPRINT, 'GETTING-STARTED.md'), 'utf8');
 
 /** The text of a `## ` section of a Markdown document. */
 function section(document: string, heading: string): string {
@@ -25,7 +25,7 @@ describe('section()', () => {
   });
 });
 
-describe('kit docs', () => {
+describe('blueprint docs', () => {
   it("both docs say to turn on Templater's per-device trigger", () => {
     // Templater keeps this switch in Obsidian's local storage, so no settings file can set it.
     for (const doc of [readme, guide]) expect(doc).toContain('Trigger Templater on new file creation');
@@ -37,7 +37,7 @@ describe('kit docs', () => {
   });
 
   it('the sample page names every sample note', () => {
-    const sample = readFileSync(join(KIT, 'TRY-THE-SAMPLE.md'), 'utf8');
+    const sample = readFileSync(join(BLUEPRINT, 'TRY-THE-SAMPLE.md'), 'utf8');
     expect(sample).toContain('tests/fixtures/layer1');
     const notes = readdirSync(SAMPLE, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
     for (const note of notes) expect(sample, note.name).toContain(basename(note.name, '.md'));
@@ -49,7 +49,7 @@ describe('kit docs', () => {
   });
 
   it('the property list is copied, merged and kept up to date', () => {
-    expect(section(readme, 'What the kit is')).toContain('properties.md');
+    expect(section(readme, 'What the blueprint is')).toContain('properties.md');
     const setup = section(readme, 'Setting up a vault');
     for (const part of ['properties.md', 'propertyIcons']) expect(setup, part).toContain(part);
     expect(section(readme, 'Adding or changing a type')).toContain('properties.md');
@@ -63,7 +63,7 @@ describe('kit docs', () => {
     expect(guide).not.toContain('Run **Show file properties**');
   });
 
-  it('setting up a vault copies all three kit docs', () => {
+  it('setting up a vault copies all three blueprint docs', () => {
     const steps = section(readme, 'Setting up a vault');
     for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);
   });

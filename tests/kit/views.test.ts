@@ -1,7 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { allBases, columnLabel, KIT, loadBase, loadDefinitions, sectionsOf, viewFile, viewFiles } from './load.js';
+import {
+  allBases,
+  columnLabel,
+  BLUEPRINT,
+  loadBase,
+  loadDefinitions,
+  sectionsOf,
+  viewFile,
+  viewFiles,
+} from './load.js';
 
 const defs = loadDefinitions();
 const STANDALONE = ['inbox.base', 'needs-review.base', 'active-projects.base', 'today.base'];
@@ -115,7 +124,7 @@ describe('Home, Board and the standalone views', () => {
     });
   });
 
-  it('views that match on type alone leave out the kit templates', () => {
+  it('views that match on type alone leave out the blueprint templates', () => {
     // Templates in _kiln/templates carry type and status, so Bases would list them too.
     for (const path of ['views/inbox.base', 'root/Board.base']) {
       expect(JSON.stringify(loadBase(path).filters), path).toContain('{"not":["file.inFolder(\\"_kiln\\")"]}');
@@ -139,7 +148,7 @@ describe('Home, Board and the standalone views', () => {
   });
 
   it('home embeds today, inbox, active projects and needs review, and links the board', () => {
-    const home = readFileSync(join(KIT, 'root', 'Home.md'), 'utf8');
+    const home = readFileSync(join(BLUEPRINT, 'root', 'Home.md'), 'utf8');
     const sections = sectionsOf(home);
     expect([...sections.keys()]).toEqual(['Today', 'Inbox', 'Active projects', 'Needs review']);
     expect(sections.get('Today')).toBe('![[today.base]]');

@@ -20,7 +20,7 @@ Obsidian first. Then Claude. Then everything else.
 - **P2 Obsidian is home.** Structure, views and workflows are designed in Obsidian. Claude follows the same structure rather than having its own.
 - **P3 Plain files, reachable from anywhere.** The vault is markdown on disk, and any Claude session in any folder can reach it. Ideally without Obsidian running, but that is not yet a requirement: if an Obsidian MCP proves the right way to work with the vault, it may need Obsidian open.
 - **P4 My process, not a generic one.** Reuse Obsidian's core features and community plugins where they fit the process. Build kiln's own where the process needs it.
-- **P5 Configuration first, code when it earns its place.** Start as a vault kit: types and kinds, templates, Bases views, CSS snippets and a few community plugins. Grow a kiln Obsidian plugin as gaps appear. Custom views (inbox, project, board) and icon and styling rules are the expected first gaps.
+- **P5 Configuration first, code when it earns its place.** Start as a vault blueprint: types and kinds, templates, Bases views, CSS snippets and a few community plugins. Grow a kiln Obsidian plugin as gaps appear. Custom views (inbox, project, board) and icon and styling rules are the expected first gaps.
 - **P6 Easy to extend.** Adding a type or kind is cheap for me and for Claude, and it arrives with its template, icon, styling and views.
 - **P7 One inbox.** Everything comes in one way and is triaged in one place.
 - **P8 Remote truth, selective local context.** External systems own their data. Only what I engage with is held locally, as a summary. Writes out are explicit and approved.

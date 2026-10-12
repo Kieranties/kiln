@@ -1,0 +1,12 @@
+{
+  "name": "kiln",
+  "description": "kiln's Claude skills and the blueprint they apply to an Obsidian vault.",
+  "author": {
+    "name": "Kieranties",
+    "url": "https://github.com/Kieranties"
+  },
+  "homepage": "https://github.com/Kieranties/kiln",
+  "repository": "https://github.com/Kieranties/kiln",
+  "license": "MIT",
+  "keywords": ["obsidian", "knowledge", "notes"]
+}
