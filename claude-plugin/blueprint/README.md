@@ -28,7 +28,7 @@ The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist,
 - **Dates** are `YYYY-MM-DD`; date-times are `YYYY-MM-DDTHH:mm`.
 - **Log lines** in a daily note are `- HH:mm text`, appended to the end of the file. `## Log` is always the last section.
 - **Check notes** with `/kiln:check`. It checks each note against its definition and never changes a note.
-- **Claude finds the vault** from any folder. In the vault, or a folder inside it, Claude uses that vault. Elsewhere it uses `KILN_VAULT`, a vault name or folder for one terminal (`export KILN_VAULT=work` in Bash, `$env:KILN_VAULT = 'work'` in PowerShell), then the default vault in `~/.kiln/config.json`, which setup writes (on Windows, `.kiln` is in your home folder). If none of those answers, Claude asks.
+- **Claude finds the vault** from any folder. In the vault, or a folder inside it, Claude uses that vault; inside an Obsidian vault that isn't set up for kiln, it stops and offers `/kiln:setup`. Elsewhere it uses `KILN_VAULT`, a vault name or folder for one terminal (`export KILN_VAULT=work` in Bash, `$env:KILN_VAULT = 'work'` in PowerShell), then the default vault in `~/.kiln/config.json`, which setup writes (on Windows, `.kiln` is in your home folder), then the only kiln vault in Obsidian's vault list. If none of those answers, Claude asks.
 - **Archive, never delete.** A note is retired through its `status`.
 
 ## Setting up a vault

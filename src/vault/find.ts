@@ -2,7 +2,8 @@ import { statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { findUp, isFolder } from './paths.js';
 
-export type VaultCheck = { ok: true; root: string } | { ok: false; reason: string };
+/** `plain` marks a failure that is a plain Obsidian vault: one without kiln, which setup can fix. */
+export type VaultCheck = { ok: true; root: string } | { ok: false; reason: string; plain?: true };
 
 /** Starts at `path` (or its folder) and walks up to the first folder holding `_kiln/types/`. */
 export function findVault(path: string): string | undefined {
@@ -29,6 +30,7 @@ export function checkVault(path: string, options: { walkUp: boolean }): VaultChe
   if (obs !== undefined) {
     return {
       ok: false,
+      plain: true,
       reason: `${obs} is an Obsidian vault without kiln: it has no _kiln/types/ folder. Set it up with /kiln:setup first.`,
     };
   }

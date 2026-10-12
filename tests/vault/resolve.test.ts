@@ -48,6 +48,26 @@ describe('resolveVault: each step, in order', () => {
     expect(resolveVault(s.where({ cwd: join(work, 'Work') }))).toEqual({ vault: work, source: 'current-folder' });
   });
 
+  it('2. inside a plain Obsidian vault stops, with or without KILN_VAULT or a default', () => {
+    const plain = s.vault('plain', 'obsidian');
+    s.record({ default: 'work', vaults: { work } });
+    for (const env of [{}, { KILN_VAULT: 'work' }]) {
+      const r = resolveVault(s.where({ cwd: join(plain, 'Work'), env: { ...s.env, ...env } }));
+      expect(r).toEqual({
+        vault: null,
+        candidates: [{ path: work, name: 'work', from: 'kiln' }],
+        reasons: [
+          `${plain} is an Obsidian vault without kiln: it has no _kiln/types/ folder. Set it up with /kiln:setup first.`,
+        ],
+      });
+    }
+  });
+
+  it('2. a folder that is in no vault at all moves on to the default', () => {
+    s.record({ default: 'work', vaults: { work } });
+    expect(resolveVault(s.where())).toEqual({ vault: work, source: 'default', name: 'work' });
+  });
+
   it('2. Claudian: the current folder beats a global KILN_VAULT and the default, even a broken one', () => {
     s.record({ default: 'trial', vaults: { work, trial } });
     for (const KILN_VAULT of ['trial', trial, 'nope']) {
@@ -73,6 +93,26 @@ describe('resolveVault: each step, in order', () => {
       source: 'KILN_VAULT',
       name: 'trial',
     });
+  });
+
+  it('4. a recorded path that is not absolute is a reason, never resolved against the session folder', () => {
+    s.record({ default: 'rel', vaults: { work, rel: 'vaults/trial', empty: '' } });
+    const cwd = s.home;
+    const bad = (name: string, path: string) => `vault "${name}": ${path} isn't an absolute path`;
+    const byDefault = resolveVault(s.where({ cwd }));
+    expect(byDefault).toMatchObject({
+      vault: null,
+      reasons: expect.arrayContaining([
+        expect.stringContaining(bad('rel', 'vaults/trial')),
+        expect.stringContaining(bad('empty', '')),
+      ]),
+    });
+    const byEnv = resolveVault(s.where({ cwd, env: { ...s.env, KILN_VAULT: 'empty' } }));
+    expect(byEnv).toMatchObject({
+      vault: null,
+      reasons: expect.arrayContaining([expect.stringContaining(bad('empty', ''))]),
+    });
+    expect(byEnv.vault).toBeNull();
   });
 
   it('3. an empty KILN_VAULT counts as unset', () => {

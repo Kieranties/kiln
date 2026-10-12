@@ -32,7 +32,7 @@ The plugin setting (`userConfig`) holds one value, isn't visible to scripts Clau
 The first answer wins:
 
 1. A path given explicitly ("capture this to `D:\notes`").
-2. The vault containing the current folder: walk up to the first folder holding `_kiln/types/`. In Claudian, the session always starts in the vault root, so this always finds it.
+2. The vault containing the current folder: walk up to the first folder holding `_kiln/types/`. In Claudian, the session always starts in the vault root, so this always finds it. If the current folder is instead inside a plain Obsidian vault (it has `.obsidian/` but no `_kiln/types/`), resolution stops there and offers setup, rather than moving on to another vault.
 3. `KILN_VAULT`, a vault name or a path. It is an override for one terminal or one Herdr workspace.
 4. The kiln file's `default`.
 5. Obsidian's own vault list (`obsidian.json`), only when exactly one vault in it has `_kiln/`. The format isn't documented, so this is a fallback for discovery.

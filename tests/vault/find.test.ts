@@ -56,8 +56,8 @@ describe('checkVault', () => {
   it('rejects a plain Obsidian vault, naming its root', () => {
     const plain = s.vault('plain', 'obsidian');
     const reason = `${plain} is an Obsidian vault without kiln: it has no _kiln/types/ folder. Set it up with /kiln:setup first.`;
-    expect(checkVault(plain, { walkUp: false })).toEqual({ ok: false, reason });
-    expect(checkVault(join(plain, 'Work'), { walkUp: true })).toEqual({ ok: false, reason });
+    expect(checkVault(plain, { walkUp: false })).toEqual({ ok: false, plain: true, reason });
+    expect(checkVault(join(plain, 'Work'), { walkUp: true })).toEqual({ ok: false, plain: true, reason });
   });
   it('rejects a missing path and a folder in no vault', () => {
     const gone = join(s.root, 'gone');

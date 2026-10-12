@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 import { checkVault, findVault } from './find.js';
 import { kilnConfigPath, readKilnConfig, type KilnConfig } from './config.js';
 import { obsidianListPath, readObsidianVaults } from './obsidian.js';
@@ -42,10 +42,18 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
     const k = kiln();
     return k.kind === 'ok' ? Object.entries(k.config.vaults) : [];
   };
-  /** The folder the kiln file records for `name`, if it records one. */
-  const recordedPath = (name: string): string | undefined => {
+  /** A recorded path is used only when it is absolute, since a session's folder says nothing about it. */
+  const recordedAbsolute = (path: string): string | undefined => {
+    const expanded = expandHome(path, home);
+    return isAbsolute(expanded) ? resolve(expanded) : undefined;
+  };
+  const notAbsolute = (name: string, path: string): string => `vault "${name}": ${path} isn't an absolute path`;
+  /** The folder the kiln file records for `name` (or why it can't be used), if it records one. */
+  const recordedPath = (name: string): { path: string } | { bad: string } | undefined => {
     const path = recorded().find(([n]) => n === name)?.[1];
-    return path === undefined ? undefined : absolute(path);
+    if (path === undefined) return undefined;
+    const abs = recordedAbsolute(path);
+    return abs === undefined ? { bad: notAbsolute(name, path) } : { path: abs };
   };
   const unreadable = (): string | undefined => {
     const k = kiln();
@@ -53,7 +61,7 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
   };
 
   const found = (vault: string, source: Source, name?: string): Outcome => {
-    const named = name ?? recorded().find(([, path]) => key(absolute(path)) === key(vault))?.[0];
+    const named = name ?? recorded().find(([, path]) => key(recordedAbsolute(path) ?? '') === key(vault))?.[0];
     return { found: { vault, source, ...(named === undefined ? {} : { name: named }) } };
   };
 
@@ -91,17 +99,21 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
 
   const currentFolderStep = (): Outcome => {
     const vault = findVault(cwd);
-    return vault === undefined
-      ? { reasons: [`the current folder (${cwd}) isn't in a kiln vault`] }
-      : found(vault, 'current-folder');
+    if (vault !== undefined) return found(vault, 'current-folder');
+    // A plain Obsidian vault is the owner's vault, just not set up: stop, don't pick another.
+    const check = checkVault(cwd, { walkUp: true });
+    if (!check.ok && check.plain) return { stop: check.reason };
+    return { reasons: [`the current folder (${cwd}) isn't in a kiln vault`] };
   };
 
   const envStep = (): Outcome => {
     const v = envValue(where.env, 'KILN_VAULT');
     if (v === undefined) return { reasons: ["KILN_VAULT isn't set"] };
     const recordedAt = recordedPath(v);
+    if (recordedAt !== undefined && 'bad' in recordedAt)
+      return { stop: `KILN_VAULT is "${v}": ${recordedAt.bad}`, named: v };
     const byName = recordedAt !== undefined;
-    const path = recordedAt ?? absolute(v);
+    const path = recordedAt?.path ?? absolute(v);
     const check = checkVault(path, { walkUp: !byName });
     if (check.ok) return found(check.root, 'KILN_VAULT', byName ? v : undefined);
     let reason = check.reason;
@@ -117,9 +129,10 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
     if (k.kind === 'missing') return { reasons: [`no kiln file at ${kilnFile}`] };
     const d = k.config.default;
     if (d === undefined) return { reasons: [`${kilnFile} has no default`] };
-    const path = recordedPath(d);
-    if (path === undefined) return { stop: `${kilnFile}'s default is "${d}", which isn't one of its vaults` };
-    const check = checkVault(path, { walkUp: false });
+    const recordedAt = recordedPath(d);
+    if (recordedAt === undefined) return { stop: `${kilnFile}'s default is "${d}", which isn't one of its vaults` };
+    if ('bad' in recordedAt) return { stop: `${kilnFile}'s default "${d}": ${recordedAt.bad}`, named: d };
+    const check = checkVault(recordedAt.path, { walkUp: false });
     return check.ok
       ? found(check.root, 'default', d)
       : { stop: `${kilnFile}'s default "${d}": ${check.reason}`, named: d };
@@ -162,7 +175,12 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
   const candidates: Candidate[] = [];
   const seen = new Set<string>();
   for (const [name, path] of recorded()) {
-    const check = checkVault(absolute(path), { walkUp: false });
+    const abs = recordedAbsolute(path);
+    if (abs === undefined) {
+      if (name !== named) reasons.push(`${kilnFile}'s ${notAbsolute(name, path)}`);
+      continue;
+    }
+    const check = checkVault(abs, { walkUp: false });
     if (check.ok) {
       candidates.push({ path: check.root, name, from: 'kiln' });
       seen.add(key(check.root));
