@@ -42,6 +42,21 @@ describe('usersOf', () => {
     expect(usersOf('_kiln/types/runbook.md', notes)).toEqual(['Runbooks/Restart.md']);
     expect(usersOf('_kiln/templates/Runbook.md', notes)).toEqual([]);
   });
+
+  it('matches a whole link name, with or without its folder, and a type line in any case or quotes', () => {
+    const more = [
+      { path: 'a.md', text: 'See [[Runbooks/Restart]] and [[Workshop]].\n' },
+      { path: 'b.md', text: '![[_kiln/views/inbox.base]]\n' },
+      { path: 'c.md', text: '![[inbox.base#Today]]\n' },
+      { path: 'd.md', text: 'Run [[Runbook|the runbook]].\n' },
+      { path: 'e.md', text: '---\ntype: Work\n---\n' },
+      { path: 'f.md', text: '---\ntype: "work"\n---\n' },
+      { path: 'g.md', text: '---\ntype: workshop\n---\nSee [[Runbook.md^step]].\n' },
+    ];
+    expect(usersOf('_kiln/types/runbook.md', more)).toEqual(['d.md', 'g.md']);
+    expect(usersOf('_kiln/views/inbox.base', more)).toEqual(['b.md', 'c.md']);
+    expect(usersOf('_kiln/types/work.md', more)).toEqual(['e.md', 'f.md']);
+  });
 });
 
 describe('the version record', () => {

@@ -7959,10 +7959,11 @@ function sortFile(path, recorded, vault, blueprint, hasRecord = true) {
 var escape = (text2) => text2.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
 function usersOf(path, notes) {
   const file = path.slice(path.lastIndexOf("/") + 1);
-  const name = file.endsWith(".md") ? file.slice(0, -".md".length) : file;
-  const link = new RegExp(`\\[\\[${escape(name)}`, "i");
-  const type = /^_kiln\/types\/[^/]+\.md$/.test(path) ? new RegExp(`^type:\\s*${escape(name)}\\s*$`, "m") : void 0;
-  return notes.filter((note) => link.test(note.text) || (type?.test(splitFrontmatter(note.text).frontmatter) ?? false)).map((note) => note.path);
+  const note = file.endsWith(".md");
+  const name = note ? file.slice(0, -".md".length) : file;
+  const link = new RegExp(`\\[\\[(?:[^\\]|#^\\n]*/)?${escape(name)}${note ? "(?:\\.md)?" : ""}[\\]|#^]`, "i");
+  const type = /^_kiln\/types\/[^/]+\.md$/.test(path) ? new RegExp(`^type:[ \\t]*(["']?)${escape(name)}\\1[ \\t]*$`, "im") : void 0;
+  return notes.filter((note2) => link.test(note2.text) || (type?.test(splitFrontmatter(note2.text).frontmatter) ?? false)).map((note2) => note2.path);
 }
 
 // src/setup/merge.ts

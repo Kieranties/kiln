@@ -39,15 +39,19 @@ export function sortFile(
 const escape = (text: string): string => text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
- * The notes that still use a dropped file, in the order given: those whose text links to it
- * (`[[<name>`, case-insensitive), and for a type definition (`_kiln/types/<name>.md`) those of that type.
- * A link names a note without `.md`, and any other file with its extension.
+ * The notes that still use a dropped file, in the order given: those whose text links to it, and for a type
+ * definition (`_kiln/types/<name>.md`) those of that type. A link may name a folder before the file, names a
+ * note with or without `.md` and any other file with its extension, and ends at `]`, `|`, `#` or `^`; a type
+ * line may quote the name. Both ignore case.
  */
 export function usersOf(path: string, notes: { path: string; text: string }[]): string[] {
   const file = path.slice(path.lastIndexOf('/') + 1);
-  const name = file.endsWith('.md') ? file.slice(0, -'.md'.length) : file;
-  const link = new RegExp(`\\[\\[${escape(name)}`, 'i');
-  const type = /^_kiln\/types\/[^/]+\.md$/.test(path) ? new RegExp(`^type:\\s*${escape(name)}\\s*$`, 'm') : undefined;
+  const note = file.endsWith('.md');
+  const name = note ? file.slice(0, -'.md'.length) : file;
+  const link = new RegExp(`\\[\\[(?:[^\\]|#^\\n]*/)?${escape(name)}${note ? '(?:\\.md)?' : ''}[\\]|#^]`, 'i');
+  const type = /^_kiln\/types\/[^/]+\.md$/.test(path)
+    ? new RegExp(`^type:[ \\t]*(["']?)${escape(name)}\\1[ \\t]*$`, 'im')
+    : undefined;
   return notes
     .filter((note) => link.test(note.text) || (type?.test(splitFrontmatter(note.text).frontmatter) ?? false))
     .map((note) => note.path);
