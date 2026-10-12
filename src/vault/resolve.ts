@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { checkVault } from './find.js';
+import { checkVault, findVault } from './find.js';
 import { kilnConfigPath, readKilnConfig, type KilnConfig } from './config.js';
 import { obsidianListPath, readObsidianVaults } from './obsidian.js';
-import { envValue, expandHome, findUp, pathKey, type Where } from './paths.js';
+import { envValue, expandHome, pathKey, type Where } from './paths.js';
 
 export type Source = 'explicit' | 'current-folder' | 'KILN_VAULT' | 'default' | 'obsidian';
 export type Candidate = { path: string; name?: string; from: 'kiln' | 'obsidian' };
@@ -42,8 +42,11 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
     const k = kiln();
     return k.kind === 'ok' ? Object.entries(k.config.vaults) : [];
   };
-  const recordedPath = (name: string): string => absolute(recorded().find(([n]) => n === name)?.[1] ?? '');
-  const hasRecorded = (name: string): boolean => recorded().some(([n]) => n === name);
+  /** The folder the kiln file records for `name`, if it records one. */
+  const recordedPath = (name: string): string | undefined => {
+    const path = recorded().find(([n]) => n === name)?.[1];
+    return path === undefined ? undefined : absolute(path);
+  };
   const unreadable = (): string | undefined => {
     const k = kiln();
     return k.kind === 'unreadable' ? `${kilnFile} can't be read: ${k.message}` : undefined;
@@ -66,15 +69,19 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
     return obsidianRead;
   };
   /** Obsidian's kiln vaults (roots), merged by folder. */
+  let obsidianRoots: string[] | undefined;
   const obsidianKilnVaults = (): string[] => {
+    if (obsidianRoots !== undefined) return obsidianRoots;
     const read = obsidian();
-    if (!('paths' in read)) return [];
     const roots = new Map<string, string>();
-    for (const path of read.paths) {
-      const check = checkVault(absolute(path), { walkUp: false });
-      if (check.ok && !roots.has(key(check.root))) roots.set(key(check.root), check.root);
+    if ('paths' in read) {
+      for (const path of read.paths) {
+        const check = checkVault(absolute(path), { walkUp: false });
+        if (check.ok && !roots.has(key(check.root))) roots.set(key(check.root), check.root);
+      }
     }
-    return [...roots.values()];
+    obsidianRoots = [...roots.values()];
+    return obsidianRoots;
   };
 
   const explicitStep = (path: string): Outcome => {
@@ -83,17 +90,18 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
   };
 
   const currentFolderStep = (): Outcome => {
-    const vault = findUp(cwd, '_kiln', 'types');
+    const vault = findVault(cwd);
     return vault === undefined
       ? { reasons: [`the current folder (${cwd}) isn't in a kiln vault`] }
-      : found(resolve(vault), 'current-folder');
+      : found(vault, 'current-folder');
   };
 
   const envStep = (): Outcome => {
     const v = envValue(where.env, 'KILN_VAULT');
     if (v === undefined) return { reasons: ["KILN_VAULT isn't set"] };
-    const byName = hasRecorded(v);
-    const path = byName ? recordedPath(v) : absolute(v);
+    const recordedAt = recordedPath(v);
+    const byName = recordedAt !== undefined;
+    const path = recordedAt ?? absolute(v);
     const check = checkVault(path, { walkUp: !byName });
     if (check.ok) return found(check.root, 'KILN_VAULT', byName ? v : undefined);
     let reason = check.reason;
@@ -109,8 +117,9 @@ export function resolveVault(where: Where, explicit?: string): Resolution {
     if (k.kind === 'missing') return { reasons: [`no kiln file at ${kilnFile}`] };
     const d = k.config.default;
     if (d === undefined) return { reasons: [`${kilnFile} has no default`] };
-    if (!hasRecorded(d)) return { stop: `${kilnFile}'s default is "${d}", which isn't one of its vaults` };
-    const check = checkVault(recordedPath(d), { walkUp: false });
+    const path = recordedPath(d);
+    if (path === undefined) return { stop: `${kilnFile}'s default is "${d}", which isn't one of its vaults` };
+    const check = checkVault(path, { walkUp: false });
     return check.ok
       ? found(check.root, 'default', d)
       : { stop: `${kilnFile}'s default "${d}": ${check.reason}`, named: d };

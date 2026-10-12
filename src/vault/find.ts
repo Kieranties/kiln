@@ -1,6 +1,6 @@
-import { existsSync, statSync } from 'node:fs';
+import { statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { findUp } from './paths.js';
+import { findUp, isFolder } from './paths.js';
 
 export type VaultCheck = { ok: true; root: string } | { ok: false; reason: string };
 
@@ -9,16 +9,20 @@ export function findVault(path: string): string | undefined {
   return findUp(path, '_kiln', 'types');
 }
 
-const hasFolder = (root: string, ...marker: string[]): boolean =>
-  statSync(join(root, ...marker), { throwIfNoEntry: false })?.isDirectory() === true;
+const hasFolder = (root: string, ...marker: string[]): boolean => isFolder(join(root, ...marker));
 
 /** Says whether `path` (absolute) is a kiln vault, or with `walkUp` is inside one. */
 export function checkVault(path: string, options: { walkUp: boolean }): VaultCheck {
   const { walkUp } = options;
-  if (!existsSync(path)) return { ok: false, reason: `${path} doesn't exist` };
-  if (!walkUp && statSync(path).isFile()) {
-    return { ok: false, reason: `${path} is a file, not a vault folder` };
+  let isFile: boolean;
+  try {
+    const stat = statSync(path, { throwIfNoEntry: false });
+    if (stat === undefined) return { ok: false, reason: `${path} doesn't exist` };
+    isFile = stat.isFile();
+  } catch (error) {
+    return { ok: false, reason: `${path} can't be read: ${error instanceof Error ? error.message : String(error)}` };
   }
+  if (!walkUp && isFile) return { ok: false, reason: `${path} is a file, not a vault folder` };
   const root = walkUp ? findVault(path) : hasFolder(path, '_kiln', 'types') ? resolve(path) : undefined;
   if (root !== undefined) return { ok: true, root: resolve(root) };
   const obs = walkUp ? findUp(path, '.obsidian') : hasFolder(path, '.obsidian') ? path : undefined;

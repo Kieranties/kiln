@@ -27,7 +27,14 @@ export function pathKey(path: string, platform: NodeJS.Platform): string {
   return platform === 'win32' || platform === 'darwin' ? key.toLowerCase() : key;
 }
 
-const isFolder = (path: string): boolean => statSync(path, { throwIfNoEntry: false })?.isDirectory() === true;
+/** True for a folder; any failure to look (permissions, a file in the way) counts as no. */
+export function isFolder(path: string): boolean {
+  try {
+    return statSync(path, { throwIfNoEntry: false })?.isDirectory() === true;
+  } catch {
+    return false;
+  }
+}
 
 /** From `start` (or its folder) walks up to the first folder in which `join(folder, ...marker)` is a folder. */
 export function findUp(start: string, ...marker: string[]): string | undefined {
