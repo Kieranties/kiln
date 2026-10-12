@@ -72,7 +72,7 @@ The steps for whoever applies the blueprint, usually Claude. `<vault>` is the va
    - its properties in `settings/types.json`;
    - any new property in `properties.md` (an icon, or the type it links to) and in `propertyIcons` in `settings/plugins/iconic.json`.
 3. Update the tests, which pin the starting set:
-   - `tests/kit/definitions.test.ts`: the type list and the folder, status, kind, property and section tables;
+   - `tests/kit/definitions.test.ts`: the type list; the folder, naming, status, kind, property and section tables; which type keeps a section `last`; and the shared and optional properties in `properties.md`;
    - `tests/fixtures/layer1`: add an example note of the new type in its folder, since every type needs one.
 4. Run `npx vitest run tests/kit` until it passes. The tests name anything that is out of step.
 5. In the vault, create the type's folder, copy the changed files in and merge the changed settings, as in "Setting up a vault". Iconic and Templater pick up their settings with Obsidian open; templates and views are plain files. Only QuickAdd and Homepage changes need Obsidian closed.
