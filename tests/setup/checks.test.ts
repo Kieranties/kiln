@@ -64,6 +64,8 @@ describe('the Obsidian CLI', () => {
     writeFileSync(join(bin, 'Obsidian.com'), '');
     expect(findObsidianCli({ Path: `${join(dir, 'nothing')};;${bin}` }, 'win32')).toBe(join(bin, 'Obsidian.com'));
     expect(findObsidianCli({ Path: join(dir, 'nothing') }, 'win32')).toBeNull();
+    // Windows accepts a PATH entry in double quotes.
+    expect(findObsidianCli({ Path: `${join(dir, 'nothing')};"${bin}"` }, 'win32')).toBe(join(bin, 'Obsidian.com'));
     expect(findObsidianCli({}, 'win32')).toBeNull();
   });
   // PATH splits on ":" outside Windows, so a Windows folder such as D:\tmp can't stand in for one there.

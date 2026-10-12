@@ -62,6 +62,11 @@ describe('loadSample', () => {
     ['Work//x.md'],
     ['./x.md'],
     ['Work/x\u0000.md'],
+    // Windows drops a trailing dot or space, so these would land somewhere other than they say.
+    ['Work./x.md'],
+    ['Work/x.md.'],
+    ['Work /x.md'],
+    ['Work/x.md '],
   ])('refuses the unsafe sample path %j before fetching any file', async (path) => {
     const github = fakeGitHub(SHA, { extra: { [path]: 'evil\n' } });
     await expect(loadSample(pluginCopy(SHA), github)).rejects.toThrow(

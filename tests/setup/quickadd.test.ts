@@ -22,6 +22,13 @@ describe('kindTemplates', () => {
     for (const t of templates) expect(t.text, t.path).not.toMatch(/tp\.system|<% kind %>/);
   });
 
+  it('writes a kind name as it is, even one with a $ pattern in it', () => {
+    const work = definitions.find((d) => d.name === 'work');
+    if (work === undefined) throw new Error('the blueprint has no work type');
+    const [template] = kindTemplates([{ ...work, kinds: { 'fix$&': {} } }], read);
+    expect(template?.text).toContain('\nkind: fix$&\n');
+  });
+
   it('names the template when its picker is missing', () => {
     expect(() => kindTemplates(definitions, (f) => (f === 'Work.md' ? '---\ntype: work\n---\n' : read(f)))).toThrow(
       /^templates\/Work\.md: expected a kind picker/,
@@ -82,6 +89,14 @@ describe('kindChoices', () => {
 
   it("leaves a type to the blueprint's own choice when it has one", () => {
     expect(all.some((c) => c.id === 'kiln-capture')).toBe(false);
+  });
+
+  it('refuses a type with no kinds and no template, rather than pointing at the templates folder', () => {
+    const topic = definitions.find((d) => d.name === 'topic');
+    if (topic === undefined) throw new Error('the blueprint has no topic type');
+    expect(() => kindChoices([{ ...topic, name: 'loose', template: '' }], fragment.choices)).toThrow(
+      'types/loose.md: no template and no kinds, so there is nothing for a QuickAdd choice to use',
+    );
   });
 
   it('refuses a duplicate name', () => {

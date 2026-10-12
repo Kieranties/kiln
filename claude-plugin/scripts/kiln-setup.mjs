@@ -7472,7 +7472,8 @@ function findObsidianCli(env, platform) {
   const path = key === void 0 ? void 0 : env[key];
   if (path === void 0) return null;
   const name = platform === "win32" ? "Obsidian.com" : "obsidian";
-  for (const folder of path.split(platform === "win32" ? ";" : ":")) {
+  for (const entry of path.split(platform === "win32" ? ";" : ":")) {
+    const folder = platform === "win32" ? entry.trim().replace(/^"(.*)"$/, "$1") : entry;
     if (folder.trim() === "") continue;
     const file = join(folder, name);
     if (existsSync(file)) return file;
@@ -7776,7 +7777,7 @@ import { createHash } from "node:crypto";
 import { readdirSync as readdirSync3, readFileSync as readFileSync4 } from "node:fs";
 import { join as join7, relative as relative2, sep as sep2 } from "node:path";
 function hash(data) {
-  const text2 = typeof data === "string" ? data : new TextDecoder().decode(data);
+  const text2 = typeof data === "string" ? data : new TextDecoder("utf-8", { ignoreBOM: true, fatal: true }).decode(data);
   return `sha256:${createHash("sha256").update(text2.replaceAll("\r\n", "\n"), "utf8").digest("hex")}`;
 }
 function filesUnder(dir) {
@@ -7813,7 +7814,8 @@ function kindTemplates(definitions, readTemplate) {
     }
     return kinds.map((kind) => ({
       path: kindPath(d, kind),
-      text: text2.replace(PICKER, "").replace(KIND, `kind: ${kind}`)
+      // A function, so a `$` pattern in the kind's name is written as it is.
+      text: text2.replace(PICKER, "").replace(KIND, () => `kind: ${kind}`)
     }));
   });
 }
@@ -7861,7 +7863,13 @@ function kindChoices(definitions, blueprintChoices) {
     const kinds = Object.keys(d.kinds);
     if (kinds.length === 0) {
       const id = `kiln-${d.name}`;
-      if (!taken.has(id)) generated.push(templateChoice(id, `New ${d.name}`, d, `_kiln/templates/${d.template}`));
+      if (taken.has(id)) continue;
+      if (d.template === "") {
+        throw new Error(
+          `types/${d.name}.md: no template and no kinds, so there is nothing for a QuickAdd choice to use`
+        );
+      }
+      generated.push(templateChoice(id, `New ${d.name}`, d, `_kiln/templates/${d.template}`));
       continue;
     }
     generated.push({
@@ -8307,7 +8315,7 @@ var message = (error) => error instanceof Error ? error.message : String(error);
 function isPlainPath(path) {
   const unsafe = (code) => code === 92 || code === 58 || code < 32 || code === 127;
   return path.split("/").every((segment) => {
-    if (segment === "" || segment === "." || segment === "..") return false;
+    if (segment === "" || segment.endsWith(".") || segment.endsWith(" ")) return false;
     for (let i = 0; i < segment.length; i++) if (unsafe(segment.charCodeAt(i))) return false;
     return true;
   });

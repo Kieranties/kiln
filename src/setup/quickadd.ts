@@ -39,7 +39,8 @@ export function kindTemplates(definitions: Definition[], readTemplate: (file: st
     }
     return kinds.map((kind) => ({
       path: kindPath(d, kind),
-      text: text.replace(PICKER, '').replace(KIND, `kind: ${kind}`),
+      // A function, so a `$` pattern in the kind's name is written as it is.
+      text: text.replace(PICKER, '').replace(KIND, () => `kind: ${kind}`),
     }));
   });
 }
@@ -92,7 +93,13 @@ export function kindChoices(definitions: Definition[], blueprintChoices: Choice[
     const kinds = Object.keys(d.kinds);
     if (kinds.length === 0) {
       const id = `kiln-${d.name}`;
-      if (!taken.has(id)) generated.push(templateChoice(id, `New ${d.name}`, d, `_kiln/templates/${d.template}`));
+      if (taken.has(id)) continue;
+      if (d.template === '') {
+        throw new Error(
+          `types/${d.name}.md: no template and no kinds, so there is nothing for a QuickAdd choice to use`,
+        );
+      }
+      generated.push(templateChoice(id, `New ${d.name}`, d, `_kiln/templates/${d.template}`));
       continue;
     }
     generated.push({

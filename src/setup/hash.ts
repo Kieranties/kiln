@@ -4,10 +4,12 @@ import { join, relative, sep } from 'node:path';
 
 /**
  * `sha256:<hex>` of the text, with CRLF read as LF so a file saved either way hashes the same.
- * Bytes are read as UTF-8 text (kiln's files are all text).
+ * Bytes are read as UTF-8 text (kiln's files are all text), keeping a byte-order mark as
+ * `readFileSync(file, 'utf8')` does; bytes that aren't UTF-8 throw.
  */
 export function hash(data: string | Uint8Array): string {
-  const text = typeof data === 'string' ? data : new TextDecoder().decode(data);
+  const text =
+    typeof data === 'string' ? data : new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }).decode(data);
   return `sha256:${createHash('sha256').update(text.replaceAll('\r\n', '\n'), 'utf8').digest('hex')}`;
 }
 

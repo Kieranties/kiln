@@ -53,7 +53,9 @@ export function findObsidianCli(env: Env, platform: NodeJS.Platform): string | n
   const path = key === undefined ? undefined : env[key];
   if (path === undefined) return null;
   const name = platform === 'win32' ? 'Obsidian.com' : 'obsidian';
-  for (const folder of path.split(platform === 'win32' ? ';' : ':')) {
+  for (const entry of path.split(platform === 'win32' ? ';' : ':')) {
+    // Windows accepts an entry in double quotes.
+    const folder = platform === 'win32' ? entry.trim().replace(/^"(.*)"$/, '$1') : entry;
     if (folder.trim() === '') continue;
     const file = join(folder, name);
     if (existsSync(file)) return file;

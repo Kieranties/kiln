@@ -20,12 +20,13 @@ const message = (error: unknown): string => (error instanceof Error ? error.mess
 
 /**
  * True when every segment of a sample-relative `/` path is a plain name: not empty, `.` or `..`, and
- * without `\`, `:` or control characters, which could lead out of the repo's URL or out of the vault.
+ * without `\`, `:` or control characters, which could lead out of the repo's URL or out of the vault. A
+ * segment can't end in `.` or a space either, which Windows drops, so the file would land elsewhere.
  */
 function isPlainPath(path: string): boolean {
   const unsafe = (code: number) => code === 0x5c || code === 0x3a || code < 0x20 || code === 0x7f; // \ : controls
   return path.split('/').every((segment) => {
-    if (segment === '' || segment === '.' || segment === '..') return false;
+    if (segment === '' || segment.endsWith('.') || segment.endsWith(' ')) return false; // also . and ..
     for (let i = 0; i < segment.length; i++) if (unsafe(segment.charCodeAt(i))) return false;
     return true;
   });
