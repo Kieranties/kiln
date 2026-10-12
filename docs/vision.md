@@ -36,7 +36,51 @@ Built in this order. Each layer is usable on its own.
 | 3. **Claude** | Skills that teach Claude the structure and the workflows, plus existing Obsidian skills or an Obsidian MCP where they help | Ask, Start work, Work and checkpoint |
 | 4. **Further** | Close-out, refresh, scheduling, Herdr workspaces, feeders | Close-out, Follow up and refresh |
 
-The flows and the agreed story order are in [kiln user flows](specs/2026-10-11-user-flows.md).
+## Flows
+
+A flow is one journey through kiln, from a trigger to a result. Each flow's design lives in its epic on GitHub, labelled `epic`, until the flow is built; then it gets a guide. The order they are built in is the order of the [kiln project board](https://github.com/users/Kieranties/projects/5).
+
+The flows' diagrams use these lanes:
+
+| Lane | What it is |
+|---|---|
+| **Me** | The owner |
+| **Obsidian** | The vault on screen: notes, embedded Bases views, the daily note |
+| **Claude** | Claudian inside Obsidian, or a Claude session in a Herdr tab. Same skills either way |
+| **Herdr** | Workspaces: tabs, Claude sessions, worktrees |
+| **Vault** | The markdown files on disk, with kiln's templates, views and checks |
+| **External** | Jira, GitHub, Slack, mail, calendar, meeting notes, the web |
+
+How the flows hand off to each other:
+
+```mermaid
+%%{init: {"theme": "default"}}%%
+flowchart LR
+    subgraph card[" "]
+        subgraph arrive[Things arrive]
+            EXT[Tickets, PRs, threads, mail]
+            MTG[Meetings]
+            ME[My thoughts and links]
+            SES[Claude session outcomes]
+        end
+        EXT -->|Capture| INBOX[(Inbox)]
+        ME -->|Capture| INBOX
+        SES -->|Capture| INBOX
+        MTG -->|Meeting| MNOTE[Meeting note] --> INBOX
+        INBOX -->|Triage| VAULT[(Projects, work items,<br/>topics, people)]
+        RES[Research] -->|knowledge for later decisions| VAULT
+        VAULT -->|Browse| OBS[Read in Obsidian:<br/>notes and the board]
+        TYPES[Add a type or kind] -.->|new shapes| VAULT
+        VAULT -->|Ask| ANS[Answer with links]
+        VAULT -->|Start work| WS[Herdr workspace]
+        WS -->|Checkpoint| VAULT
+        WS -->|Close-out| VAULT
+        EXT -->|Follow up and refresh| VAULT
+        DAY[Daily rhythm] -.->|morning and evening| VAULT
+        DAY -.-> INBOX
+    end
+    style card fill:#fafafa,stroke:#bbbbbb
+```
 
 ## Entities, types and kinds
 

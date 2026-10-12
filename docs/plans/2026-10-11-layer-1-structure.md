@@ -8,7 +8,7 @@
 
 **Tech Stack:** Obsidian 1.14+ (Bases, built-in kanban), Iconic, Templater, QuickAdd, Homepage. Tests: vitest and `yaml` (both already in the repo), TypeScript ESM.
 
-**Spec:** [docs/specs/2026-10-11-layer-1-structure-design.md](../specs/2026-10-11-layer-1-structure-design.md). Context: [vision](../vision.md), [user flows](../specs/2026-10-11-user-flows.md).
+**Spec:** [docs/specs/2026-10-11-layer-1-structure-design.md](../specs/2026-10-11-layer-1-structure-design.md). Context: [vision](../vision.md), the flow epics on GitHub.
 
 ## Global Constraints
 

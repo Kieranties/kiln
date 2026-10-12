@@ -2,7 +2,7 @@
 
 Status: **built and checked** (2026-10-11), as the blueprint in `claude-plugin/blueprint/` (the kit until #105). Nothing here is final.
 
-Layer 1 of the [vision](../vision.md): the vault structure, so that entities are easy to find and read in Obsidian. It covers the flows Browse (5) and Add a type or kind (12) in [kiln user flows](2026-10-11-user-flows.md), and the shapes every later layer writes into.
+Layer 1 of the [vision](../vision.md): the vault structure, so that entities are easy to find and read in Obsidian. It covers the flows Browse (5) and Add a type or kind (12) (their epics on GitHub), and the shapes every later layer writes into.
 
 Approach: configuration first (vision P5). Type definitions, templates, properties and Bases views, plus a few community plugins. kiln plugin code comes after the migration slice.
 

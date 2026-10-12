@@ -8,7 +8,7 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 |---|---|
 | **The language and the decisions**: canonical terms, and why kiln is shaped the way it is | [GLOSSARY.md](GLOSSARY.md), [docs/adr/](docs/adr/). Where an older doc below disagrees with an ADR, the ADR wins |
 | **Why kiln exists, principles, entities, types and kinds, layers** | [docs/vision.md](docs/vision.md) |
-| **User flows and the agreed story order** | [docs/specs/2026-10-11-user-flows.md](docs/specs/2026-10-11-user-flows.md) |
+| **User flows** | Each flow's epic on GitHub (label `epic`); how they hand off is in [docs/vision.md](docs/vision.md#flows). Board order is the priority |
 | **Layer 1, the vault structure: design and plan** | [design](docs/specs/2026-10-11-layer-1-structure-design.md), [plan](docs/plans/2026-10-11-layer-1-structure.md) |
 | **Foundation: Claude in the vault (#79)**, one design note per sub-issue | [vault access](docs/specs/2026-10-11-vault-access-design.md), [repo layout](docs/specs/2026-10-11-repo-layout-design.md), [note check](docs/specs/2026-10-11-note-check-design.md), [finding the vault](docs/specs/2026-10-11-finding-the-vault-design.md), [plugin install](docs/specs/2026-10-11-plugin-install-design.md), [vault setup](docs/specs/2026-10-11-vault-setup-design.md) |
 | **The blueprint** (types, templates, views, settings), its guides and checks | [claude-plugin/blueprint/README.md](claude-plugin/blueprint/README.md), [Getting started](claude-plugin/blueprint/GETTING-STARTED.md), [Try the sample](claude-plugin/blueprint/TRY-THE-SAMPLE.md); tests in `tests/blueprint/` |

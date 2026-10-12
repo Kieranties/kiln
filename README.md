@@ -80,7 +80,7 @@ claude plugin install obsidian@obsidian-skills
 | `tests/plugin/` | Checks the catalog, the plugin manifest and folder, the release zip, the vault rules and every skill, the README's plugin commands, and the living docs' links |
 | `tests/fixtures/sample/` | The Northwind Arena sample vault |
 | `tests/fixtures/check/` | Broken notes for the note check, laid over the sample |
-| `docs/` | The vision, the user flows and story order, and each layer's design and plan |
+| `docs/` | The vision, with how the flows hand off, and each layer's design and plan |
 
 ## Working on kiln
 
