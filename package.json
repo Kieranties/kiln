@@ -26,11 +26,13 @@
   "devDependencies": {
     "@types/node": "^24",
     "esbuild": "0.28.2",
+    "mermaid": "^11.17.2",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2004",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",
     "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17",
     "vitest": "^5.0.3",
     "yaml": "^2.9.1"
   }
