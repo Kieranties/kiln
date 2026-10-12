@@ -148,7 +148,7 @@ describe('setting up from any folder', () => {
 describe('guide caveats', () => {
   it('says where a locally edited type reaches the vault from', () => {
     for (const doc of [guide, section(readme, 'Adding or changing a type')]) {
-      expect(doc).toContain('--plugin-dir');
+      expect(doc).toContain('--plugin-dir D:/src/kiln/claude-plugin');
       expect(doc).toContain('claude plugin update kiln@kiln');
     }
   });
