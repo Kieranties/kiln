@@ -128,6 +128,7 @@ describe('the Obsidian settings', () => {
       'iconic',
       'templater-obsidian',
       'homepage',
+      'realclaudian',
     ]);
   });
 

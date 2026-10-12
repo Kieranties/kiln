@@ -27,7 +27,7 @@ Keep to the conventions in `<vault>/_kiln/README.md`, "Conventions". The ones mo
 - Relationships are always lists of links, even with one entry: `projects: ["[[Season Ticket Renewals 2027]]"]`.
 - Change only the properties and sections you mean to.
 - Archive, never delete: retire a note through its `status`.
-- Leave `_kiln/`, `.obsidian/` and `.claude/` alone. Only `/kiln:setup` changes `_kiln/` and `.obsidian/`; kiln never writes to `.claude/`.
+- Leave `_kiln/`, `.obsidian/`, `.claude/` and `.claudian/` alone. Only `/kiln:setup` changes `_kiln/` and `.obsidian/`; kiln never writes to `.claude/` or to Claudian's `.claudian/`.
 
 ## 3. Create notes through QuickAdd, after checking the file doesn't exist
 

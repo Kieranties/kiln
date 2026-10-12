@@ -28,7 +28,7 @@ export function cleanupAll(): void {
   for (const dir of made.splice(0)) rmSync(dir, { recursive: true, force: true });
 }
 
-const PLUGINS = ['iconic', 'templater-obsidian', 'quickadd', 'homepage'];
+const PLUGINS = ['iconic', 'templater-obsidian', 'quickadd', 'homepage', 'realclaudian'];
 
 /**
  * What Obsidian and the plugins leave in a just-made vault, keyed by path under `.obsidian/`.
@@ -93,8 +93,8 @@ export type TestVault = {
 const offline = () => Promise.reject(new Error('no network in tests'));
 
 /**
- * A vault at `<root>/Trial Vault` in a new temporary folder, with the four plugins installed at the
- * blueprint's minimums (or the version `plugins` names, or not at all for `null`), and `FRESH` unless
+ * A vault at `<root>/Trial Vault` in a new temporary folder, with the blueprint's plugins installed at their
+ * minimums (or the version `plugins` names, or not at all for `null`), and `FRESH` unless
  * `fresh` is false. The kiln file is `<root>/kiln-home/config.json`.
  */
 export function testVault(o: { plugins?: Record<string, string | null>; fresh?: boolean } = {}): TestVault {

@@ -112,6 +112,8 @@ describe('/kiln:setup', () => {
       '`install.plugins`',
       '`cli` is `null`',
       'restricted mode',
+      // Claudian is the one plugin Obsidian staff haven't reviewed, and it runs Claude Code in the vault.
+      "When `realclaudian` is in the list, also say that Claudian is the one plugin Obsidian staff haven't reviewed",
       'Run nothing until the owner says yes',
       // The CLI doesn't start Obsidian on Windows (1.14.4), and says so: open the vault by its URI and retry,
       // then ask the owner. Nothing is written by hand.
