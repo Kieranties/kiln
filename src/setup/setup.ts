@@ -42,7 +42,7 @@ export type SetupOptions = {
 
 export type FileStep = {
   path: string;
-  action: 'add' | 'update' | 'replace' | 'keep' | 'ask' | 'dropped' | 'wait';
+  action: 'add' | 'update' | 'replace' | 'keep' | 'ask' | 'deleted' | 'dropped' | 'wait';
   backup?: string;
   usedBy?: string[];
 };
@@ -338,10 +338,11 @@ function prepare(o: SetupOptions): Prepared {
       continue;
     }
     let action: FileStep['action'] = sorted;
-    const taken = sorted === 'ask' && take.has(path);
+    // Taken: the blueprint's copy replaces the owner's edit, or comes back where they deleted it.
+    const taken = (sorted === 'ask' || sorted === 'deleted') && take.has(path);
     if (taken) {
       matched.add(path);
-      action = 'replace';
+      action = sorted === 'deleted' ? 'add' : 'replace';
     } else if (sorted === 'ask' && blueprint !== undefined && kept[path] === blueprint) {
       action = 'keep';
     }

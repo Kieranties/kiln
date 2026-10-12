@@ -13,6 +13,7 @@ describe('sortFile: the spec table', () => {
     ['changed by the owner, unchanged in the blueprint: keep', R, V, R, 'keep'],
     ['changed by both: ask', R, V, B, 'ask'],
     ['missing, new in the blueprint: add', undefined, undefined, B, 'add'],
+    ['installed, then deleted by the owner: deleted, not restored', R, undefined, B, 'deleted'],
     ['present, dropped from the blueprint: dropped', R, V, undefined, 'dropped'],
   ] as const)('%s', (_name, recorded, vault, blueprint, action) => {
     expect(sortFile('_kiln/views/x.base', recorded, vault, blueprint, true)).toBe(action);
@@ -20,7 +21,7 @@ describe('sortFile: the spec table', () => {
 
   it('the cases around it', () => {
     expect(sortFile('_kiln/x.md', R, B, B, true)).toBe('unchanged');
-    expect(sortFile('_kiln/x.md', R, undefined, B, true)).toBe('add');
+    expect(sortFile('_kiln/x.md', R, undefined, R, true)).toBe('deleted');
     expect(sortFile('_kiln/x.md', R, undefined, undefined, true)).toBe('forget');
     expect(sortFile('_kiln/x.md', undefined, V, undefined, true)).toBe('skip');
     expect(sortFile('Home.md', undefined, V, B, true)).toBe('ask');

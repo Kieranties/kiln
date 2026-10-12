@@ -7947,7 +7947,7 @@ function sortFile(path, recorded, vault, blueprint, hasRecord = true) {
     if (recorded === void 0) return "skip";
     return vault === void 0 ? "forget" : "dropped";
   }
-  if (vault === void 0) return "add";
+  if (vault === void 0) return recorded === void 0 ? "add" : "deleted";
   if (vault === blueprint) return "unchanged";
   if (recorded === void 0) {
     return !hasRecord && path.startsWith("_kiln/") ? "replace" : "ask";
@@ -8558,10 +8558,10 @@ function prepare(o) {
       continue;
     }
     let action = sorted;
-    const taken = sorted === "ask" && take.has(path);
+    const taken = (sorted === "ask" || sorted === "deleted") && take.has(path);
     if (taken) {
       matched.add(path);
-      action = "replace";
+      action = sorted === "deleted" ? "add" : "replace";
     } else if (sorted === "ask" && blueprint !== void 0 && kept[path] === blueprint) {
       action = "keep";
     }

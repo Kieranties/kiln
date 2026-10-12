@@ -2,9 +2,11 @@ import { splitFrontmatter } from '../blueprint/markdown.js';
 
 /**
  * What re-apply does with one file. `replace` means replace, backing up the vault's copy first;
+ * `deleted` the owner deleted a file setup installed: leave it deleted (their edit) and report it;
  * `forget` drop it from the record; `skip` it isn't the blueprint's.
  */
-export type FileAction = 'add' | 'update' | 'replace' | 'unchanged' | 'keep' | 'ask' | 'dropped' | 'forget' | 'skip';
+export type FileAction =
+  'add' | 'update' | 'replace' | 'unchanged' | 'keep' | 'ask' | 'deleted' | 'dropped' | 'forget' | 'skip';
 
 /**
  * The three-way sort. `recorded` is what setup installed last time (from the record), `vault` what is
@@ -22,7 +24,8 @@ export function sortFile(
     if (recorded === undefined) return 'skip'; // never the blueprint's: the owner's own file
     return vault === undefined ? 'forget' : 'dropped';
   }
-  if (vault === undefined) return 'add';
+  // Missing and new in the blueprint: add it. Missing but installed before: the owner deleted it.
+  if (vault === undefined) return recorded === undefined ? 'add' : 'deleted';
   if (vault === blueprint) return 'unchanged';
   if (recorded === undefined) {
     // No hash to compare with. A vault set up by hand (no record) only ever had the blueprint in _kiln/.

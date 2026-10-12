@@ -1,4 +1,4 @@
-import { rmSync, writeFileSync } from 'node:fs';
+import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { applySetup, planSetup } from '../../src/setup/setup.js';
@@ -129,6 +129,23 @@ describe('re-applying a changed blueprint', () => {
     await applySetup(t.options({ obsidianRunning: true }));
     expect(planSetup(t.options()).asks).toEqual([]);
     expect(t.json('.obsidian/app.json')).toMatchObject({ newFileFolderPath: 'Notes' });
+  });
+
+  it('leaves a file the owner deleted deleted, and puts it back only when taken', async () => {
+    const t = testVault();
+    await applySetup(t.options());
+    rmSync(join(t.vault, '_kiln', 'views', 'today.base'));
+    const report = await applySetup(t.options());
+    expect(report.files).toEqual([{ path: '_kiln/views/today.base', action: 'deleted' }]);
+    expect(existsSync(join(t.vault, '_kiln', 'views', 'today.base'))).toBe(false);
+    // Still recorded, so the next run doesn't take it for a new file.
+    expect(planSetup(t.options()).files).toEqual([{ path: '_kiln/views/today.base', action: 'deleted' }]);
+
+    const taken = await applySetup(t.options({ take: ['_kiln/views/today.base'] }));
+    expect(taken.files).toEqual([{ path: '_kiln/views/today.base', action: 'add' }]);
+    expect(taken.warnings).toEqual([]);
+    expect(existsSync(join(t.vault, '_kiln', 'views', 'today.base'))).toBe(true);
+    expect(planSetup(t.options()).files).toEqual([]);
   });
 
   it('reads a copy saved with CRLF endings as unchanged', async () => {

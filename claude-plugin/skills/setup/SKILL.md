@@ -25,7 +25,7 @@ Add `--sample` if the owner asked for the sample. The commands are the same in B
 
 - `stop`: tell the owner each reason and how to fix it, then plan again. Exit code 1 means there is at least one. A stop that says Obsidian is running, or that it can't tell, is not handled here: carry on to step 3 with the plan's `asks`, and deal with it at step 4, the only place Obsidian is checked. If the output has `error` instead, report it and stop. Exit code 2 prints usage text, not JSON: run it again with only the options listed here.
 - `warnings`: pass each one on. One says the Obsidian CLI isn't registered; kiln's other skills need it.
-- Summarise the plan: the folders, the files by action, the settings that change. Files with action `wait` wait for Obsidian to close.
+- Summarise the plan: the folders, the files by action, the settings that change. Files with action `wait` wait for Obsidian to close. Files with action `deleted` are ones setup installed that the owner has since deleted: setup leaves them deleted. Offer to put one back, which is `--take '<path>'` at step 5.
 - `vaultOnlyTypes`: types the owner added to `_kiln/types/` themselves. Setup leaves them alone and generates nothing for them.
 - `sample`: with `notes` above 0, the vault already has the owner's own notes. Ask before loading the sample there.
 
@@ -57,7 +57,7 @@ With the same `--sample`, each `--take '<id>'`, and `--confirm-closed` if step 4
 
 ## 7. Report
 
-Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through section 4 of `_kiln/GETTING-STARTED.md`, or section 3 of `_kiln/TRY-THE-SAMPLE.md` for the sample.
+Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, files the owner deleted (left deleted), dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through section 4 of `_kiln/GETTING-STARTED.md`, or section 3 of `_kiln/TRY-THE-SAMPLE.md` for the sample.
 
 ## Never
 
