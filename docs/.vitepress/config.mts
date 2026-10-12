@@ -3,8 +3,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type DefaultTheme } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
+import { readDefinitions } from '../../src/blueprint/load.js';
 
 const DOCS = fileURLToPath(new URL('../', import.meta.url));
+const BLUEPRINT = fileURLToPath(new URL('../../claude-plugin/blueprint/', import.meta.url));
 
 /** A sidebar entry for every page in a docs folder, titled by its first heading, in file name order. */
 function pagesIn(folder: string): DefaultTheme.SidebarItem[] {
@@ -59,6 +61,12 @@ export default withMermaid(
               text: 'Reference',
               items: [
                 { text: 'The blueprint', link: '/reference/blueprint' },
+                {
+                  text: 'Types',
+                  link: '/reference/types/',
+                  collapsed: true,
+                  items: readDefinitions(BLUEPRINT).map((d) => ({ text: d.name, link: `/reference/types/${d.name}` })),
+                },
                 { text: 'Skills', link: '/reference/skills' },
                 { text: 'Vault rules', link: '/reference/vault-rules' },
                 { text: 'Configuration', link: '/reference/configuration' },

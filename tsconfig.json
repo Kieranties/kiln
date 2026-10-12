@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts", "docs/.vitepress/**/*.mts"],
-  "exclude": ["tests/fixtures/**"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts", "docs/**/*.mts"],
+  "exclude": ["tests/fixtures/**", "docs/.vitepress/cache/**"]
 }

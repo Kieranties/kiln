@@ -4,7 +4,7 @@ The blueprint is kiln's vault structure: what kinds of notes exist, how each one
 
 ## Types and kinds
 
-Every note is an entity with a **type** (the `type` property) and optionally a **kind** within it (`kind`). The type decides the folder, template, properties, icon, styling and views; a kind can override any of them. Each type has one **type definition**, the single source of truth that everything else in the blueprint is written from ([ADR 0004](../adr/0004-type-definitions-are-the-source-of-truth.md)). The definitions are in `claude-plugin/blueprint/types/`, and a vault holds its own copies in `_kiln/types/`.
+Every note is an entity with a **type** (the `type` property) and optionally a **kind** within it (`kind`). The type decides the folder, template, properties, icon, styling and views; a kind can override any of them. Each type has one **type definition**, the single source of truth that everything else in the blueprint is written from ([ADR 0004](../adr/0004-type-definitions-are-the-source-of-truth.md)). The definitions are in `claude-plugin/blueprint/types/`, and a vault holds its own copies in `_kiln/types/`. [Each type's reference page](../reference/types/) is written from its definition when this site is built.
 
 The starting set, by how long its entities live:
 
