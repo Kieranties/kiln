@@ -165,7 +165,7 @@ describe('/kiln:setup', () => {
     expect(body).not.toMatch(/GETTING-STARTED|TRY-THE-SAMPLE/);
     const step8 = body.slice(body.indexOf('## 8.'), body.indexOf('## Never'));
     for (const page of ['guides/getting-started#_4-check-it', 'guides/try-the-sample#_3-look-around']) {
-      expect(step8, page).toContain(`https://kieranties.github.io/kiln/${page}`);
+      expect(step8, page).toContain(`https://kiln.kieranties.com/${page}`);
     }
   });
 

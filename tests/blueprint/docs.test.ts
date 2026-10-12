@@ -6,7 +6,7 @@ import { installedFiles } from '../../src/setup/blueprint.js';
 import { BLUEPRINT } from '../support/blueprint.js';
 
 const SAMPLE = fileURLToPath(new URL('../fixtures/sample/', import.meta.url));
-const SITE = 'https://kieranties.github.io/kiln';
+const SITE = 'https://kiln.kieranties.com';
 
 const GUIDES = fileURLToPath(new URL('../../docs/guides/', import.meta.url));
 const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');

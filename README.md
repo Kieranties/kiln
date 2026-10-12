@@ -13,11 +13,11 @@ claude plugin marketplace add Kieranties/kiln
 claude plugin install kiln@kiln
 ```
 
-Then follow [Getting started](https://kieranties.github.io/kiln/guides/getting-started) to set up your vault with `/kiln:setup`.
+Then follow [Getting started](https://kiln.kieranties.com/guides/getting-started) to set up your vault with `/kiln:setup`.
 
 ## Docs
 
-**[kieranties.github.io/kiln](https://kieranties.github.io/kiln/)**: guides to install, set up and update kiln, try the sample, the reference, how kiln works, and the decisions behind it. The source is in [`docs/`](docs/).
+**[kiln.kieranties.com](https://kiln.kieranties.com/)**: guides to install, set up and update kiln, try the sample, the reference, how kiln works, and the decisions behind it. The source is in [`docs/`](docs/).
 
 ## License
 

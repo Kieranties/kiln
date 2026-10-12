@@ -144,7 +144,7 @@ describe('the README', () => {
       'claude plugin marketplace add Kieranties/kiln',
       `claude plugin install ${catalog.plugins[0]?.name}@${catalog.name}`,
     ]);
-    expect(readme).toContain('](https://kieranties.github.io/kiln/)');
+    expect(readme).toContain('](https://kiln.kieranties.com/)');
   });
 });
 
@@ -217,8 +217,8 @@ describe('the docs site', () => {
     expect(docs?.steps.some((s) => s.uses?.startsWith('actions/deploy-pages@'))).toBe(true);
   });
 
-  it('is served from the repo name, and leaves out the agents notes', () => {
-    expect(config).toContain("base: '/kiln/'");
+  it('is served from the root of kiln.kieranties.com, and leaves out the agents notes', () => {
+    expect(config).toContain("base: '/'");
     expect(config).toContain("srcExclude: ['agents/**']");
   });
 

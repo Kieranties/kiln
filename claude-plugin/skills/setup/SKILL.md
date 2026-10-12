@@ -83,7 +83,7 @@ With the same `--sample`, each `--take '<id>'`, and `--confirm-closed` if step 5
 
 ## 8. Report
 
-Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, files the owner deleted (left deleted), dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through "Check it" in Getting started, https://kieranties.github.io/kiln/guides/getting-started#_4-check-it, or "Look around" in Try the sample, https://kieranties.github.io/kiln/guides/try-the-sample#_3-look-around, for the sample.
+Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, files the owner deleted (left deleted), dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through "Check it" in Getting started, https://kiln.kieranties.com/guides/getting-started#_4-check-it, or "Look around" in Try the sample, https://kiln.kieranties.com/guides/try-the-sample#_3-look-around, for the sample.
 
 ## Never
 
