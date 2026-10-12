@@ -7752,7 +7752,13 @@ function readBlueprint(dir) {
 // src/vault/paths.ts
 import { statSync } from "node:fs";
 import { dirname, join as join3, parse as parse3, resolve } from "node:path";
-var isFolder = (path) => statSync(path, { throwIfNoEntry: false })?.isDirectory() === true;
+function isFolder(path) {
+  try {
+    return statSync(path, { throwIfNoEntry: false })?.isDirectory() === true;
+  } catch {
+    return false;
+  }
+}
 function findUp(start, ...marker) {
   const from = resolve(start);
   let current = isFolder(from) ? from : dirname(from);
