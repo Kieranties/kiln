@@ -1,6 +1,8 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { readdirSync } from 'node:fs';
+import { basename, join, relative, resolve, sep } from 'node:path';
 import { readBlueprint, type Blueprint } from '../blueprint/load.js';
+
+export { findVault } from '../vault/find.js';
 
 export type Vault = {
   root: string;
@@ -10,18 +12,6 @@ export type Vault = {
   /** Lower-case link name to vault-relative paths, for every file outside dot-folders. */
   names: Map<string, string[]>;
 };
-
-/** Starts at `path` (or its folder) and walks up to the first folder holding `_kiln/types/`. */
-export function findVault(path: string): string | undefined {
-  const start = resolve(path);
-  let current = statSync(start, { throwIfNoEntry: false })?.isDirectory() ? start : dirname(start);
-  for (;;) {
-    if (existsSync(join(current, '_kiln', 'types'))) return current;
-    const parent = dirname(current);
-    if (parent === current) return undefined;
-    current = parent;
-  }
-}
 
 /** Reads the blueprint and lists the vault's files. Throws whatever `readBlueprint` throws. */
 export function openVault(path: string, blueprintDir?: string): Vault {
