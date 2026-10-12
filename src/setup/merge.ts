@@ -188,7 +188,10 @@ function kilnId(v: Json): string | undefined {
 }
 
 /** Whether a kiln id belongs to a type defined only in the vault: `kiln-<type>` or `kiln-<type>-…`. */
-function ofVaultOnlyType(id: string, extra: MergeExtra): boolean {
+function ofVaultOnlyType(id: string, extra: MergeExtra, made: ReadonlySet<string | undefined>): boolean {
+  // An id the blueprint makes is the blueprint's, whatever the vault's types: keeping the vault's copy too
+  // would put the id in twice, and once more on every apply.
+  if (made.has(id)) return false;
   return (extra.vaultOnlyTypes ?? []).some((t) => id === `kiln-${t}` || id.startsWith(`kiln-${t}-`));
 }
 
@@ -200,9 +203,10 @@ function warnRemoved(m: Merger, what: string, removed: string[]): void {
 }
 
 /**
- * The owner's QuickAdd choices without kiln's, at any depth. A kiln choice of a vault-only type stays as it
- * is. Any other goes, and its id is added to `removed` unless `made` (the blueprint's) has it; the owner's
- * choices inside it are returned in `lifted`, for the top level (archive, never delete).
+ * The owner's QuickAdd choices without kiln's, at any depth. A kiln choice of a vault-only type stays, less
+ * anything inside it the blueprint makes. Any other goes, and its id is added to `removed` unless `made` (the
+ * blueprint's) has it; the choices inside it that stay are returned in `lifted`, for the top level (archive,
+ * never delete). No id `made` has is left, so the blueprint's choices can follow without a duplicate.
  */
 function withoutKiln(
   choices: Json[],
@@ -214,8 +218,14 @@ function withoutKiln(
   const lifted: Json[] = [];
   for (const c of choices) {
     const id = kilnId(c);
-    if (id !== undefined && ofVaultOnlyType(id, extra)) {
-      kept.push(c);
+    if (id !== undefined && ofVaultOnlyType(id, extra, made)) {
+      if (isObject(c) && Array.isArray(c['choices'])) {
+        const inner = withoutKiln(c['choices'], made, extra, removed);
+        kept.push({ ...c, choices: inner.kept });
+        lifted.push(...inner.lifted);
+      } else {
+        kept.push(c);
+      }
     } else if (id !== undefined) {
       if (!made.has(id)) removed.push(id);
       if (isObject(c) && Array.isArray(c['choices'])) {
@@ -257,7 +267,7 @@ const iconic: Rule = (current, blueprint, m, extra) => {
   const removed: string[] = [];
   const theirs = asArray(o['fileRules'] ?? [], m).filter((r) => {
     const id = kilnId(r);
-    if (id === undefined || ofVaultOnlyType(id, extra)) return true;
+    if (id === undefined || ofVaultOnlyType(id, extra, made)) return true;
     if (!made.has(id)) removed.push(id);
     return false;
   });
@@ -295,7 +305,9 @@ const quickadd: Rule = (current, blueprint, m, extra) => {
   m.set(o, 'choices', [...kept, ...lifted, ...ours]);
   if (lifted.length > 0) {
     const ids = lifted.map((c) => (isObject(c) && typeof c['id'] === 'string' ? c['id'] : '?'));
-    m.warnings.push(`${m.file}: your choices ${ids.join(', ')} were inside kiln menus, so they move to the top level`);
+    m.warnings.push(
+      `${m.file}: choices inside kiln menus that setup replaces move to the top level: ${ids.join(', ')}`,
+    );
   }
   warnRemoved(m, 'choices', removed);
   return o;

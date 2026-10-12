@@ -154,6 +154,18 @@ describe('re-applying a changed blueprint', () => {
     });
   });
 
+  it("a vault-only type named like a blueprint choice doesn't make it multiply", async () => {
+    const t = testVault();
+    await applySetup(t.options());
+    t.write('_kiln/types/log.md', '---\ntype: kiln-type\nname: log\nfolder: Logs\nnaming: date\n---\nA log.\n');
+    for (let run = 0; run < 3; run++) await applySetup(t.options());
+    const ids = (t.json('.obsidian/plugins/quickadd/data.json') as { choices: { id: string }[] }).choices.map(
+      (c) => c.id,
+    );
+    expect(ids.filter((id) => id === 'kiln-log')).toHaveLength(1);
+    expect(planSetup(t.options()).settings).toEqual([]);
+  });
+
   it('with Obsidian open, what the owner kept in a waiting file stays kept', async () => {
     const t = testVault();
     t.write('.obsidian/app.json', '{\n  "newFileFolderPath": "Notes"\n}');

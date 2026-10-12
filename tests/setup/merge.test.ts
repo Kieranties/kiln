@@ -318,7 +318,7 @@ describe('the plugin settings', () => {
     ]);
     expect(choices.at(-1)?.choices?.map((c) => c.id)).toEqual(['kiln-work-bug']);
     expect(warnings).toContain(
-      '.obsidian/plugins/quickadd/data.json: your choices own-spike, own-deep were inside kiln menus, so they move to the top level',
+      '.obsidian/plugins/quickadd/data.json: choices inside kiln menus that setup replaces move to the top level: own-spike, own-deep',
     );
   });
 
@@ -356,6 +356,31 @@ describe('the plugin settings', () => {
       changes: [],
       warnings: [],
     });
+  });
+
+  it("QuickAdd: a vault-only type never claims an id the blueprint makes, so ids don't multiply", () => {
+    // The blueprint's fragment has kiln-log, and there is no log type: an owner's own log type mustn't keep it.
+    const extra = { choices: [], vaultOnlyTypes: ['log'] };
+    const first = merge('settings/plugins/quickadd.json', {}, [], {}, extra).value ?? null;
+    const second = merge('settings/plugins/quickadd.json', first, [], {}, extra);
+    expect(second.changes).toEqual([]);
+    const ids = (value: Json | undefined) => (value as { choices: { id: string }[] }).choices.map((c) => c.id);
+    expect(ids(second.value).filter((id) => id === 'kiln-log')).toHaveLength(1);
+    // A vault where the ids already multiplied is mended: one of each.
+    const doubled = { choices: [...(first as { choices: Json[] }).choices, ...(first as { choices: Json[] }).choices] };
+    const mended = ids(merge('settings/plugins/quickadd.json', doubled, [], {}, extra).value);
+    expect(mended).toEqual([...new Set(mended)]);
+  });
+
+  it("Iconic: a vault-only type never claims a rule id the blueprint makes, so ids don't multiply", () => {
+    // An owner's type named reference-doc makes kiln-reference-doc look like theirs.
+    const extra = { choices: [], vaultOnlyTypes: ['reference-doc'] };
+    const first = merge('settings/plugins/iconic.json', {}, [], {}, extra).value ?? null;
+    const second = merge('settings/plugins/iconic.json', first, [], {}, extra);
+    expect(second.changes).toEqual([]);
+    const ids = (second.value as { fileRules: { id: string }[] }).fileRules.map((r) => r.id);
+    expect(ids.filter((id) => id === 'kiln-reference-doc')).toHaveLength(1);
+    expect(ids).toEqual([...new Set(ids)]);
   });
 
   it('Iconic: keeps kiln rules of a type only the vault has, and names others the blueprint dropped', () => {

@@ -8111,7 +8111,8 @@ var homepage = (current, blueprint, m) => {
 function kilnId(v) {
   return isObject(v) && typeof v["id"] === "string" && v["id"].startsWith("kiln-") ? v["id"] : void 0;
 }
-function ofVaultOnlyType(id, extra) {
+function ofVaultOnlyType(id, extra, made) {
+  if (made.has(id)) return false;
   return (extra.vaultOnlyTypes ?? []).some((t) => id === `kiln-${t}` || id.startsWith(`kiln-${t}-`));
 }
 function warnRemoved(m, what, removed) {
@@ -8124,8 +8125,14 @@ function withoutKiln(choices, made, extra, removed) {
   const lifted = [];
   for (const c of choices) {
     const id = kilnId(c);
-    if (id !== void 0 && ofVaultOnlyType(id, extra)) {
-      kept.push(c);
+    if (id !== void 0 && ofVaultOnlyType(id, extra, made)) {
+      if (isObject(c) && Array.isArray(c["choices"])) {
+        const inner = withoutKiln(c["choices"], made, extra, removed);
+        kept.push({ ...c, choices: inner.kept });
+        lifted.push(...inner.lifted);
+      } else {
+        kept.push(c);
+      }
     } else if (id !== void 0) {
       if (!made.has(id)) removed.push(id);
       if (isObject(c) && Array.isArray(c["choices"])) {
@@ -8164,7 +8171,7 @@ var iconic = (current, blueprint, m, extra) => {
   const removed = [];
   const theirs = asArray(o["fileRules"] ?? [], m).filter((r) => {
     const id = kilnId(r);
-    if (id === void 0 || ofVaultOnlyType(id, extra)) return true;
+    if (id === void 0 || ofVaultOnlyType(id, extra, made)) return true;
     if (!made.has(id)) removed.push(id);
     return false;
   });
@@ -8199,7 +8206,9 @@ var quickadd = (current, blueprint, m, extra) => {
   m.set(o, "choices", [...kept, ...lifted, ...ours]);
   if (lifted.length > 0) {
     const ids = lifted.map((c) => isObject(c) && typeof c["id"] === "string" ? c["id"] : "?");
-    m.warnings.push(`${m.file}: your choices ${ids.join(", ")} were inside kiln menus, so they move to the top level`);
+    m.warnings.push(
+      `${m.file}: choices inside kiln menus that setup replaces move to the top level: ${ids.join(", ")}`
+    );
   }
   warnRemoved(m, "choices", removed);
   return o;

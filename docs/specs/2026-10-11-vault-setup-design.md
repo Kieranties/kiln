@@ -71,7 +71,8 @@ After a kiln update, setup compares three versions of each file: what it install
 | Changed by the owner | Unchanged | Keep the owner's edit |
 | Changed by the owner | Changed | Show both, and ask |
 | Missing | New | Add it |
-| Deleted by the owner (setup installed it) | Any | Leave it deleted, and report it; the owner can take it back |
+| Deleted by the owner (setup installed it) | Still has it | Leave it deleted, and report it; the owner can take it back |
+| Deleted by the owner (setup installed it) | Dropped | Nothing to report: drop it from the record |
 | Present | Dropped | Leave it, and report which notes still use it (archive, never delete) |
 
 In a trial this sorted every case correctly. Re-apply can't change notes already written; it reports any that no longer match a changed definition, and `/kiln:check` finds them.
