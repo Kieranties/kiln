@@ -34,11 +34,11 @@ Keep to the conventions in `<vault>/_kiln/README.md`, "Conventions". The ones mo
 Never create a note by writing a new file. With Templater's trigger on, Obsidian runs any `<%` in a new file, and merges the template over a file with only properties. (`/kiln:setup` is the one exception: it writes with Obsidian closed.)
 
 1. Work out the note's path from its definition (`folder` and `naming`) and check the file doesn't exist. If it does, use that note, or ask the owner.
-2. Run `obsidian quickadd:check`.
+2. Run `obsidian vault="<folder name>" quickadd:check`.
 3. Find the choice for the type and kind: kiln's choices have ids starting `kiln-` in `<vault>/.obsidian/plugins/quickadd/data.json`. Read that file; don't change it. Pass each `{{VALUE:<name>}}` the choice uses, in its file name format, its template or its format, as a var:
 
    ```
-   obsidian quickadd:run choice="<choice name>" vars='{"<name>":"<value>"}'
+   obsidian vault="<folder name>" quickadd:run choice="<choice name>" vars='{"<name>":"<value>"}'
    ```
 
 4. Fill in the new note's properties and body as edits to its file, by rule 2.
@@ -48,8 +48,8 @@ Never create a note by writing a new file. With Templater's trigger on, Obsidian
 Obsidian then rewrites every link to the note. A rename on disk breaks them. Paths are relative to the vault, with `/`:
 
 ```
-obsidian rename path="<note path>" name="<new name>"
-obsidian move path="<note path>" to="<folder>/"
+obsidian vault="<folder name>" rename path="<note path>" name="<new name>"
+obsidian vault="<folder name>" move path="<note path>" to="<folder>/"
 ```
 
 ## 5. Never write `<%`
@@ -70,5 +70,5 @@ A flow that touched much of the day's work may check `--today "<vault>"` instead
 ## Calling the Obsidian CLI
 
 - In Git Bash, call `obsidian.com`: bare `obsidian` there starts the app. In pwsh, and on macOS and Linux, call `obsidian`.
-- Unless rule 1's `source` was `current-folder`, name the vault first: the current folder may not be inside it. Use its folder name, the last part of `vault` (not the `name` in the kiln file): for `D:\notes`, `obsidian vault="notes" quickadd:check`.
+- Name the vault first on every call, `vault="<folder name>"`: unless the current folder is the vault folder itself, the CLI may act on the active vault instead. The folder name is the last part of rule 1's `vault` (not the `name` in the kiln file): for `D:\notes`, `obsidian vault="notes" quickadd:check`. If rule 1 was skipped because the owner named notes, use the name of the folder above the note that holds `_kiln/types/`. If two vaults share that folder name, stop and ask the owner: naming a vault by its id waits on T2.
 - The CLI needs Obsidian running. The first command starts it.

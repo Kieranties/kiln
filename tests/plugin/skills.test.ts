@@ -70,19 +70,36 @@ describe('the vault rules', () => {
     // "check the file", not the heading's "checking the file": the step itself must come first.
     const look = text.indexOf("check the file doesn't exist");
     expect(look).toBeGreaterThan(0);
-    expect(text.indexOf('obsidian quickadd:check')).toBeGreaterThan(look);
-    expect(text.indexOf('obsidian quickadd:run choice="')).toBeGreaterThan(text.indexOf('obsidian quickadd:check'));
+    expect(text.indexOf('obsidian vault="<folder name>" quickadd:check')).toBeGreaterThan(look);
+    expect(text.indexOf('obsidian vault="<folder name>" quickadd:run choice="')).toBeGreaterThan(
+      text.indexOf('obsidian vault="<folder name>" quickadd:check'),
+    );
   });
 
   it('4. rename and move with the CLI', () => {
-    for (const part of ['obsidian rename path="', 'obsidian move path="']) expect(rule(4), part).toContain(part);
+    for (const part of ['obsidian vault="<folder name>" rename path="', 'obsidian vault="<folder name>" move path="'])
+      expect(rule(4), part).toContain(part);
   });
 
   it('call the CLI in Git Bash and pwsh, from inside the vault or outside it, and say T2 is pending', () => {
     const start = rules.indexOf('\n## Calling the Obsidian CLI');
     expect(start).toBeGreaterThan(0);
     const section = rules.slice(start);
-    for (const part of ['obsidian.com', 'pwsh', 'vault="', 'current-folder']) expect(section, part).toContain(part);
+    for (const part of ['obsidian.com', 'pwsh']) expect(section, part).toContain(part);
+    // Name the vault on every call: from a folder inside a vault the CLI may act on the active vault.
+    for (const part of [
+      'vault="<folder name>"',
+      'active vault',
+      "the last part of rule 1's `vault`",
+      '_kiln/types/',
+      'stop and ask the owner',
+    ]) {
+      expect(section, part).toContain(part);
+    }
+    expect(section).not.toContain('current-folder');
+    const calls = [...rules.matchAll(/\bobsidian (\S+)/g)].map((m) => m[1] ?? '');
+    expect(calls.length).toBeGreaterThanOrEqual(4);
+    for (const call of calls) expect(call).toMatch(/^vault=/);
     // The intro, before rule 1, says T2 is pending and sends the reader to the section.
     const intro = rules.slice(0, rules.indexOf('\n## 1. '));
     for (const part of ['T2', 'Calling the Obsidian CLI']) expect(intro, part).toContain(part);
