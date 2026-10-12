@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { splitFrontmatter } from '../../src/blueprint/markdown.js';
 import { USAGE } from '../../src/setup/run.js';
-import { planSetup } from '../../src/setup/setup.js';
+import { permissionRules, planSetup } from '../../src/setup/setup.js';
 import { cleanupAll, PLUGIN_ROOT, testVault } from './fixture.js';
 
 afterAll(cleanupAll);
@@ -105,12 +105,18 @@ describe('/kiln:setup', () => {
     const never = body.slice(body.indexOf('## Never'));
     expect(never).toContain('With Node, write to the vault yourself');
     const step6 = body.slice(body.indexOf('## 6.'), body.indexOf('## 7.'));
-    for (const part of [
-      'only entries not already there',
-      'Without Node there is no plan',
-      'Edit(//<vault, forward slashes>/.obsidian/**)',
-      'Edit(//<vault, forward slashes>/_kiln/**)',
-    ])
-      expect(step6, part).toContain(part.replace('only entries', 'only entries'));
+    const template = ['Edit(<rule path>/.obsidian/**)', 'Edit(<rule path>/_kiln/**)'];
+    for (const part of ['only entries not already there', 'Without Node there is no plan', ...template]) {
+      expect(step6, part).toContain(part);
+    }
+    // The examples, filled into the template, are what the helper writes.
+    for (const [vault, platform, rulePath] of [
+      ['D:\\notes', 'win32', '//d/notes'],
+      ['/home/me/notes', 'linux', '//home/me/notes'],
+    ] as const) {
+      expect(step6, rulePath).toContain(`\`${rulePath}\``);
+      expect(step6, vault).toContain(`\`${vault}\``);
+      expect(permissionRules(vault, platform).ask).toEqual(template.map((t) => t.replace('<rule path>', rulePath)));
+    }
   });
 });

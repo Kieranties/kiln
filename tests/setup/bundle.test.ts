@@ -6,7 +6,15 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { cleanupAll, fingerprint, testVault } from './fixture.js';
 
 const BUNDLE = fileURLToPath(new URL('../../claude-plugin/scripts/kiln-setup.mjs', import.meta.url));
-const OVERRIDDEN = ['KILN_VAULT', 'KILN_HOME', 'KILN_OBSIDIAN_RUNNING', 'HOME', 'USERPROFILE'];
+const OVERRIDDEN = [
+  'KILN_VAULT',
+  'KILN_HOME',
+  'KILN_OBSIDIAN_RUNNING',
+  'HOME',
+  'USERPROFILE',
+  'APPDATA',
+  'XDG_CONFIG_HOME',
+];
 afterAll(cleanupAll);
 
 const t = testVault();
