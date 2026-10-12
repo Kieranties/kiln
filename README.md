@@ -31,12 +31,13 @@ The plugin carries the blueprint and one skill so far: `/kiln:check` checks a va
 | `claude-plugin/` | The Claude plugin, and nothing else. Its manifest is `claude-plugin/.claude-plugin/plugin.json`, with no version: the plugin's version is the commit |
 | `claude-plugin/blueprint/` | The blueprint: type definitions, Templater templates, Bases views, Obsidian and plugin settings, and its guides |
 | `claude-plugin/skills/` | The plugin's skills, one folder each: `check` |
-| `claude-plugin/scripts/` | The scripts the skills run, such as `kiln-check.mjs`: each one file built from `src/` by `npm run build`, committed, never edited by hand |
-| `src/` | The code: `blueprint/` reads a blueprint's definitions, `check/` is the note check, `cli/` holds an entry point per script |
+| `claude-plugin/scripts/` | The scripts the skills run, such as `kiln-check.mjs` and `kiln-vault.mjs`: each one file built from `src/` by `npm run build`, committed, never edited by hand |
+| `src/` | The code: `blueprint/` reads a blueprint's definitions, `check/` is the note check, `vault/` finds the vault, `cli/` holds an entry point per script |
 | `scripts/` | Repo tooling: `build.mjs` builds the plugin's scripts; `apply-repo-settings.sh` applies the GitHub merge settings and rulesets |
 | `tests/kit/` | Checks every blueprint file against the type definitions, and the sample against both |
 | `tests/blueprint/` | Checks reading the definitions, and the errors for a malformed one |
 | `tests/check/` | Checks the note check, the built `kiln-check.mjs` and the check skill |
+| `tests/vault/` | Checks finding the vault: the resolution order, the kiln file, Obsidian's vault list and the built `kiln-vault.mjs` |
 | `tests/plugin/` | Checks the catalog, the plugin manifest and folder, the release zip, and the living docs' links |
 | `tests/fixtures/layer1/` | The Northwind Arena sample vault |
 | `tests/fixtures/check/` | Broken notes for the note check, laid over the sample |

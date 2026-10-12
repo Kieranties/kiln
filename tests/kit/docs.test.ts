@@ -84,4 +84,10 @@ describe('blueprint docs', () => {
       expect(steps, place).toContain(place);
     }
   });
+  it('the README says how Claude finds the vault, in Bash and PowerShell', () => {
+    const conventions = section(readme, 'Conventions');
+    for (const part of ['~/.kiln/config.json', 'KILN_VAULT', 'export KILN_VAULT=work', "$env:KILN_VAULT = 'work'"]) {
+      expect(conventions, part).toContain(part);
+    }
+  });
 });
