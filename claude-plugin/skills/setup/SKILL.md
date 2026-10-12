@@ -57,7 +57,7 @@ With the same `--sample`, each `--take '<id>'`, and `--confirm-closed` if step 4
 
 ## 7. Report
 
-Say what changed: folders, files by action, settings, backups (in `.kiln/backup/`), what was kept, what waits, dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through section 4 of `_kiln/GETTING-STARTED.md`, or section 3 of `_kiln/TRY-THE-SAMPLE.md` for the sample.
+Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through section 4 of `_kiln/GETTING-STARTED.md`, or section 3 of `_kiln/TRY-THE-SAMPLE.md` for the sample.
 
 ## Never
 

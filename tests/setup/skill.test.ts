@@ -35,7 +35,17 @@ describe('/kiln:setup', () => {
 
   it('acts on fields the report really has', () => {
     const report = planSetup(testVault().options());
-    for (const key of ['stop', 'warnings', 'asks', 'obsidian', 'vaultOnlyTypes', 'sample', 'kiln', 'permissions']) {
+    for (const key of [
+      'stop',
+      'warnings',
+      'asks',
+      'backups',
+      'obsidian',
+      'vaultOnlyTypes',
+      'sample',
+      'kiln',
+      'permissions',
+    ]) {
       expect(body, key).toContain(`\`${key}\``);
       expect(Object.keys(report), key).toContain(key);
     }

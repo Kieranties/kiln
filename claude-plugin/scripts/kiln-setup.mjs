@@ -8382,6 +8382,7 @@ function prepare(o) {
     files: [],
     unchanged: 0,
     settings: [],
+    backups: [],
     asks: [],
     vaultOnlyTypes: [],
     sample: null,
@@ -8461,6 +8462,19 @@ function prepare(o) {
   }
   const installed = installedFiles(bp);
   const stamp = o.now.toISOString().slice(0, 19).replaceAll(":", "-");
+  let backupDir = `.kiln/backup/${stamp}`;
+  for (let n = 2; existsSync4(onDisk(vault, backupDir)); n++) backupDir = `.kiln/backup/${stamp}-${n}`;
+  const backUp = (path) => {
+    const backup = `${backupDir}/${path}`;
+    const from = onDisk(vault, path);
+    const to = onDisk(vault, backup);
+    report.backups.push(backup);
+    writes.backups.push(() => {
+      mkdirSync3(dirname3(to), { recursive: true });
+      copyFileSync(from, to);
+    });
+    return backup;
+  };
   let notes;
   const vaultNotes = () => {
     if (notes === void 0) {
@@ -8500,14 +8514,7 @@ function prepare(o) {
     if (action === "add" || action === "update" || action === "replace") {
       if (blueprint !== void 0) nextFiles[path] = blueprint;
       const target = onDisk(vault, path);
-      if (action === "replace") {
-        step.backup = `.kiln/backup/${stamp}/${path}`;
-        const backup = onDisk(vault, step.backup);
-        writes.backups.push(() => {
-          mkdirSync3(dirname3(backup), { recursive: true });
-          copyFileSync(target, backup);
-        });
-      }
+      if (action === "replace") step.backup = backUp(path);
       writes.files.push(() => {
         mkdirSync3(dirname3(target), { recursive: true });
         writeFileSync3(target, text2 ?? "");
@@ -8576,6 +8583,7 @@ function prepare(o) {
       for (const [id, value] of Object.entries(kept)) if (id.startsWith(`${s.target}#`)) nextKept[id] = value;
     } else if (!sameJson(next, current)) {
       const value = next;
+      if (current !== void 0) backUp(s.target);
       settingWrites.push(() => {
         mkdirSync3(dirname3(file), { recursive: true });
         writeFileSync3(file, obsidianJson(value));

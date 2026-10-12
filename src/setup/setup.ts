@@ -71,6 +71,8 @@ export type SetupReport = {
   files: FileStep[];
   unchanged: number;
   settings: SettingStep[];
+  /** Each copy taken before a file or settings file is replaced, as a vault path under `.kiln/backup/`. */
+  backups: string[];
   asks: Ask[];
   vaultOnlyTypes: string[];
   sample: { source: string; files: string[]; skipped: string[] } | { notes: number } | null;
@@ -198,6 +200,7 @@ function prepare(o: SetupOptions): Prepared {
     files: [],
     unchanged: 0,
     settings: [],
+    backups: [],
     asks: [],
     vaultOnlyTypes: [],
     sample: null,
@@ -295,7 +298,21 @@ function prepare(o: SetupOptions): Prepared {
 
   // Files: the three-way sort over everything the blueprint installs and everything the record names.
   const installed = installedFiles(bp);
+  // One backup folder per run, never one an earlier run used (two runs can share a second).
   const stamp = o.now.toISOString().slice(0, 19).replaceAll(':', '-');
+  let backupDir = `.kiln/backup/${stamp}`;
+  for (let n = 2; existsSync(onDisk(vault, backupDir)); n++) backupDir = `.kiln/backup/${stamp}-${n}`;
+  const backUp = (path: string): string => {
+    const backup = `${backupDir}/${path}`;
+    const from = onDisk(vault, path);
+    const to = onDisk(vault, backup);
+    report.backups.push(backup);
+    writes.backups.push(() => {
+      mkdirSync(dirname(to), { recursive: true });
+      copyFileSync(from, to);
+    });
+    return backup;
+  };
   let notes: { path: string; text: string }[] | null | undefined;
   const vaultNotes = () => {
     if (notes === undefined) {
@@ -336,14 +353,7 @@ function prepare(o: SetupOptions): Prepared {
     if (action === 'add' || action === 'update' || action === 'replace') {
       if (blueprint !== undefined) nextFiles[path] = blueprint;
       const target = onDisk(vault, path);
-      if (action === 'replace') {
-        step.backup = `.kiln/backup/${stamp}/${path}`;
-        const backup = onDisk(vault, step.backup);
-        writes.backups.push(() => {
-          mkdirSync(dirname(backup), { recursive: true });
-          copyFileSync(target, backup);
-        });
-      }
+      if (action === 'replace') step.backup = backUp(path);
       writes.files.push(() => {
         mkdirSync(dirname(target), { recursive: true });
         writeFileSync(target, text ?? '');
@@ -426,6 +436,7 @@ function prepare(o: SetupOptions): Prepared {
       for (const [id, value] of Object.entries(kept)) if (id.startsWith(`${s.target}#`)) nextKept[id] = value;
     } else if (!sameJson(next, current)) {
       const value = next;
+      if (current !== undefined) backUp(s.target);
       settingWrites.push(() => {
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, obsidianJson(value));

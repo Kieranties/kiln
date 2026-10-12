@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { applySetup, permissionRules, planSetup, vaultName } from '../../src/setup/setup.js';
@@ -121,14 +121,51 @@ describe('a vault already in use', () => {
     expect(t.json('.obsidian/app.json')).toMatchObject({ newFileFolderPath: 'Notes' });
     expect(planSetup(t.options()).asks).toEqual([]);
 
+    // The first apply backed up the settings files it changed at 09-30-00, so this run's backups go to -2.
     const taken = await applySetup(t.options({ take: ['Home.md'] }));
     expect(taken.files).toContainEqual({
       path: 'Home.md',
       action: 'replace',
-      backup: '.kiln/backup/2026-10-12T09-30-00/Home.md',
+      backup: '.kiln/backup/2026-10-12T09-30-00-2/Home.md',
     });
-    expect(t.read('.kiln/backup/2026-10-12T09-30-00/Home.md')).toBe('My own home.\n');
+    expect(t.read('.kiln/backup/2026-10-12T09-30-00-2/Home.md')).toBe('My own home.\n');
     expect(t.read('Home.md')).toBe(readFileSync(join(PLUGIN_ROOT, 'blueprint', 'root', 'Home.md'), 'utf8'));
+  });
+});
+
+describe('backups', () => {
+  it('copies every settings file it rewrites, byte for byte, before writing', async () => {
+    const t = testVault();
+    const own = '{\r\n    "showInlineTitle": false,\r\n    "mine": 1\r\n}\r\n';
+    t.write('.obsidian/app.json', own);
+    const report = await applySetup(t.options());
+    const backup = '.kiln/backup/2026-10-12T09-30-00/.obsidian/app.json';
+    expect(report.backups).toContain(backup);
+    expect(readFileSync(join(t.vault, ...backup.split('/')))).toEqual(Buffer.from(own));
+    expect(t.json('.obsidian/app.json')).toMatchObject({ showInlineTitle: true, mine: 1 });
+    // A file setup didn't change, or didn't find, isn't backed up.
+    expect(report.backups).not.toContain('.kiln/backup/2026-10-12T09-30-00/.obsidian/daily-notes.json');
+    expect(planSetup(t.options()).backups).toEqual([]);
+  });
+
+  it('never overwrites an earlier backup, even in the same second', async () => {
+    const t = testVault();
+    await applySetup(t.options({ now: new Date('2026-10-11T08:00:00Z') }));
+    // With no record, setup replaces _kiln/ with the blueprint's, backing up the vault's copy.
+    const replaceByHand = async (text: string) => {
+      rmSync(join(t.vault, '.kiln', 'blueprint.json'));
+      t.write('_kiln/types/work.md', text);
+      return applySetup(t.options());
+    };
+    await replaceByHand('first\n');
+    const second = await replaceByHand('second\n');
+    expect(second.files).toContainEqual({
+      path: '_kiln/types/work.md',
+      action: 'replace',
+      backup: '.kiln/backup/2026-10-12T09-30-00-2/_kiln/types/work.md',
+    });
+    expect(t.read('.kiln/backup/2026-10-12T09-30-00/_kiln/types/work.md')).toBe('first\n');
+    expect(t.read('.kiln/backup/2026-10-12T09-30-00-2/_kiln/types/work.md')).toBe('second\n');
   });
 });
 
