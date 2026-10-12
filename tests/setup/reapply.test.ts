@@ -95,6 +95,33 @@ describe('re-applying a changed blueprint', () => {
     );
   });
 
+  it('keeps the kiln choices and icon rules of a vault-only type, and names other kiln ones it removes', async () => {
+    const t = testVault();
+    await applySetup(t.options());
+    t.write(
+      '_kiln/types/runbook.md',
+      '---\ntype: kiln-type\nname: runbook\nfolder: Runbooks\nnaming: title\n---\nA how-to.\n',
+    );
+    const quickadd = t.json('.obsidian/plugins/quickadd/data.json') as { choices: unknown[] };
+    const runbook = { id: 'kiln-runbook', name: 'New runbook', type: 'Template' };
+    quickadd.choices.push(runbook, { id: 'kiln-retired', name: 'Retired', type: 'Template' });
+    t.write('.obsidian/plugins/quickadd/data.json', JSON.stringify(quickadd));
+    const iconic = t.json('.obsidian/plugins/iconic/data.json') as { fileRules: unknown[] };
+    iconic.fileRules.push({ id: 'kiln-runbook', name: 'Runbook' });
+    t.write('.obsidian/plugins/iconic/data.json', JSON.stringify(iconic));
+
+    const report = await applySetup(t.options());
+    expect(report.vaultOnlyTypes).toEqual(['runbook']);
+    expect(report.warnings).toContain(
+      '.obsidian/plugins/quickadd/data.json: kiln choices the blueprint no longer makes are removed: kiln-retired',
+    );
+    expect((t.json('.obsidian/plugins/quickadd/data.json') as { choices: unknown[] }).choices).toContainEqual(runbook);
+    expect((t.json('.obsidian/plugins/iconic/data.json') as { fileRules: unknown[] }).fileRules).toContainEqual({
+      id: 'kiln-runbook',
+      name: 'Runbook',
+    });
+  });
+
   it('with Obsidian open, what the owner kept in a waiting file stays kept', async () => {
     const t = testVault();
     t.write('.obsidian/app.json', '{\n  "newFileFolderPath": "Notes"\n}');

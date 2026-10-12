@@ -7977,6 +7977,8 @@ var Merger = class {
   answers;
   changes = [];
   overrides = [];
+  /** What the merge did that the owner should hear about. */
+  warnings = [];
   /** Sets obj[key] = to, recording a change when the value differs. */
   set(obj, key, to, path = key) {
     const from = obj[key];
@@ -8097,11 +8099,49 @@ var homepage = (current, blueprint, m) => {
   }
   return o;
 };
-var isKiln = (v) => isObject(v) && typeof v.id === "string" && v.id.startsWith("kiln-");
-function withoutKiln(choices) {
-  return choices.filter((c) => !isKiln(c)).map((c) => isObject(c) && Array.isArray(c.choices) ? { ...c, choices: withoutKiln(c.choices) } : c);
+function kilnId(v) {
+  return isObject(v) && typeof v["id"] === "string" && v["id"].startsWith("kiln-") ? v["id"] : void 0;
 }
-var iconic = (current, blueprint, m) => {
+function ofVaultOnlyType(id, extra) {
+  return (extra.vaultOnlyTypes ?? []).some((t) => id === `kiln-${t}` || id.startsWith(`kiln-${t}-`));
+}
+function warnRemoved(m, what, removed) {
+  if (removed.length > 0) {
+    m.warnings.push(`${m.file}: kiln ${what} the blueprint no longer makes are removed: ${removed.join(", ")}`);
+  }
+}
+function withoutKiln(choices, made, extra, removed) {
+  const kept = [];
+  const lifted = [];
+  for (const c of choices) {
+    const id = kilnId(c);
+    if (id !== void 0 && ofVaultOnlyType(id, extra)) {
+      kept.push(c);
+    } else if (id !== void 0) {
+      if (!made.has(id)) removed.push(id);
+      if (isObject(c) && Array.isArray(c["choices"])) {
+        const inner = withoutKiln(c["choices"], made, extra, removed);
+        lifted.push(...inner.kept, ...inner.lifted);
+      }
+    } else if (isObject(c) && Array.isArray(c["choices"])) {
+      const inner = withoutKiln(c["choices"], made, extra, removed);
+      kept.push({ ...c, choices: inner.kept });
+      lifted.push(...inner.lifted);
+    } else {
+      kept.push(c);
+    }
+  }
+  return { kept, lifted };
+}
+function choiceIds(choices, out = /* @__PURE__ */ new Set()) {
+  for (const c of choices) {
+    if (!isObject(c)) continue;
+    if (typeof c["id"] === "string") out.add(c["id"]);
+    if (Array.isArray(c["choices"])) choiceIds(c["choices"], out);
+  }
+  return out;
+}
+var iconic = (current, blueprint, m, extra) => {
   const o = asObject(current, m);
   const b = asObject(blueprint, m);
   for (const key of ["showAllFileIcons", "showAllFolderIcons", "minimalFolderIcons"]) m.set(o, key, b[key] ?? null);
@@ -8110,10 +8150,17 @@ var iconic = (current, blueprint, m) => {
     for (const [name, value] of Object.entries(asObject(b[group] ?? {}, m)))
       m.set(icons, name, value, `${group}/${name}`);
   }
-  m.set(o, "fileRules", [
-    ...asArray(b["fileRules"] ?? [], m),
-    ...asArray(o["fileRules"] ?? [], m).filter((r) => !isKiln(r))
-  ]);
+  const ours = asArray(b["fileRules"] ?? [], m);
+  const made = new Set(ours.map(kilnId));
+  const removed = [];
+  const theirs = asArray(o["fileRules"] ?? [], m).filter((r) => {
+    const id = kilnId(r);
+    if (id === void 0 || ofVaultOnlyType(id, extra)) return true;
+    if (!made.has(id)) removed.push(id);
+    return false;
+  });
+  m.set(o, "fileRules", [...ours, ...theirs]);
+  warnRemoved(m, "rules", removed);
   return o;
 };
 var templater = (current, blueprint, m) => {
@@ -8137,11 +8184,15 @@ var templater = (current, blueprint, m) => {
 var quickadd = (current, blueprint, m, extra) => {
   const o = asObject(current, m);
   const b = asObject(blueprint, m);
-  m.set(o, "choices", [
-    ...withoutKiln(asArray(o["choices"] ?? [], m)),
-    ...asArray(b["choices"] ?? [], m),
-    ...extra.choices
-  ]);
+  const ours = [...asArray(b["choices"] ?? [], m), ...extra.choices];
+  const removed = [];
+  const { kept, lifted } = withoutKiln(asArray(o["choices"] ?? [], m), choiceIds(ours), extra, removed);
+  m.set(o, "choices", [...kept, ...lifted, ...ours]);
+  if (lifted.length > 0) {
+    const ids = lifted.map((c) => isObject(c) && typeof c["id"] === "string" ? c["id"] : "?");
+    m.warnings.push(`${m.file}: your choices ${ids.join(", ")} were inside kiln menus, so they move to the top level`);
+  }
+  warnRemoved(m, "choices", removed);
   return o;
 };
 function tabGroups(node, out = []) {
@@ -8561,7 +8612,7 @@ function prepare(o) {
     const m = new Merger(s.target, { take, kept });
     try {
       current = readJson(file);
-      next = mergeFragment(s.fragment, current, fragment, m, { choices });
+      next = mergeFragment(s.fragment, current, fragment, m, { choices, vaultOnlyTypes: report.vaultOnlyTypes });
     } catch (error) {
       problems.push(fix(error));
       continue;
@@ -8586,6 +8637,7 @@ function prepare(o) {
       }
       if (!wait) nextKept[override.id] = override.blueprint;
     }
+    if (!wait) warnings.other.push(...m.warnings);
     if (wait) {
       for (const [id, value] of Object.entries(kept)) if (id.startsWith(`${s.target}#`)) nextKept[id] = value;
     } else if (!sameJson(next, current)) {

@@ -14,7 +14,11 @@ export type Override = {
   asked: boolean;
   taken: boolean;
 };
-export type MergeExtra = { choices: Json[] };
+/**
+ * `choices`: the QuickAdd choices generated from the definitions. `vaultOnlyTypes`: types defined only in the
+ * vault, whose kiln- QuickAdd choices and Iconic rules stay.
+ */
+export type MergeExtra = { choices: Json[]; vaultOnlyTypes?: readonly string[] };
 
 const scalar = (v: Json | undefined) => v === undefined || v === null || typeof v !== 'object';
 const blank = (v: Json | undefined) => v === undefined || v === null || v === '';
@@ -22,6 +26,8 @@ const blank = (v: Json | undefined) => v === undefined || v === null || v === ''
 export class Merger {
   readonly changes: Change[] = [];
   readonly overrides: Override[] = [];
+  /** What the merge did that the owner should hear about. */
+  readonly warnings: string[] = [];
   constructor(
     readonly file: string,
     private readonly answers: Answers,
@@ -175,16 +181,68 @@ const homepage: Rule = (current, blueprint, m) => {
   return o;
 };
 
-export const isKiln = (v: Json): boolean => isObject(v) && typeof v.id === 'string' && v.id.startsWith('kiln-');
-
-/** The choices without any kiln one, at any depth (a kiln choice inside a Multi goes too). */
-function withoutKiln(choices: Json[]): Json[] {
-  return choices
-    .filter((c) => !isKiln(c))
-    .map((c) => (isObject(c) && Array.isArray(c.choices) ? { ...c, choices: withoutKiln(c.choices) } : c));
+/** The id of a kiln entry (one whose `id` starts with `kiln-`), else `undefined`. */
+function kilnId(v: Json): string | undefined {
+  return isObject(v) && typeof v['id'] === 'string' && v['id'].startsWith('kiln-') ? v['id'] : undefined;
 }
 
-const iconic: Rule = (current, blueprint, m) => {
+/** Whether a kiln id belongs to a type defined only in the vault: `kiln-<type>` or `kiln-<type>-…`. */
+function ofVaultOnlyType(id: string, extra: MergeExtra): boolean {
+  return (extra.vaultOnlyTypes ?? []).some((t) => id === `kiln-${t}` || id.startsWith(`kiln-${t}-`));
+}
+
+/** Warns about kiln entries removed that the blueprint no longer makes. */
+function warnRemoved(m: Merger, what: string, removed: string[]): void {
+  if (removed.length > 0) {
+    m.warnings.push(`${m.file}: kiln ${what} the blueprint no longer makes are removed: ${removed.join(', ')}`);
+  }
+}
+
+/**
+ * The owner's QuickAdd choices without kiln's, at any depth. A kiln choice of a vault-only type stays as it
+ * is. Any other goes, and its id is added to `removed` unless `made` (the blueprint's) has it; the owner's
+ * choices inside it are returned in `lifted`, for the top level (archive, never delete).
+ */
+function withoutKiln(
+  choices: Json[],
+  made: ReadonlySet<string>,
+  extra: MergeExtra,
+  removed: string[],
+): { kept: Json[]; lifted: Json[] } {
+  const kept: Json[] = [];
+  const lifted: Json[] = [];
+  for (const c of choices) {
+    const id = kilnId(c);
+    if (id !== undefined && ofVaultOnlyType(id, extra)) {
+      kept.push(c);
+    } else if (id !== undefined) {
+      if (!made.has(id)) removed.push(id);
+      if (isObject(c) && Array.isArray(c['choices'])) {
+        const inner = withoutKiln(c['choices'], made, extra, removed);
+        lifted.push(...inner.kept, ...inner.lifted);
+      }
+    } else if (isObject(c) && Array.isArray(c['choices'])) {
+      const inner = withoutKiln(c['choices'], made, extra, removed);
+      kept.push({ ...c, choices: inner.kept });
+      lifted.push(...inner.lifted);
+    } else {
+      kept.push(c);
+    }
+  }
+  return { kept, lifted };
+}
+
+/** Every id in the choices, at any depth. */
+function choiceIds(choices: Json[], out = new Set<string>()): Set<string> {
+  for (const c of choices) {
+    if (!isObject(c)) continue;
+    if (typeof c['id'] === 'string') out.add(c['id']);
+    if (Array.isArray(c['choices'])) choiceIds(c['choices'], out);
+  }
+  return out;
+}
+
+const iconic: Rule = (current, blueprint, m, extra) => {
   const o = asObject(current, m);
   const b = asObject(blueprint, m);
   for (const key of ['showAllFileIcons', 'showAllFolderIcons', 'minimalFolderIcons']) m.set(o, key, b[key] ?? null);
@@ -193,10 +251,17 @@ const iconic: Rule = (current, blueprint, m) => {
     for (const [name, value] of Object.entries(asObject(b[group] ?? {}, m)))
       m.set(icons, name, value, `${group}/${name}`);
   }
-  m.set(o, 'fileRules', [
-    ...asArray(b['fileRules'] ?? [], m),
-    ...asArray(o['fileRules'] ?? [], m).filter((r) => !isKiln(r)),
-  ]);
+  const ours = asArray(b['fileRules'] ?? [], m);
+  const made = new Set(ours.map(kilnId));
+  const removed: string[] = [];
+  const theirs = asArray(o['fileRules'] ?? [], m).filter((r) => {
+    const id = kilnId(r);
+    if (id === undefined || ofVaultOnlyType(id, extra)) return true;
+    if (!made.has(id)) removed.push(id);
+    return false;
+  });
+  m.set(o, 'fileRules', [...ours, ...theirs]);
+  warnRemoved(m, 'rules', removed);
   return o;
 };
 
@@ -223,11 +288,15 @@ const templater: Rule = (current, blueprint, m) => {
 const quickadd: Rule = (current, blueprint, m, extra) => {
   const o = asObject(current, m);
   const b = asObject(blueprint, m);
-  m.set(o, 'choices', [
-    ...withoutKiln(asArray(o['choices'] ?? [], m)),
-    ...asArray(b['choices'] ?? [], m),
-    ...extra.choices,
-  ]);
+  const ours = [...asArray(b['choices'] ?? [], m), ...extra.choices];
+  const removed: string[] = [];
+  const { kept, lifted } = withoutKiln(asArray(o['choices'] ?? [], m), choiceIds(ours), extra, removed);
+  m.set(o, 'choices', [...kept, ...lifted, ...ours]);
+  if (lifted.length > 0) {
+    const ids = lifted.map((c) => (isObject(c) && typeof c['id'] === 'string' ? c['id'] : '?'));
+    m.warnings.push(`${m.file}: your choices ${ids.join(', ')} were inside kiln menus, so they move to the top level`);
+  }
+  warnRemoved(m, 'choices', removed);
   return o;
 };
 

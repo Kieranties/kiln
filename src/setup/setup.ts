@@ -406,7 +406,7 @@ function prepare(o: SetupOptions): Prepared {
     try {
       // The owner's file: unreadable JSON, or a shape the merge can't use, stops setup.
       current = readJson(file);
-      next = mergeFragment(s.fragment, current, fragment, m, { choices });
+      next = mergeFragment(s.fragment, current, fragment, m, { choices, vaultOnlyTypes: report.vaultOnlyTypes });
     } catch (error) {
       problems.push(fix(error));
       continue;
@@ -431,6 +431,7 @@ function prepare(o: SetupOptions): Prepared {
       }
       if (!wait) nextKept[override.id] = override.blueprint;
     }
+    if (!wait) warnings.other.push(...m.warnings);
     if (wait) {
       // Not looked at this time: what the owner kept here stays kept.
       for (const [id, value] of Object.entries(kept)) if (id.startsWith(`${s.target}#`)) nextKept[id] = value;

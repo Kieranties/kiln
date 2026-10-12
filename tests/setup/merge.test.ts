@@ -30,7 +30,7 @@ function merge(
   const blueprint = JSON.parse(readFileSync(join(BLUEPRINT, fragment), 'utf8')) as Json;
   const m = new Merger(TARGET[fragment] ?? fragment, { take: new Set(take), kept });
   const value = mergeFragment(fragment, current, blueprint, m, extra);
-  return { value, changes: m.changes, overrides: m.overrides };
+  return { value, changes: m.changes, overrides: m.overrides, warnings: m.warnings };
 }
 
 describe('the Obsidian settings', () => {
@@ -263,6 +263,115 @@ describe('the plugin settings', () => {
     expect(value.choices.map((c) => c.id)).toEqual(['mine', 'kiln-capture', 'kiln-log', 'kiln-topic']);
     expect(value.choices[0]?.choices?.map((c) => c.id)).toEqual(['own']);
     expect(value.migrations).toEqual({ someMigration: true });
+  });
+
+  it("QuickAdd: lifts the owner's choices out of a kiln menu it replaces, at any depth", () => {
+    const current: Json = {
+      choices: [
+        { id: 'mine', name: 'Mine', type: 'Template' },
+        {
+          id: 'kiln-work-menu',
+          name: 'New work',
+          type: 'Multi',
+          choices: [
+            { id: 'kiln-work-bug', name: 'New bug', type: 'Template' },
+            { id: 'own-spike', name: 'New spike', type: 'Template' },
+            {
+              id: 'kiln-work-old',
+              name: 'Old',
+              type: 'Multi',
+              choices: [{ id: 'own-deep', name: 'Deep', type: 'Template' }],
+            },
+          ],
+        },
+      ],
+    };
+    const generated = [
+      {
+        id: 'kiln-work-menu',
+        name: 'New work',
+        type: 'Multi',
+        choices: [{ id: 'kiln-work-bug', name: 'New bug', type: 'Template' }],
+      },
+    ];
+    const { value, warnings } = merge('settings/plugins/quickadd.json', current, [], {}, { choices: generated });
+    const choices = (value as { choices: { id: string; choices?: { id: string }[] }[] }).choices;
+    expect(choices.map((c) => c.id)).toEqual([
+      'mine',
+      'own-spike',
+      'own-deep',
+      'kiln-capture',
+      'kiln-log',
+      'kiln-work-menu',
+    ]);
+    expect(choices.at(-1)?.choices?.map((c) => c.id)).toEqual(['kiln-work-bug']);
+    expect(warnings).toContain(
+      '.obsidian/plugins/quickadd/data.json: your choices own-spike, own-deep were inside kiln menus, so they move to the top level',
+    );
+  });
+
+  it('QuickAdd: keeps kiln choices of a type only the vault has, and names others the blueprint dropped', () => {
+    const runbook: Json = {
+      id: 'kiln-runbook-menu',
+      name: 'New runbook',
+      type: 'Multi',
+      choices: [{ id: 'kiln-runbook-restart', name: 'New restart', type: 'Template' }],
+    };
+    const current: Json = {
+      choices: [
+        {
+          id: 'mine',
+          name: 'Mine',
+          type: 'Multi',
+          choices: [{ id: 'kiln-runbookish', name: 'Gone', type: 'Template' }],
+        },
+        runbook,
+        { id: 'kiln-capture', name: 'Capture to inbox', type: 'Template' },
+        { id: 'kiln-retired', name: 'Retired', type: 'Template' },
+      ],
+    };
+    const extra = { choices: [], vaultOnlyTypes: ['runbook'] };
+    const { value, warnings } = merge('settings/plugins/quickadd.json', current, [], {}, extra);
+    const choices = (value as { choices: { id: string; choices?: Json[] }[] }).choices;
+    expect(choices.map((c) => c.id)).toEqual(['mine', 'kiln-runbook-menu', 'kiln-capture', 'kiln-log']);
+    expect(choices[0]?.choices).toEqual([]);
+    expect(choices[1]).toEqual(runbook);
+    expect(warnings).toEqual([
+      '.obsidian/plugins/quickadd/data.json: kiln choices the blueprint no longer makes are removed: kiln-runbookish, kiln-retired',
+    ]);
+    // kiln's own choices come back, so they aren't named; nothing is named twice.
+    expect(merge('settings/plugins/quickadd.json', value ?? null, [], {}, extra)).toMatchObject({
+      changes: [],
+      warnings: [],
+    });
+  });
+
+  it('Iconic: keeps kiln rules of a type only the vault has, and names others the blueprint dropped', () => {
+    const current = {
+      fileRules: [
+        { id: 'mine', name: 'Mine' },
+        { id: 'kiln-runbook', name: 'Runbook' },
+        { id: 'kiln-work-bug', name: 'Old bug rule' },
+        { id: 'kiln-retired', name: 'Old' },
+      ],
+    };
+    const { value, warnings } = merge(
+      'settings/plugins/iconic.json',
+      current,
+      [],
+      {},
+      {
+        choices: [],
+        vaultOnlyTypes: ['runbook'],
+      },
+    );
+    const ids = (value as { fileRules: { id: string }[] }).fileRules.map((r) => r.id);
+    expect(ids.slice(-2)).toEqual(['mine', 'kiln-runbook']);
+    expect(ids.filter((id) => id === 'kiln-work-bug')).toHaveLength(1);
+    expect(ids).not.toContain('kiln-retired');
+    expect(warnings).toEqual([
+      '.obsidian/plugins/iconic/data.json: kiln rules the blueprint no longer makes are removed: kiln-retired',
+    ]);
   });
 
   it('the workspace: File properties becomes the visible tab, once', () => {
