@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readRequires } from '../../src/setup/blueprint.js';
-import type { SetupOptions } from '../../src/setup/setup.js';
+import type { Fetch, FetchResponse, SetupOptions } from '../../src/setup/setup.js';
 
 export const PLUGIN_ROOT = fileURLToPath(new URL('../../claude-plugin/', import.meta.url));
 
@@ -138,6 +138,69 @@ export function testVault(o: { plugins?: Record<string, string | null>; fresh?: 
     read: (path) => readFileSync(at(path), 'utf8'),
     json: (path): unknown => JSON.parse(readFileSync(at(path), 'utf8')),
   };
+}
+
+const SAMPLE_DIR = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'layer1');
+
+/** An answer with a JSON body or a text body. */
+function answer(body: { json: unknown } | { text: string }): FetchResponse {
+  return {
+    ok: true,
+    status: 200,
+    json: () => ('json' in body ? Promise.resolve(body.json) : Promise.reject(new Error('not JSON'))),
+    text: () => ('text' in body ? Promise.resolve(body.text) : Promise.resolve(JSON.stringify(body.json))),
+  };
+}
+
+/**
+ * GitHub for the sample at commit `version` (the full SHA is `version` padded with `0`s): the commits,
+ * tree and raw endpoints, served from `tests/fixtures/layer1`; the API ones only with GitHub's headers. Records every URL in `urls`. A URL
+ * containing `options.fail` answers 403; any other URL rejects.
+ */
+export function fakeGitHub(version: string, options: { fail?: string } = {}): Fetch & { urls: string[] } {
+  const sha = version.padEnd(40, '0');
+  const repo = 'Kieranties/kiln';
+  const raw = `https://raw.githubusercontent.com/${repo}/${sha}/`;
+  const files = readdirSync(SAMPLE_DIR, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => relative(SAMPLE_DIR, join(e.parentPath, e.name)).split(sep).join('/'));
+  const folders = [...new Set(files.map((f) => f.split('/').slice(0, -1).join('/')).filter((f) => f !== ''))];
+  const tree = [
+    { path: 'README.md', type: 'blob' },
+    { path: 'tests/fixtures', type: 'tree' },
+    { path: 'tests/fixtures/layer1', type: 'tree' },
+    ...folders.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'tree' })),
+    ...files.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
+  ];
+  const urls: string[] = [];
+  const fetch: Fetch = (url, init) => {
+    urls.push(url);
+    const headers = init?.headers ?? {};
+    const api = headers.Accept === 'application/vnd.github+json' && headers['User-Agent'] === 'kiln-setup';
+    if (options.fail !== undefined && url.includes(options.fail)) {
+      return Promise.resolve({
+        ok: false,
+        status: 403,
+        json: () => Promise.reject(new Error('forbidden')),
+        text: () => Promise.resolve('forbidden'),
+      });
+    }
+    if (api && url === `https://api.github.com/repos/${repo}/commits/${version}`) {
+      return Promise.resolve(answer({ json: { sha } }));
+    }
+    if (api && url === `https://api.github.com/repos/${repo}/git/trees/${sha}?recursive=1`) {
+      return Promise.resolve(answer({ json: { sha, truncated: false, tree } }));
+    }
+    const prefix = `${raw}tests/fixtures/layer1/`;
+    if (url.startsWith(prefix)) {
+      const path = url.slice(prefix.length).split('/').map(decodeURIComponent);
+      if (files.includes(path.join('/'))) {
+        return Promise.resolve(answer({ text: readFileSync(join(SAMPLE_DIR, ...path), 'utf8') }));
+      }
+    }
+    return Promise.reject(new Error(`no such URL in the fake GitHub: ${url}`));
+  };
+  return Object.assign(fetch, { urls });
 }
 
 /** A hash of every folder's and file's relative path under `dir`, and each file's bytes and modified time. */

@@ -7,11 +7,12 @@ import { expandHome, isFolder, pathKey } from '../vault/paths.js';
 import { installedFiles, isLive, readRequires, SETTINGS } from './blueprint.js';
 import { checkPlugins, type PluginCheck } from './checks.js';
 import { sortFile, usersOf } from './files.js';
-import { blueprintHash, hash } from './hash.js';
+import { blueprintHash, filesUnder, hash } from './hash.js';
 import { isObject, obsidianJson, readJson, sameJson, type Json } from './json.js';
 import { Merger, mergeFragment } from './merge.js';
 import { isChoice, kindChoices } from './quickadd.js';
 import { readRecord, RECORD, writeRecord } from './record.js';
+import { loadSample } from './sample.js';
 
 export type FetchResponse = { ok: boolean; status: number; json(): Promise<unknown>; text(): Promise<string> };
 export type Fetch = (url: string, init?: { headers?: Record<string, string> }) => Promise<FetchResponse>;
@@ -85,6 +86,8 @@ const NO_CLI =
   "The Obsidian CLI isn't on PATH. kiln's other skills need it: in Obsidian, turn on Settings → General → Command line interface, then restart the terminal and Claude.";
 const OPEN =
   'Obsidian is running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.';
+const SAMPLE_NEEDS_CLOSED =
+  'The sample is written as plain files, which needs Obsidian closed (Templater would run on new notes). Close Obsidian, then run setup again.';
 const NO_WORKSPACE =
   ".obsidian/workspace.json doesn't exist yet, so File properties isn't opened in the right sidebar. Getting started, section 4, says how.";
 
@@ -102,6 +105,17 @@ function readText(file: string): string | undefined {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return undefined;
     throw error;
   }
+}
+
+/** The owner's notes: `.md` files outside dot-folders and `_kiln/`, other than `Home.md`. */
+function ownNotes(vault: string): string[] {
+  return filesUnder(vault).filter(
+    (path) =>
+      path.endsWith('.md') &&
+      path !== 'Home.md' &&
+      !path.startsWith('_kiln/') &&
+      !path.split('/').some((segment) => segment.startsWith('.')),
+  );
 }
 
 /** `from` and `to` for a step, only when both are scalars (as `Change` has them). */
@@ -261,6 +275,8 @@ function prepare(o: SetupOptions): Prepared {
     else if (unsure) obsidianStop = SETUP_UNSURE;
   }
   const open = report.mode === 'reapply' && (o.obsidianRunning === true || unsure);
+  const sampleStop = o.sample === true && (o.obsidianRunning === true || unsure) ? SAMPLE_NEEDS_CLOSED : undefined;
+  if (o.sample === true) report.sample = { notes: ownNotes(vault).length };
   const waits = (path: string): boolean => open && !isLive(path);
 
   const writes = { folders: [] as (() => void)[], backups: [] as (() => void)[], files: [] as (() => void)[] };
@@ -433,6 +449,7 @@ function prepare(o: SetupOptions): Prepared {
     ...missing,
     ...problems,
     ...(obsidianStop === undefined ? [] : [obsidianStop]),
+    ...(sampleStop === undefined ? [] : [sampleStop]),
     ...('error' in named ? [named.error] : []),
   ];
   return {
@@ -447,27 +464,49 @@ export function planSetup(options: SetupOptions): SetupReport {
 }
 
 /**
- * Plans again and, unless something stops it, writes: folders, backups, files, settings, the record, and
- * then the vault in the kiln file. Overrides nobody took are kept, so an `ask` is reported as `keep`.
+ * Plans again and, unless something stops it, writes: folders, backups, files, settings, the record, then
+ * the sample when asked for, and then the vault in the kiln file. The sample is loaded before anything is
+ * written, so a failed fetch writes nothing. Overrides nobody took are kept, so an `ask` is reported as `keep`.
  */
-export function applySetup(options: SetupOptions): Promise<SetupReport> {
-  try {
-    const { report, writes } = prepare(options);
-    if (report.stop.length > 0) return Promise.resolve(report);
-    for (const write of writes) write();
-    if (report.kiln.recorded === 'new') {
-      try {
-        recordVault(options.kilnConfig, report.kiln.name, options.vault, { makeDefault: options.makeDefault === true });
-      } catch (error) {
-        report.kiln = { ...report.kiln, recorded: 'skipped', default: null };
-        report.warnings.push(`can't record the vault: ${message(error)}`);
-      }
+export async function applySetup(options: SetupOptions): Promise<SetupReport> {
+  const { report, writes } = prepare(options);
+  if (report.stop.length > 0) return report;
+  let sample: Awaited<ReturnType<typeof loadSample>> | undefined;
+  if (options.sample === true) {
+    try {
+      sample = await loadSample(options.pluginRoot, options.fetch);
+    } catch (error) {
+      report.stop.push(message(error));
+      return report;
     }
-    report.applied = true;
-    for (const step of report.files) if (step.action === 'ask') step.action = 'keep';
-    for (const step of report.settings) if (step.action === 'ask') step.action = 'keep';
-    return Promise.resolve(report);
-  } catch (error) {
-    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
   }
+  for (const write of writes) write();
+  if (sample !== undefined) {
+    // The owner's notes from now on: never over an existing file, and not in the record.
+    const written: string[] = [];
+    const skipped: string[] = [];
+    for (const file of sample.files) {
+      const target = onDisk(options.vault, file.path);
+      if (existsSync(target)) {
+        skipped.push(file.path);
+        continue;
+      }
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, file.text, { flag: 'wx' });
+      written.push(file.path);
+    }
+    report.sample = { source: sample.source, files: written, skipped };
+  }
+  if (report.kiln.recorded === 'new') {
+    try {
+      recordVault(options.kilnConfig, report.kiln.name, options.vault, { makeDefault: options.makeDefault === true });
+    } catch (error) {
+      report.kiln = { ...report.kiln, recorded: 'skipped', default: null };
+      report.warnings.push(`can't record the vault: ${message(error)}`);
+    }
+  }
+  report.applied = true;
+  for (const step of report.files) if (step.action === 'ask') step.action = 'keep';
+  for (const step of report.settings) if (step.action === 'ask') step.action = 'keep';
+  return report;
 }
