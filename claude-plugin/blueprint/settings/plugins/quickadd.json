@@ -8,7 +8,7 @@
       "templatePath": "_kiln/templates/Capture.md",
       "fileNameFormat": {
         "enabled": true,
-        "format": "{{DATE:YYYY-MM-DD}} {{VALUE:Capture}}"
+        "format": "{{DATE:YYYY-MM-DD}} {{VALUE:title}}"
       },
       "folder": {
         "enabled": true,
@@ -26,7 +26,8 @@
         "focus": true
       },
       "fileExistsBehavior": {
-        "kind": "prompt"
+        "kind": "apply",
+        "mode": "duplicateSuffix"
       }
     },
     {

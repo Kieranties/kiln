@@ -14,7 +14,7 @@ Each release on GitHub also carries the blueprint as `kiln-blueprint-<version>.z
 
 ### The Claude plugin
 
-This repo is also a Claude Code plugin marketplace with one plugin, `kiln`. The plugin carries the blueprint, kiln's skills and the rules every kiln skill follows in a vault. So far there is one skill: `/kiln:check` checks a vault's notes, or today's changes, against their type definitions. The commands are the same in Bash and PowerShell.
+This repo is also a Claude Code plugin marketplace with one plugin, `kiln`. The plugin carries the blueprint, kiln's skills and the rules every kiln skill follows in a vault. There are two skills so far: `/kiln:setup` sets up a vault from the blueprint, re-applies the blueprint after an update and loads the sample on request, and `/kiln:check` checks a vault's notes, or today's changes, against their type definitions. The commands are the same in Bash and PowerShell.
 
 #### Install
 
@@ -69,14 +69,15 @@ claude plugin install obsidian@obsidian-skills
 | `claude-plugin/` | The Claude plugin, and nothing else. Its manifest is `claude-plugin/.claude-plugin/plugin.json`, with no version: the plugin's version is the commit |
 | `claude-plugin/blueprint/` | The blueprint: type definitions, Templater templates, Bases views, Obsidian and plugin settings, and its guides |
 | `claude-plugin/reference/vault-rules.md` | The rules every kiln skill follows in a vault: find the vault, read the type definition, create through QuickAdd, rename through the Obsidian CLI, never write `<%`, check at the end |
-| `claude-plugin/skills/` | The plugin's skills, one folder each: `check` |
-| `claude-plugin/scripts/` | The scripts the skills run, such as `kiln-check.mjs` and `kiln-vault.mjs`: each one file built from `src/` by `npm run build`, committed, never edited by hand |
-| `src/` | The code: `blueprint/` reads a blueprint's definitions, `check/` is the note check, `vault/` finds the vault, `cli/` holds an entry point per script |
+| `claude-plugin/skills/` | The plugin's skills, one folder each: `check`, `setup` |
+| `claude-plugin/scripts/` | The scripts the skills run, such as `kiln-check.mjs`, `kiln-setup.mjs` and `kiln-vault.mjs`: each one file built from `src/` by `npm run build`, committed, never edited by hand |
+| `src/` | The code: `blueprint/` reads a blueprint's definitions, `check/` is the note check, `vault/` finds the vault, `setup/` sets up a vault, `cli/` holds an entry point per script |
 | `scripts/` | Repo tooling: `build.mjs` builds the plugin's scripts; `apply-repo-settings.sh` applies the GitHub merge settings and rulesets |
 | `tests/kit/` | Checks every blueprint file against the type definitions, and the sample against both |
 | `tests/blueprint/` | Checks reading the definitions, and the errors for a malformed one |
 | `tests/check/` | Checks the note check, the built `kiln-check.mjs` and the check skill |
 | `tests/vault/` | Checks finding the vault: the resolution order, the kiln file, Obsidian's vault list and the built `kiln-vault.mjs` |
+| `tests/setup/` | Checks setting up a vault: the generated QuickAdd choices, the settings merges, the three-way re-apply, the sample, the built `kiln-setup.mjs` and the setup skill |
 | `tests/plugin/` | Checks the catalog, the plugin manifest and folder, the release zip, the vault rules and every skill, the README's plugin commands, and the living docs' links |
 | `tests/fixtures/layer1/` | The Northwind Arena sample vault |
 | `tests/fixtures/check/` | Broken notes for the note check, laid over the sample |

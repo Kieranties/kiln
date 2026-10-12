@@ -142,3 +142,18 @@ describe('the README', () => {
     expect(readme).toContain('Load user Claude Code settings');
   });
 });
+
+describe('the README and the skills', () => {
+  it('names every skill, in the plugin section and the repo table', () => {
+    const readme = readFileSync(join(REPO, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
+    const skills = readdirSync(join(PLUGIN, 'skills'), { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+    const intro = /^This repo is also a Claude Code plugin marketplace.*$/m.exec(readme)?.[0] ?? '';
+    const row = /^\| `claude-plugin\/skills\/` \|(.*)$/m.exec(readme)?.[1] ?? '';
+    for (const skill of skills) {
+      expect(intro, skill).toContain(`/kiln:${skill}`);
+      expect(row, skill).toContain(`\`${skill}\``);
+    }
+  });
+});

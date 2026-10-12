@@ -41,7 +41,7 @@ The helper writes JSON the way Obsidian does: LF line endings and no final newli
 
 ### A vault already in use
 
-The kit's settings can collide with the owner's: Homepage, the new-note folder, the daily-note folder and format, Templater's template folder and folder templates, and property types. Setup shows each override and asks before writing. A fresh vault has nothing to ask, so setup stays one prompt. An existing `Home.md` is never replaced without asking.
+The kit's settings can collide with the owner's: Homepage, the new-note folder, the new-link format, where properties show in a note, the daily-note folder and format, Templater's template folder and folder templates, and property types. Setup shows each override and asks before writing. A fresh vault has nothing to ask, so setup stays one prompt. An existing `Home.md` is never replaced without asking.
 
 ### The version record
 
@@ -71,6 +71,8 @@ After a kiln update, setup compares three versions of each file: what it install
 | Changed by the owner | Unchanged | Keep the owner's edit |
 | Changed by the owner | Changed | Show both, and ask |
 | Missing | New | Add it |
+| Deleted by the owner (setup installed it) | Still has it | Leave it deleted, and report it; the owner can take it back |
+| Deleted by the owner (setup installed it) | Dropped | Nothing to report: drop it from the record |
 | Present | Dropped | Leave it, and report which notes still use it (archive, never delete) |
 
 In a trial this sorted every case correctly. Re-apply can't change notes already written; it reports any that no longer match a changed definition, and `/kiln:check` finds them.

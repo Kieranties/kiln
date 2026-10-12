@@ -254,8 +254,14 @@ describe('QuickAdd', () => {
       name: 'Capture to inbox',
       type: 'Template',
       templatePath: '_kiln/templates/Capture.md',
-      fileNameFormat: { enabled: true, format: '{{DATE:YYYY-MM-DD}} {{VALUE:Capture}}' },
+      fileNameFormat: { enabled: true, format: '{{DATE:YYYY-MM-DD}} {{VALUE:title}}' },
       folder: { enabled: true, folders: ['Inbox'] },
+      fileExistsBehavior: { kind: 'apply', mode: 'duplicateSuffix' },
     });
+  });
+
+  it('no kiln choice asks what to do when the file exists', () => {
+    const choices = loadJson<{ choices: Choice[] }>('settings/plugins/quickadd.json').choices;
+    for (const c of choices) expect(c.fileExistsBehavior, c.id).not.toEqual({ kind: 'prompt' });
   });
 });
