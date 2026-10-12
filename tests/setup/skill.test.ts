@@ -163,10 +163,15 @@ describe('/kiln:setup', () => {
     }
     expect(byHand).toContain('Yishen Tu');
     expect(body).not.toMatch(/GETTING-STARTED|TRY-THE-SAMPLE/);
+    // The checks work offline; the guides on the docs site are fetched for the latest when they can be.
     const step8 = body.slice(body.indexOf('## 8.'), body.indexOf('## Never'));
-    for (const page of ['guides/getting-started#_4-check-it', 'guides/try-the-sample#_3-look-around']) {
+    for (const part of ['works offline', 'File properties', '/kiln:check', 'Load user Claude Code settings']) {
+      expect(step8, part).toContain(part);
+    }
+    for (const page of ['guides/getting-started', 'guides/try-the-sample']) {
       expect(step8, page).toContain(`https://kiln.kieranties.com/${page}`);
     }
+    expect(body).not.toMatch(/kiln\.kieranties\.com\/[^\s]*#/);
   });
 
   it('keeps the Never list true without Node, and offers the permission rules by hand', () => {

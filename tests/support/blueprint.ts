@@ -1,6 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import {
   readDefinitions,
@@ -9,8 +8,9 @@ import {
   type PropertyEntry,
 } from '../../src/blueprint/load.js';
 import { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
+import { REPO_BLUEPRINT } from '../../src/docs/blueprint.js';
 
-export const BLUEPRINT = fileURLToPath(new URL('../../claude-plugin/blueprint/', import.meta.url));
+export const BLUEPRINT = REPO_BLUEPRINT;
 
 export {
   PROP_TYPES,

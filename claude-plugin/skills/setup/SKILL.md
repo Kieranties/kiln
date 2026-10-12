@@ -33,7 +33,7 @@ Add `--sample` if the owner asked for the sample. The commands are the same in B
 
 Only when `install` isn't `null`. `install.plugins` are the ids of the plugins that are missing, and `install.vault` is the vault's name for the Obsidian CLI.
 
-- **`cli` is `null`:** the CLI isn't on PATH. Ask the owner to install and switch on the plugins in Obsidian, then plan again. Tell them how: in Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd**, **Homepage** and **Claudian**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on. Choose the Claudian by Yishen Tu: several other plugins have similar names.
+- **`cli` is `null`:** the CLI isn't on PATH. Ask the owner to install and switch on the plugins in Obsidian, then plan again. Tell them how: in Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd**, **Homepage** and **Claudian**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on. Choose the Claudian by Yishen Tu: several other plugins have similar names. If you can fetch web pages, "Make your vault" in https://kiln.kieranties.com/guides/getting-started has the latest steps.
 - **Otherwise,** offer to install and switch them on through the CLI. Say what that does first: it turns off restricted mode, which lets community plugins run, then downloads each plugin from Obsidian's community directory and turns it on. When `realclaudian` is in the list, also say that Claudian is the one plugin Obsidian staff haven't reviewed, and that it runs Claude Code inside Obsidian with the vault as its working folder. Run nothing until the owner says yes. The CLI needs Obsidian running with this vault open: ask the owner to open the vault in Obsidian and keep it open until the commands are done. Call it as "Calling the Obsidian CLI" in the vault rules says: `obsidian.com` in Git Bash, `obsidian` in pwsh, and every value in single quotes. Turn off restricted mode, install each id in `install.plugins`, then list what is installed:
 
   ```
@@ -83,7 +83,15 @@ With the same `--sample`, each `--take '<id>'`, and `--confirm-closed` if step 5
 
 ## 8. Report
 
-Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, files the owner deleted (left deleted), dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and work through "Check it" in Getting started, https://kiln.kieranties.com/guides/getting-started#_4-check-it, or "Look around" in Try the sample, https://kiln.kieranties.com/guides/try-the-sample#_3-look-around, for the sample.
+Say what changed: folders, files by action, settings, the backups (`backups`, under `.kiln/backup/`: setup copies each file and settings file there before it replaces it), what was kept, what waits, files the owner deleted (left deleted), dropped files with the notes that still use them (`usedBy`), the sample, and the name the vault was recorded under in `~/.kiln/config.json`. Then the next step: open Obsidian and check it. Give the owner this list, which works offline:
+
+- Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review (all empty in a new vault).
+- The right sidebar shows **File properties**. If not: command palette → **Show file properties**.
+- The file explorer has a folder per type and a `_kiln` folder, each showing its type's icon and colour.
+- In Claudian, `/kiln:check` runs and finds no problems. If it isn't offered, turn on Settings → Claudian → Providers → **Load user Claude Code settings**, then start a new chat.
+- With the sample: Home's Inbox and Active projects list the sample's capture and project, and the project's Board shows three cards.
+
+If you can fetch web pages, get the latest from the guides and pass on anything this list lacks: "Check it" in https://kiln.kieranties.com/guides/getting-started, or "Look around" in https://kiln.kieranties.com/guides/try-the-sample for the sample. Without a connection, this list is enough.
 
 ## Never
 

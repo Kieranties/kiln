@@ -6,14 +6,12 @@ Claude must find the vault from wherever a session runs: Claudian, which starts 
 
 kiln records vaults in `~/.kiln/config.json`, not in a Claude Code plugin setting, because kiln's Node scripts read it, it holds more than one vault, and it isn't tied to Claude. A plugin setting holds one value, isn't visible to scripts Claude runs from the shell, and its default wasn't filled in when unset in a trial. `/kiln:setup` is its one writer.
 
-## The order
+## Why this order
 
-- **A folder you name** comes first: you said so.
 - **The current folder comes before `KILN_VAULT`,** because Obsidian inherits your environment variables and Claudian passes them on. A `KILN_VAULT` set for your whole user would otherwise point a Claudian session at the wrong vault.
 - **A plain Obsidian vault stops the search.** If the current folder is inside a vault without `_kiln/`, Claude offers to set it up rather than moving on to another vault, since that is almost always the vault you meant.
-- **`KILN_VAULT`** overrides the default for one terminal or one Herdr workspace.
 - **Obsidian's vault list** is a fallback for discovery only: its format isn't documented, so it is used only when exactly one vault in it has `_kiln/`.
-- **Asking** comes last, and the answer is recorded through setup, so there is one writer.
+- **Asking** comes last, and the answer is recorded through setup, so the kiln file has one writer.
 
 A small Node resolver in the Claude plugin, `kiln-vault.mjs`, implements the order. It behaves the same in Bash and pwsh.
 

@@ -19,14 +19,22 @@ const PROPERTY: Record<Exclude<PropType, 'links'>, string> = {
 const cell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 const code = (text: string): string => `\`${cell(text)}\``;
 const codes = (items: string[]): string => items.map(code).join(', ');
+/** Prose as text: `<` outside code spans is escaped, so a bare `<placeholder>` isn't read as HTML. */
+const prose = (text: string): string =>
+  text
+    .split(/(`+[^`]*`+)/)
+    .map((part, i) => (i % 2 ? part : part.replace(/</g, '&lt;')))
+    .join('');
 
-function holds(name: string, type: PropType, blueprint: Blueprint): string {
+/** What a property holds, for its row in the Properties table. */
+function propertyDescription(name: string, type: PropType, blueprint: Blueprint): string {
   if (type !== 'links') return PROPERTY[type];
   const target = blueprint.properties.entries[name]?.links;
   return target ? `Links to ${code(target)} notes` : 'Links';
 }
 
-function lists(view: ViewDef): string {
+/** What a view lists, for its row in the Views table. */
+function viewDescription(view: ViewDef): string {
   const notes = `${code(view.type)} notes`;
   if (view.via === 'link') return `${notes} that link to this note`;
   if (view.via === 'created') return `${notes} created on this note's \`date\``;
@@ -43,7 +51,7 @@ export function typePage(definition: Definition, blueprint: Blueprint): string {
   const lines = [
     `# ${definition.name}`,
     '',
-    definition.body,
+    prose(definition.body),
     '',
     '| | |',
     '|---|---|',
@@ -77,7 +85,7 @@ export function typePage(definition: Definition, blueprint: Blueprint): string {
           '',
           '| Property | Holds |',
           '|---|---|',
-          ...properties.map(([name, type]) => `| ${code(name)} | ${holds(name, type, blueprint)} |`),
+          ...properties.map(([name, type]) => `| ${code(name)} | ${propertyDescription(name, type, blueprint)} |`),
         ]
       : [`A ${definition.name} note has no properties of its own.`]),
     '',
@@ -89,7 +97,11 @@ export function typePage(definition: Definition, blueprint: Blueprint): string {
     '## Views',
     '',
     ...(views.length
-      ? ['| View | Lists |', '|---|---|', ...views.map(([name, view]) => `| ${cell(name)} | ${lists(view)} |`)]
+      ? [
+          '| View | Lists |',
+          '|---|---|',
+          ...views.map(([name, view]) => `| ${cell(name)} | ${viewDescription(view)} |`),
+        ]
       : ['None.']),
     '',
     `Written from \`claude-plugin/blueprint/types/${definition.name}.md\`, which a vault holds as \`_kiln/types/${definition.name}.md\`.`,
@@ -100,7 +112,7 @@ export function typePage(definition: Definition, blueprint: Blueprint): string {
 
 /** The index of every type's page, in Markdown. */
 export function typeIndex(blueprint: Blueprint): string {
-  const lead = (body: string): string => cell(body.split(/\r?\n\r?\n/)[0] ?? '');
+  const lead = (body: string): string => cell(prose(body.split(/\r?\n\r?\n/)[0] ?? ''));
   return [
     '# Types',
     '',

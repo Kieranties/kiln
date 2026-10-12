@@ -70,13 +70,11 @@ describe('the blueprint README and the guides', () => {
   it('setting up a vault copies the README, and points at the guides on the docs site', () => {
     const steps = section(readme, 'Setting up a vault');
     expect(steps).toContain('this README');
-    for (const page of [
-      'guides/getting-started#_2-make-your-vault',
-      'guides/try-the-sample',
-      'guides/getting-started#_4-check-it',
-    ]) {
-      expect(steps, page).toContain(`${SITE}/${page}`);
+    for (const page of ['guides/getting-started', 'guides/try-the-sample', 'concepts/setup']) {
+      expect(steps, page).toContain(`${SITE}/${page})`);
     }
+    // Pages, not heading anchors, so renumbering a guide's sections can't break a link.
+    expect(readme).not.toMatch(new RegExp(`${SITE}/[^)\\s]*#`));
   });
 
   it('adding a type names every place that must change', () => {

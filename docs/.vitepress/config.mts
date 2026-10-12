@@ -1,24 +1,29 @@
 // The docs site: docs/ built with VitePress and published to GitHub Pages, at kiln.kieranties.com, on each merge to main.
 import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type DefaultTheme } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
-import { readDefinitions } from '../../src/blueprint/load.js';
+import { REPO_BLUEPRINT, readRepoBlueprint } from '../../src/docs/blueprint.js';
 
 const DOCS = fileURLToPath(new URL('../', import.meta.url));
-const BLUEPRINT = fileURLToPath(new URL('../../claude-plugin/blueprint/', import.meta.url));
+const CONFIG = fileURLToPath(import.meta.url);
 
-/** A sidebar entry for every page in a docs folder, titled by its first heading, in file name order. */
-function pagesIn(folder: string): DefaultTheme.SidebarItem[] {
-  return readdirSync(`${DOCS}${folder}`)
+/** A sidebar entry for a page, titled by its first heading. `path` is relative to docs/, without `.md`. */
+function page(path: string): DefaultTheme.SidebarItem {
+  const title = /^# (.+)$/m.exec(readFileSync(join(DOCS, `${path}.md`), 'utf8'))?.[1] ?? path;
+  // Sidebar text is HTML: drop code ticks and escape `<host>`-style placeholders.
+  const text = title.replace(/`/g, '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return { text, link: `/${path}` };
+}
+
+/** Sidebar entries for the named pages of a docs folder, in that order, or for all of them by file name. */
+function pages(folder: string, names?: string[]): DefaultTheme.SidebarItem[] {
+  const all = readdirSync(join(DOCS, folder))
     .filter((f) => f.endsWith('.md'))
-    .sort()
-    .map((f) => {
-      const title = /^# (.+)$/m.exec(readFileSync(`${DOCS}${folder}/${f}`, 'utf8'))?.[1] ?? f;
-      // Sidebar text is HTML: drop code ticks and escape `<host>`-style placeholders.
-      const text = title.replace(/`/g, '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      return { text, link: `/${folder}/${f.replace(/\.md$/, '')}` };
-    });
+    .map((f) => f.replace(/\.md$/, ''))
+    .sort();
+  return (names ?? all).map((name) => page(`${folder}/${name}`));
 }
 
 export default withMermaid(
@@ -31,51 +36,60 @@ export default withMermaid(
     lastUpdated: true,
     // docs/agents/ is for the engineering skills, not readers.
     srcExclude: ['agents/**'],
+    vite: {
+      // Mermaid 11's CommonJS dependencies (fastdom among them) need bundling for `docs:dev`; the plugin
+      // only lists older ones.
+      optimizeDeps: { include: ['mermaid'] },
+      plugins: [
+        {
+          // In `docs:dev`, a change to a type definition or properties.md restarts the server, as a config change
+          // does, so the type pages and the sidebar follow. A build always reads them afresh.
+          name: 'kiln:restart-on-blueprint-change',
+          configureServer(server) {
+            const slashes = (file: string) => file.replace(/\\/g, '/');
+            const watched = [join(REPO_BLUEPRINT, 'types'), join(REPO_BLUEPRINT, 'properties.md')];
+            server.watcher.add(watched);
+            server.watcher.on('change', (file) => {
+              if (watched.some((path) => slashes(file).startsWith(slashes(path)))) {
+                server.watcher.emit('change', slashes(CONFIG));
+              }
+            });
+          },
+        },
+      ],
+    },
     themeConfig: {
       nav: [
         { text: 'Use kiln', link: '/guides/getting-started' },
         { text: 'Inside kiln', link: '/concepts/vision' },
       ],
       sidebar: [
-        {
-          text: 'Use kiln',
-          items: [
-            { text: 'Install, update and turn off', link: '/guides/install' },
-            { text: 'Getting started', link: '/guides/getting-started' },
-            { text: 'Try the sample', link: '/guides/try-the-sample' },
-          ],
-        },
+        { text: 'Use kiln', items: pages('guides', ['install', 'getting-started', 'try-the-sample']) },
         {
           text: 'Inside kiln',
           items: [
             {
               text: 'Concepts',
-              items: [
-                { text: 'Vision', link: '/concepts/vision' },
-                { text: 'How notes are shaped', link: '/concepts/notes' },
-                { text: 'Claude in the vault', link: '/concepts/claude-in-the-vault' },
-                { text: 'Finding the vault', link: '/concepts/finding-the-vault' },
-                { text: 'Setting up and re-applying', link: '/concepts/setup' },
-              ],
+              items: pages('concepts', ['vision', 'notes', 'claude-in-the-vault', 'finding-the-vault', 'setup']),
             },
             {
               text: 'Reference',
               items: [
-                { text: 'The blueprint', link: '/reference/blueprint' },
+                page('reference/blueprint'),
                 {
                   text: 'Types',
                   link: '/reference/types/',
                   collapsed: true,
-                  items: readDefinitions(BLUEPRINT).map((d) => ({ text: d.name, link: `/reference/types/${d.name}` })),
+                  items: readRepoBlueprint().definitions.map((d) => ({
+                    text: d.name,
+                    link: `/reference/types/${d.name}`,
+                  })),
                 },
-                { text: 'Skills', link: '/reference/skills' },
-                { text: 'Vault rules', link: '/reference/vault-rules' },
-                { text: 'Configuration', link: '/reference/configuration' },
-                { text: 'The repo', link: '/reference/repo' },
+                ...pages('reference', ['skills', 'vault-rules', 'configuration', 'repo']),
               ],
             },
-            { text: 'Glossary', link: '/glossary' },
-            { text: 'Decisions', collapsed: true, items: pagesIn('adr') },
+            page('glossary'),
+            { text: 'Decisions', collapsed: true, items: pages('adr') },
           ],
         },
       ],

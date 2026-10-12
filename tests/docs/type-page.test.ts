@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { readBlueprint, type Definition } from '../../src/blueprint/load.js';
 import { typeIndex, typePage } from '../../src/docs/type-page.js';
@@ -76,6 +78,11 @@ describe('typePage', () => {
     expect(section(text, 'Sections')).not.toContain('Context');
   });
 
+  it("keeps a definition's prose as text: a bare <placeholder> is escaped, code is left alone", () => {
+    const odd = { ...definition('work'), body: 'Put <vault> here, and `<vault>` in code.' };
+    expect(typePage(odd, blueprint)).toContain('Put &lt;vault> here, and `<vault>` in code.');
+  });
+
   it('escapes table cells, so a pipe in a definition cannot break a table', () => {
     const odd = { ...definition('work'), kinds: { 'a|b': {} } };
     expect(section(typePage(odd, blueprint), 'Kinds')).toContain('`a\\|b`');
@@ -99,5 +106,13 @@ describe('the type pages on the docs site', () => {
       ['index', ...blueprint.definitions.map((d) => d.name)].sort(),
     );
     expect(paths.find((p) => p.params.type === 'work')?.content).toBe(page('work'));
+  });
+
+  it("render each page as text, so a definition's {{…}} is never read as Vue", () => {
+    const template = readFileSync(
+      fileURLToPath(new URL('../../docs/reference/types/[type].md', import.meta.url)),
+      'utf8',
+    );
+    expect(template.replace(/\r\n/g, '\n')).toMatch(/^::: v-pre\n+<!-- @content -->\n+:::\n?$/);
   });
 });
