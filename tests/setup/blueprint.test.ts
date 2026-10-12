@@ -60,7 +60,7 @@ describe('installedFiles', () => {
 });
 
 describe('requires.json', () => {
-  it('names Obsidian and the four plugins', () => {
+  it('names Obsidian and the five plugins', () => {
     const requires = readRequires(BLUEPRINT);
     expect(requires.obsidian).toBe('1.14.0');
     expect(requires.plugins).toEqual({
@@ -68,6 +68,7 @@ describe('requires.json', () => {
       'templater-obsidian': '2.26.0',
       quickadd: '2.32.0',
       homepage: '4.5.0',
+      realclaudian: '2.3.19',
     });
   });
 });

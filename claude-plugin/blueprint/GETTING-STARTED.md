@@ -7,7 +7,7 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 ## 1. What you need
 
 - **Obsidian 1.14 or later.** Check in Settings → About. The board needs Bases' built-in kanban, added in 1.14.
-- **Claude Code** (`claude --version`).
+- **Claude Code** (`claude --version`), on the same computer as Obsidian. Setup installs **Claudian**, which runs it in a panel inside Obsidian. Claudian works only in Obsidian's desktop app.
 - **Node 24** (`node --version`). Setup runs a small Node script. Without Node, Claude follows the steps by hand, more slowly.
 - **The kiln plugin for Claude Code.** Install it once, as [the README says](https://github.com/Kieranties/kiln#install). It carries the blueprint, so you need no copy of the kiln repo. If you install it during a Claude session, run `/reload-plugins` or start a new session before `/kiln:setup` exists.
 
@@ -17,7 +17,7 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 2. In Obsidian, choose **Open folder as vault** and pick the folder, and keep it open: Claude installs the blueprint's plugins through Obsidian in section 3.
 3. In Settings → General, check **Command line interface** is on. It lets Claude install the plugins. Turning it on takes effect in terminals you start afterwards, so start Claude in a new one.
 
-**Without the Obsidian CLI,** install the four plugins yourself. In Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd** and **Homepage**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on.
+**Without the Obsidian CLI,** install the five plugins yourself. In Settings → Community plugins, select **Exit restricted mode** (before Obsidian 1.14.4, the button was **Turn on community plugins**). Select **Browse** and install **Iconic**, **Templater**, **QuickAdd**, **Homepage** and **Claudian**, then switch each on under **Installed plugins**: installing doesn't turn a plugin on. Choose the Claudian by Yishen Tu: several other plugins have similar names.
 
 ## 3. Apply the blueprint
 
@@ -27,7 +27,7 @@ Start Claude in any folder (`claude`) and give it this prompt, with your folder 
 /kiln:setup <vault folder>
 ```
 
-Claude checks the four plugins. If any is missing, it installs and switches them on through the Obsidian CLI. That turns off restricted mode, so community plugins can run, and downloads each plugin from Obsidian's community directory, so Claude asks first.
+Claude checks the five plugins. If any is missing, it installs and switches them on through the Obsidian CLI. That turns off restricted mode, so community plugins can run, and downloads each plugin from Obsidian's community directory, so Claude asks first. Claudian is the one Obsidian staff haven't reviewed: it runs Claude Code inside Obsidian, with your vault as its working folder.
 
 Then Claude asks you to **close Obsidian**, because QuickAdd and Homepage only read their settings when Obsidian starts. If you use Run in Background, use its tray icon's **Close Vault**: quitting only hides Obsidian.
 
@@ -42,6 +42,7 @@ Open Obsidian.
 - [ ] Obsidian opens on **Home**, with Today, Inbox, Active projects and Needs review, all empty.
 - [ ] The right sidebar shows **File properties**. Notes keep their properties out of the text, so this is where you read and edit them; it follows whichever note is open. If it isn't there, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
 - [ ] The file explorer has a folder per type (`Projects`, `Work`, `Inbox` and the rest) and a `_kiln` folder holding the blueprint. Each folder shows its type's icon and colour in place of the `>` arrow.
+- [ ] Open Claudian: **Open Claudian** in the left ribbon, or **Claudian: Open chat view** from the command palette. Ask it to run `/kiln:check`. It reports on your vault and finds no problems; it only reads, so it's safe to try. If `/kiln:check` isn't offered, turn on Settings → Claudian → Providers → **Load user Claude Code settings**, which lets Claudian load kiln, then start a new chat.
 
 ## 5. Your first notes
 

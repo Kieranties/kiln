@@ -25,7 +25,7 @@ claude plugin marketplace add Kieranties/kiln
 claude plugin install kiln@kiln
 ```
 
-Claudian runs your own Claude Code inside Obsidian, so it loads the plugin too, as long as its **Load user Claude Code settings** switch is on (the default). Enabling kiln in a vault's `.claude/settings.json` isn't a substitute: it only turns on a plugin that is already installed, Claude Code ignores it in a folder you haven't trusted, and it reaches only that folder.
+[Claudian](https://github.com/YishenTu/claudian), which `/kiln:setup` installs in your vault, runs your own Claude Code inside Obsidian, so it loads the plugin too, as long as its **Load user Claude Code settings** switch is on (the default). Enabling kiln in a vault's `.claude/settings.json` isn't a substitute: it only turns on a plugin that is already installed, Claude Code ignores it in a folder you haven't trusted, and it reaches only that folder.
 
 To try a branch, add the marketplace at that branch instead: `claude plugin marketplace add Kieranties/kiln#some-branch`.
 

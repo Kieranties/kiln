@@ -209,13 +209,19 @@ describe('Obsidian settings', () => {
     });
   });
 
-  it('community plugins are the four', () => {
+  it('community plugins are the five', () => {
     expect(loadJson<string[]>('settings/community-plugins.json')).toEqual([
       'iconic',
       'templater-obsidian',
       'quickadd',
       'homepage',
+      'realclaudian',
     ]);
+  });
+
+  it('switches on exactly the plugins requires.json names', () => {
+    const { plugins } = loadJson<{ plugins: Record<string, string> }>('requires.json');
+    expect([...loadJson<string[]>('settings/community-plugins.json')].sort()).toEqual(Object.keys(plugins).sort());
   });
 
   it('homepage opens Home', () => {

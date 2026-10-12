@@ -23,7 +23,7 @@ The helper writes JSON the way Obsidian does: LF line endings and no final newli
 
 ### The steps
 
-1. **Check the plugins.** Each of `iconic`, `templater-obsidian`, `quickadd` and `homepage` has `manifest.json` and `main.js`, at or above the blueprint's minimum versions. Missing ones can be installed through the Obsidian CLI (below).
+1. **Check the plugins.** Each of `iconic`, `templater-obsidian`, `quickadd`, `homepage` and `realclaudian` (Claudian, added below) has `manifest.json` and `main.js`, at or above the blueprint's minimum versions. Missing ones can be installed through the Obsidian CLI (below).
 2. **Check the Obsidian CLI is registered** ([vault access](2026-10-11-vault-access-design.md)).
 3. **Plan.** Show what will change. In a vault already in use, show every kit setting that would override the owner's (below).
 4. **Check Obsidian is closed,** at this step and only here, because QuickAdd and Homepage read some settings at start-up. If Obsidian is running, say why it must close and how. With Run in Background installed, that means the tray's Close Vault, because quitting only hides it. Then check again. The check is a process check: in Git Bash that is `tasklist //FI "IMAGENAME eq Obsidian.exe"` (double slash, or MSYS rewrites it). It can't tell which vault is open. Obsidian's `obsidian.json` can say `open: true` when the app is closed, so it isn't used.
@@ -60,6 +60,26 @@ Choices within this:
 - **2026-10-12, the owner's results on Windows 11 with Obsidian 1.14.4** ([#114](https://github.com/Kieranties/kiln/issues/114)). From Git Bash with Obsidian closed, `explorer.exe '<uri>'` did not start Obsidian, so it was dropped. `rundll32.exe url.dll,FileProtocolHandler '<uri>'` did, from Git Bash and from WSL through Windows interop; pwsh's `Start-Process '<uri>'` did too. The first CLI command after the launch said "command not found" while the vault loaded, and the next try worked. That matches an open forum report, [CLI commands for second vault do not wait for vault's window to initialize](https://forum.obsidian.md/t/115473), seen on Linux with Obsidian 1.13.1.
 - **Current direction: retry while the vault loads, and judge by the retry.** Right after Claude opened the link, "unable to find Obsidian" and "command not found" both mean "still loading": Claude waits about five seconds and retries, up to three times, then asks the owner. At any other time "not found" means the command or plugin is missing. No open command's exit code is relied on: Microsoft documents the functions `rundll32` runs as returning nothing, so it can't say whether the link opened.
 - **WSL is detected by `uname -r` containing `microsoft`, or `WSL_DISTRO_NAME` being set.** Only the launch was tried there. The CLI itself through WSL is untested: a forum report, [Obsidian CLI property:\* commands return exit code 255 when called via WSL2 interop](https://forum.obsidian.md/t/113170), says some commands fail that way, and a reply there says running from WSL isn't officially supported. It stays out of the main path.
+
+### Claudian is a required plugin (2026-10-12)
+
+Added for [#123](https://github.com/Kieranties/kiln/issues/123), found while testing the getting started guide. Current direction, not final.
+
+The specs treat Claudian (community id `realclaudian`, by Yishen Tu) as how Claude is reached while reading, so setup installs it with the other four. It is one more id in `requires.json` and `settings/community-plugins.json`; the helper reads both files, so no code changed.
+
+- **Required, not recommended.** A missing Claudian stops setup like any other plugin, and setup offers to install it through the CLI. A vault set up before this stops on its next re-apply until Claudian is installed. A "recommended" kind of plugin, which only warns, was the alternative; it would have needed new code and a second kind of plugin to explain.
+- **Installing it through the CLI works,** although Obsidian staff haven't reviewed it. Tried on Windows 11 with Obsidian 1.14.4, in a new vault: `plugins:restrict off`, then `plugin:install id='realclaudian' enable`, installed and switched on 2.3.20, the latest release that day.
+- **The consent names it.** It is the one plugin Obsidian staff haven't reviewed, and it runs Claude Code with the vault as its working folder, so step 3's question says so. The manual steps name its author, because several other plugins have similar names.
+- **Minimum 2.3.19,** the version first tried, as the other minimums were set. Raise it only when kiln depends on something newer.
+- **Setup doesn't read or write Claudian's settings.** They are in `.claudian/claudian-settings.json`, outside `.obsidian/`, in a format that changes often. The one that matters, **Load user Claude Code settings**, is on by default; with it off, kiln's user-scope plugin doesn't load in Claudian. The guide's check says how to turn it back on.
+- **`.claudian/` needs no ignore.** The note check and setup's note count skip dot-folders, setup never writes there, and Obsidian doesn't index dot-folders. The vault rules list it with the folders kiln leaves alone.
+- **The guide's check** opens Claudian and runs `/kiln:check`, which only reads. It shows that kiln loaded and that the vault was found from Claudian's working folder.
+
+Open:
+
+- **Claudian's permission modes.** Whether kiln's `permissions.ask` rules still prompt in its YOLO mode (`bypassPermissions`) is untested, and Claudian's own description of the user settings switch says user permission rules may bypass its Safe mode. The guide says nothing about modes until that is tried.
+- **Syncing a vault.** `.claudian/sessions/` holds per-device session data. Whether the guide should say anything to owners who sync or version their vault is left to Claudian for now.
+- **Finding Claude Code.** Claudian looks for the `claude` CLI itself when its path setting is empty. Not yet tried on a machine where that fails.
 
 ### A vault already in use
 
@@ -107,7 +127,7 @@ Loading the Northwind Arena sample into a trial vault is an option, never the de
 
 ### Minimum versions
 
-The blueprint gets a `requires` list: Obsidian 1.12.7 (the CLI), QuickAdd 2.32, and minimums for Templater, Iconic and Homepage. Setup warns when something is older.
+The blueprint gets a `requires` list: Obsidian 1.12.7 (the CLI), QuickAdd 2.32, and minimums for Templater, Iconic, Homepage and, since #123, Claudian. Setup warns when something is older.
 
 ### Reused from #78
 

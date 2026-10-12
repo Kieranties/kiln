@@ -115,7 +115,7 @@ describe('setting up from any folder', () => {
     expect(sample).toContain('/kiln:setup <trial vault folder> with the Northwind Arena sample');
   });
 
-  it('Claude installs the four plugins through the Obsidian CLI, and the owner does it by hand only without the CLI', () => {
+  it('Claude installs the five plugins through the Obsidian CLI, and the owner does it by hand only without the CLI', () => {
     const make = section(guide, '2. Make your vault');
     for (const part of ['Command line interface', 'keep it open', 'Without the Obsidian CLI', 'Exit restricted mode']) {
       expect(make, part).toContain(part);
@@ -143,6 +143,19 @@ describe('setting up from any folder', () => {
     ]) {
       expect(steps, part).toContain(part);
     }
+  });
+
+  it('Claudian: named by its author, its consent said, and checked by running /kiln:check in it', () => {
+    expect(section(guide, '1. What you need')).toContain('Claudian');
+    const make = section(guide, '2. Make your vault');
+    for (const part of ['**Claudian**', 'Yishen Tu']) expect(make, part).toContain(part);
+    expect(section(guide, '3. Apply the blueprint')).toContain("haven't reviewed");
+    const check = section(guide, '4. Check it');
+    for (const part of ['Open Claudian', '/kiln:check', 'Load user Claude Code settings']) {
+      expect(check, part).toContain(part);
+    }
+    const steps = section(readme, 'Setting up a vault');
+    for (const part of ['`realclaudian`', "haven't reviewed"]) expect(steps, part).toContain(part);
   });
 
   it('relative links in the blueprint docs stay in the blueprint, so they work in _kiln/', () => {
