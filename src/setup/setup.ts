@@ -7,7 +7,7 @@ import { expandHome, isFolder, pathKey } from '../vault/paths.js';
 import { installedFiles, isLive, readRequires, SETTINGS } from './blueprint.js';
 import { checkPlugins, type PluginCheck } from './checks.js';
 import { sortFile, usersOf } from './files.js';
-import { blueprintHash, filesUnder, hash } from './hash.js';
+import { blueprintHash, hash } from './hash.js';
 import { isObject, obsidianJson, readJson, sameJson, type Json } from './json.js';
 import { Merger, mergeFragment } from './merge.js';
 import { isChoice, kindChoices } from './quickadd.js';
@@ -88,6 +88,8 @@ const NO_CLI =
   "The Obsidian CLI isn't on PATH. kiln's other skills need it: in Obsidian, turn on Settings → General → Command line interface, then restart the terminal and Claude.";
 const OPEN =
   'Obsidian is running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.';
+const MAYBE_OPEN =
+  'Obsidian may be running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.';
 const SAMPLE_NEEDS_CLOSED =
   'The sample is written as plain files, which needs Obsidian closed (Templater would run on new notes). Close Obsidian, then run setup again.';
 const NO_WORKSPACE =
@@ -109,15 +111,22 @@ function readText(file: string): string | undefined {
   }
 }
 
-/** The owner's notes: `.md` files outside dot-folders and `_kiln/`, other than `Home.md`. */
-function ownNotes(vault: string): string[] {
-  return filesUnder(vault).filter(
-    (path) =>
-      path.endsWith('.md') &&
-      path !== 'Home.md' &&
-      !path.startsWith('_kiln/') &&
-      !path.split('/').some((segment) => segment.startsWith('.')),
-  );
+/**
+ * The owner's notes: `.md` files other than `Home.md`, outside `_kiln/`, dot-folders and `node_modules`,
+ * which aren't walked at all.
+ */
+function ownNotes(vault: string, folder = ''): string[] {
+  const notes: string[] = [];
+  for (const entry of readdirSync(join(vault, folder), { withFileTypes: true })) {
+    const path = folder === '' ? entry.name : `${folder}/${entry.name}`;
+    if (entry.name.startsWith('.')) continue;
+    if (entry.isDirectory()) {
+      if (entry.name !== 'node_modules' && path !== '_kiln') notes.push(...ownNotes(vault, path));
+    } else if (entry.isFile() && entry.name.endsWith('.md') && path !== 'Home.md') {
+      notes.push(path);
+    }
+  }
+  return notes;
 }
 
 /** `from` and `to` for a step, only when both are scalars (as `Change` has them). */
@@ -166,7 +175,7 @@ export function vaultName(
   }
   if (wanted !== undefined) {
     if (!NAME.test(wanted)) return { error: `vault names use letters, digits, ".", "-" and "_": "${wanted}"` };
-    const other = vaults[wanted];
+    const other = Object.hasOwn(vaults, wanted) ? vaults[wanted] : undefined;
     if (other !== undefined) {
       return { error: `vault name "${wanted}" is already ${other} in the kiln file; choose another with --name` };
     }
@@ -362,10 +371,11 @@ function prepare(o: SetupOptions): Prepared {
     } else if (action !== 'dropped' && was !== undefined) {
       nextFiles[path] = was; // keep, wait and ask: what setup installed stays the base
     }
-    if (sorted === 'ask' && !taken) {
+    if (sorted === 'ask') {
       if (action === 'wait') {
+        // Not written this time, even when taken: what the owner kept here stays kept.
         if (kept[path] !== undefined) nextKept[path] = kept[path];
-      } else if (blueprint !== undefined) {
+      } else if (!taken && blueprint !== undefined) {
         nextKept[path] = blueprint;
       }
     }
@@ -456,7 +466,7 @@ function prepare(o: SetupOptions): Prepared {
   };
 
   if (o.cliPath === null) warnings.other.push(NO_CLI);
-  if (open) warnings.other.push(OPEN);
+  if (open) warnings.other.push(o.obsidianRunning === true ? OPEN : MAYBE_OPEN);
   if (!existsSync(join(vault, '.obsidian', 'workspace.json'))) warnings.other.push(NO_WORKSPACE);
   for (const id of take) if (!matched.has(id)) warnings.other.push(`--take ${id} matched nothing`);
   if (unreadable !== undefined) warnings.other.push(unreadable);

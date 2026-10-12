@@ -1,4 +1,4 @@
-import { existsSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { applySetup, planSetup } from '../../src/setup/setup.js';
@@ -93,6 +93,38 @@ describe('re-applying a changed blueprint', () => {
         { path: 'Home.md', action: 'ask' },
       ]),
     );
+    const before = readFileSync(join(t.vault, '_kiln', 'types', 'work.md'));
+    const applied = await applySetup(t.options());
+    expect(applied.backups).toContain('.kiln/backup/2026-10-12T09-30-00/_kiln/types/work.md');
+    expect(readFileSync(join(t.vault, '.kiln', 'backup', '2026-10-12T09-30-00', '_kiln', 'types', 'work.md'))).toEqual(
+      before,
+    );
+  });
+
+  it('a file kept earlier, then taken while it waits, stays kept until Obsidian closes', async () => {
+    const t = testVault();
+    t.write('Home.md', 'My own home.\n');
+    await applySetup(t.options());
+    const open = await applySetup(t.options({ obsidianRunning: true, take: ['Home.md'] }));
+    expect(open.files).toEqual([{ path: 'Home.md', action: 'wait' }]);
+    expect(open.warnings).not.toContain('--take Home.md matched nothing');
+    expect(t.read('Home.md')).toBe('My own home.\n');
+    expect(planSetup(t.options())).toMatchObject({ asks: [], files: [{ path: 'Home.md', action: 'keep' }] });
+  });
+
+  it("with Obsidian maybe running, a re-apply waits as if it's open, and says so", async () => {
+    const t = testVault();
+    await applySetup(t.options({ pluginRoot: pluginCopy('a1b2c3d4e5f6') }));
+    const next = pluginCopy('0f9e8d7c6b5a', (bp) => {
+      writeFileSync(join(bp, 'root', 'Home.md'), 'new home\n');
+    });
+    const plan = planSetup(t.options({ pluginRoot: next, obsidianRunning: null }));
+    expect(plan.stop).toEqual([]);
+    expect(plan.files).toEqual([{ path: 'Home.md', action: 'wait' }]);
+    expect(plan.warnings).toContain(
+      'Obsidian may be running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.',
+    );
+    expect(plan.warnings.some((w) => w.startsWith('Obsidian is running'))).toBe(false);
   });
 
   it('keeps the kiln choices and icon rules of a vault-only type, and names other kiln ones it removes', async () => {

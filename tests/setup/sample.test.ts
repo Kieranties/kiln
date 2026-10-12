@@ -138,6 +138,10 @@ describe('setup with the sample', () => {
   it('counts the notes already in the vault, so the skill can ask first', () => {
     const t = testVault();
     t.write('Work/My own.md', 'x\n');
+    // Not notes: anything in a dot-folder or node_modules.
+    t.write('node_modules/some-package/README.md', 'x\n');
+    t.write('Scripts/node_modules/other/CHANGELOG.md', 'x\n');
+    t.write('.git/notes.md', 'x\n');
     expect(planSetup(t.options({ sample: true })).sample).toEqual({ notes: 1 });
   });
 });

@@ -8257,7 +8257,14 @@ function problem(text2) {
   return new Error(`${RECORD}: ${text2}`);
 }
 function readRecord(vault) {
-  const value = readJson(join9(vault, RECORD));
+  let value;
+  try {
+    value = readJson(join9(vault, RECORD));
+  } catch (error) {
+    const cause = error instanceof Error ? error.cause : void 0;
+    const text2 = cause instanceof Error ? `not valid JSON: ${cause.message}` : `can't be read: ${error instanceof Error ? error.message : String(error)}`;
+    throw new Error(`${RECORD}: ${text2}`, { cause: error });
+  }
   if (value === void 0) return void 0;
   if (!isObject(value)) throw problem("not an object");
   const { plugin, blueprint, files, kept } = value;
@@ -8367,6 +8374,7 @@ var SETUP_NEEDS_CLOSED = "Obsidian is running. Setup needs it closed, because Qu
 var SETUP_UNSURE = "Couldn't tell whether Obsidian is running. Ask the owner, and pass --confirm-closed once it is closed.";
 var NO_CLI = "The Obsidian CLI isn't on PATH. kiln's other skills need it: in Obsidian, turn on Settings \u2192 General \u2192 Command line interface, then restart the terminal and Claude.";
 var OPEN = "Obsidian is running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.";
+var MAYBE_OPEN = "Obsidian may be running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.";
 var SAMPLE_NEEDS_CLOSED = "The sample is written as plain files, which needs Obsidian closed (Templater would run on new notes). Close Obsidian, then run setup again.";
 var NO_WORKSPACE = ".obsidian/workspace.json doesn't exist yet, so File properties isn't opened in the right sidebar. Getting started, section 4, says how.";
 var message2 = (error) => error instanceof Error ? error.message : String(error);
@@ -8381,10 +8389,18 @@ function readText(file) {
     throw error;
   }
 }
-function ownNotes(vault) {
-  return filesUnder(vault).filter(
-    (path) => path.endsWith(".md") && path !== "Home.md" && !path.startsWith("_kiln/") && !path.split("/").some((segment) => segment.startsWith("."))
-  );
+function ownNotes(vault, folder = "") {
+  const notes = [];
+  for (const entry of readdirSync5(join11(vault, folder), { withFileTypes: true })) {
+    const path = folder === "" ? entry.name : `${folder}/${entry.name}`;
+    if (entry.name.startsWith(".")) continue;
+    if (entry.isDirectory()) {
+      if (entry.name !== "node_modules" && path !== "_kiln") notes.push(...ownNotes(vault, path));
+    } else if (entry.isFile() && entry.name.endsWith(".md") && path !== "Home.md") {
+      notes.push(path);
+    }
+  }
+  return notes;
 }
 function scalars(from, to) {
   return (from === null || typeof from !== "object") && (to === null || typeof to !== "object") ? { from, to } : {};
@@ -8412,7 +8428,7 @@ function vaultName(vault, config, where, wanted) {
   }
   if (wanted !== void 0) {
     if (!NAME.test(wanted)) return { error: `vault names use letters, digits, ".", "-" and "_": "${wanted}"` };
-    const other = vaults[wanted];
+    const other = Object.hasOwn(vaults, wanted) ? vaults[wanted] : void 0;
     if (other !== void 0) {
       return { error: `vault name "${wanted}" is already ${other} in the kiln file; choose another with --name` };
     }
@@ -8582,10 +8598,10 @@ function prepare(o) {
     } else if (action !== "dropped" && was !== void 0) {
       nextFiles[path] = was;
     }
-    if (sorted === "ask" && !taken) {
+    if (sorted === "ask") {
       if (action === "wait") {
         if (kept[path] !== void 0) nextKept[path] = kept[path];
-      } else if (blueprint !== void 0) {
+      } else if (!taken && blueprint !== void 0) {
         nextKept[path] = blueprint;
       }
     }
@@ -8660,7 +8676,7 @@ function prepare(o) {
     writeRecord(vault, { plugin: report.plugin, blueprint: report.blueprint, files: nextFiles, kept: nextKept });
   };
   if (o.cliPath === null) warnings.other.push(NO_CLI);
-  if (open) warnings.other.push(OPEN);
+  if (open) warnings.other.push(o.obsidianRunning === true ? OPEN : MAYBE_OPEN);
   if (!existsSync4(join11(vault, ".obsidian", "workspace.json"))) warnings.other.push(NO_WORKSPACE);
   for (const id of take) if (!matched.has(id)) warnings.other.push(`--take ${id} matched nothing`);
   if (unreadable !== void 0) warnings.other.push(unreadable);

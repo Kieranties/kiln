@@ -22,7 +22,18 @@ function problem(text: string): Error {
 
 /** Reads the vault's record: `undefined` when there is none; a malformed one throws, naming the file. */
 export function readRecord(vault: string): SetupRecord | undefined {
-  const value = readJson(join(vault, RECORD));
+  let value: Json | undefined;
+  try {
+    value = readJson(join(vault, RECORD));
+  } catch (error) {
+    // readJson names the full path; the record is named by its vault path, as below.
+    const cause = error instanceof Error ? error.cause : undefined;
+    const text =
+      cause instanceof Error
+        ? `not valid JSON: ${cause.message}`
+        : `can't be read: ${error instanceof Error ? error.message : String(error)}`;
+    throw new Error(`${RECORD}: ${text}`, { cause: error });
+  }
   if (value === undefined) return undefined;
   if (!isObject(value)) throw problem('not an object');
   const { plugin, blueprint, files, kept } = value;

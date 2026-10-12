@@ -88,5 +88,7 @@ describe('the version record', () => {
     expect(() => readRecord(vault)).toThrow('.kiln/blueprint.json: "files" has a value for a.md that is not text');
     writeFileSync(file, '[]');
     expect(() => readRecord(vault)).toThrow('.kiln/blueprint.json: not an object');
+    writeFileSync(file, '{ "plugin": ');
+    expect(() => readRecord(vault)).toThrow(/^\.kiln\/blueprint\.json: not valid JSON: /);
   });
 });

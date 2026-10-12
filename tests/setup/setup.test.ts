@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { applySetup, permissionRules, planSetup, vaultName } from '../../src/setup/setup.js';
@@ -107,6 +107,49 @@ describe('what stops setup', () => {
   it('no Obsidian CLI only warns', () => {
     expect(planSetup(testVault().options({ cliPath: null })).warnings[0]).toMatch(/^The Obsidian CLI isn't on PATH/);
   });
+
+  it('a settings file of a shape the merge can’t use, named', () => {
+    const t = testVault();
+    t.write('.obsidian/community-plugins.json', '{ "quickadd": true }');
+    expect(planSetup(t.options()).stop).toEqual([
+      '.obsidian/community-plugins.json: expected a JSON list; fix or remove it, then run setup again',
+    ]);
+  });
+
+  it('a broken record, named', () => {
+    const t = testVault();
+    t.write('.kiln/blueprint.json', '{ "plugin": ');
+    expect(planSetup(t.options()).stop[0]).toMatch(
+      /^\.kiln\/blueprint\.json: not valid JSON: .*; fix or remove it, then run setup again$/,
+    );
+  });
+});
+
+describe('what only warns', () => {
+  it('a --take that matches nothing', () => {
+    expect(planSetup(testVault().options({ take: ['Nope.md'] })).warnings).toContain('--take Nope.md matched nothing');
+  });
+
+  it("a kiln file that can't be read: setup goes ahead, and doesn't record the vault", async () => {
+    const t = testVault();
+    t.write('../kiln-home/config.json', '{ "vaults": ');
+    const report = await applySetup(t.options());
+    expect(report.applied).toBe(true);
+    expect(report.kiln).toMatchObject({ name: 'Trial-Vault', recorded: 'skipped', default: null });
+    expect(report.warnings.find((w) => w.startsWith("can't record the vault:"))).toMatch(/not valid JSON/);
+    expect(readFileSync(t.configFile, 'utf8')).toBe('{ "vaults": ');
+  });
+
+  it("a kiln file that can't be written: setup goes ahead, and says so", async () => {
+    const t = testVault();
+    // recordVault writes config.json.tmp first; a folder there makes the write fail.
+    mkdirSync(`${t.configFile}.tmp`, { recursive: true });
+    const report = await applySetup(t.options());
+    expect(report.applied).toBe(true);
+    expect(report.kiln).toMatchObject({ recorded: 'skipped', default: null });
+    expect(report.warnings.some((w) => w.startsWith("can't record the vault:"))).toBe(true);
+    expect(existsSync(t.configFile)).toBe(false);
+  });
 });
 
 describe('a vault already in use', () => {
@@ -182,6 +225,13 @@ describe('names and permissions', () => {
     expect(vaultName(other, config, w, 'Trial-Vault')).toEqual({
       error: `vault name "Trial-Vault" is already ${elsewhere} in the kiln file; choose another with --name`,
     });
+  });
+
+  it('takes a name that is also an Object property, such as constructor', () => {
+    const t = testVault();
+    const w = { platform: process.platform, home: t.root };
+    expect(vaultName(t.vault, undefined, w, 'constructor')).toEqual({ name: 'constructor', recorded: false });
+    expect(vaultName(t.vault, { vaults: {} }, w, 'toString')).toEqual({ name: 'toString', recorded: false });
   });
 
   it('keeps to the names recordVault accepts, and reads recorded paths as the resolver does', () => {
