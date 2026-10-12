@@ -7,22 +7,15 @@ Use a separate trial vault, so the sample never mixes with your own notes.
 ## 1. Make a trial vault
 
 1. Follow [Getting started](GETTING-STARTED.md) **sections 1 and 2 only**, with a new empty folder, for example `D:\tmp\kiln-sample`. Stop when Obsidian is closed.
-2. Come back here instead of going on to Getting started section 3. Start Claude in the kiln repo:
-
-   ```bash
-   cd kiln
-   claude
-   ```
-
-3. Give it this prompt, with your trial folder filled in. It applies the blueprint and adds the sample:
+2. Come back here instead of going on to Getting started section 3. Start Claude in any folder (`claude`) and give it this prompt, with your trial folder filled in:
 
    ```text
-   Set up the kiln blueprint in <trial vault folder> by following "Setting up a vault" in claude-plugin/blueprint/README.md exactly.
-   Then copy the Northwind Arena sample from tests/fixtures/layer1 into it.
-   Report each file you wrote and each setting you merged.
+   /kiln:setup <trial vault folder> with the Northwind Arena sample
    ```
 
-4. Open Obsidian on the trial vault and carry on with section 3 below. The right sidebar shows **File properties**; if it doesn't, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
+   It applies the blueprint and adds the sample: the notes in `tests/fixtures/layer1` in the kiln repo, at the same version as your plugin. It fetches them from GitHub, so it needs a connection.
+
+3. Open Obsidian on the trial vault and carry on with section 3 below. The right sidebar shows **File properties**; if it doesn't, open the command palette (Ctrl+P, or Cmd+P on a Mac), search for **properties** and choose **Show file properties**.
 
 ## 2. What's in it
 
@@ -73,4 +66,4 @@ Tell Claude about anything that doesn't match, with the line it failed on.
 
 ## 4. When you're done
 
-Close Obsidian and delete the trial vault folder. Nothing outside it was changed.
+Close Obsidian and delete the trial vault folder. Setup also recorded the trial vault in `~/.kiln/config.json` (on Windows, `.kiln` is in your home folder). Once the folder is gone, kiln says so and offers your other vaults, or you can delete its line from that file.

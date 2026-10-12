@@ -2,19 +2,14 @@
 
 This guide sets up your vault with the kiln blueprint, from an empty folder, then walks you through your first notes. It takes about fifteen minutes. Claude does the copying and settings; you do the parts in Obsidian.
 
-The commands work in both Bash and PowerShell.
-
 Want to look around before adding anything of your own? [Try the sample](TRY-THE-SAMPLE.md) loads a fictional project into a trial vault.
 
 ## 1. What you need
 
 - **Obsidian 1.14 or later.** Check in Settings → About. The board needs Bases' built-in kanban, added in 1.14.
 - **Claude Code** (`claude --version`).
-- **A clone of the kiln repo:**
-
-  ```bash
-  git clone https://github.com/Kieranties/kiln.git
-  ```
+- **Node 24** (`node --version`). Setup runs a small Node script. Without Node, Claude follows the steps by hand, more slowly.
+- **The kiln plugin for Claude Code.** Install it once, as [the README says](https://github.com/Kieranties/kiln#install). It carries the blueprint, so you need no copy of the kiln repo.
 
 ## 2. Make your vault
 
@@ -23,24 +18,18 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 3. Go to Settings → Community plugins and select **Exit restricted mode**. (Before Obsidian 1.14.4, the button was **Turn on community plugins**.)
 4. Select **Browse** and install each of these: **Iconic**, **Templater**, **QuickAdd**, **Homepage**. Installing does not turn a plugin on.
 5. Back in Settings → Community plugins, find each of the four under **Installed plugins** and switch it on.
-6. In Settings → Templater, turn on **Trigger Templater on new file creation**. Templater keeps this switch on your device rather than in the vault, so the blueprint can't set it for you. Without it, new notes get no template.
-7. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts, so the blueprint must be applied while it is closed.
+6. **Optional:** in Settings → Templater, turn on **Trigger Templater on new file creation**. It gives notes you create by hand in a type's folder their template. Templater keeps this switch on your device, so the blueprint can't set it. Claude doesn't need it: it creates notes through QuickAdd.
+7. **Close Obsidian.** QuickAdd and Homepage only read their settings when Obsidian starts. If you use Run in Background, use its tray icon's **Close Vault**: quitting only hides Obsidian.
 
 ## 3. Apply the blueprint
 
-Start Claude in the kiln repo:
-
-```bash
-cd kiln
-claude
-```
-
-Give it this prompt, with your folder filled in:
+Start Claude in any folder (`claude`) and give it this prompt, with your folder filled in:
 
 ```text
-Set up the kiln blueprint in <vault folder> by following "Setting up a vault" in claude-plugin/blueprint/README.md exactly.
-Report each file you wrote and each setting you merged.
+/kiln:setup <vault folder>
 ```
+
+Claude checks the four plugins, shows what it will change, and asks before changing any setting of yours (a new vault has none). It applies the blueprint, records the vault so Claude finds it from any folder, and offers to let Claude write to the vault without asking each time.
 
 ## 4. Check it
 
@@ -68,6 +57,8 @@ Each step is something you'll do every day. Check the result as you go.
 
 **Start a project**
 
+Creating a note in a folder needs Templater's trigger (section 2, step 6). Without it, ask Claude to create the note, or run **QuickAdd: Run QuickAdd** and choose **New project**.
+
 - [ ] Create a note in `Projects`: it gets the project's properties and the sections Goal, Current state, Scope and Done when, with a rocket icon. Set its `status` to `active`: Home's Active projects lists it.
 - [ ] Create a note in `Work`: Templater asks for its kind. Choose **task**, and in its `projects` property link your project.
 - [ ] The project's Board shows the task in **Backlog**, with every column (Backlog, Active, Blocked, Review, Done) there even when empty. Drag the task to **Active**: its `status` changes to `active`.
@@ -81,12 +72,7 @@ Tell Claude about anything that doesn't match, with the line it failed on.
 
 ## 6. Next steps
 
+- **Keep up with kiln:** after [updating the plugin](https://github.com/Kieranties/kiln#update), run `/kiln:setup` again. It updates what the new blueprint changed and keeps your own edits, asking when both changed.
 - **Try the sample:** [Try the sample](TRY-THE-SAMPLE.md) shows every type and view with a fictional project, in a separate trial vault.
-- **Add a type:** give Claude a prompt like this:
-
-  ```text
-  Add a "runbook" type to the kiln blueprint: a how-to for operating a product, with sections Purpose, Steps and Rollback, linked to products.
-  Follow "Adding or changing a type" in claude-plugin/blueprint/README.md, then apply it to <vault folder>.
-  ```
-
+- **Add a type:** a new type changes the blueprint itself, so it's done in the kiln repo: [Adding or changing a type](README.md#adding-or-changing-a-type). Then run `/kiln:setup` to apply it.
 - **How the blueprint works:** [The kiln blueprint](README.md) covers the types, conventions and how the blueprint is applied.

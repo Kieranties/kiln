@@ -2,12 +2,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { installedFiles } from '../../src/setup/blueprint.js';
 import { BLUEPRINT } from './load.js';
 
 const SAMPLE = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
 
 const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');
 const guide = readFileSync(join(BLUEPRINT, 'GETTING-STARTED.md'), 'utf8');
+const sample = readFileSync(join(BLUEPRINT, 'TRY-THE-SAMPLE.md'), 'utf8');
+const repoReadme = readFileSync(join(BLUEPRINT, '..', '..', 'README.md'), 'utf8');
 
 /** The text of a `## ` section of a Markdown document. */
 function section(document: string, heading: string): string {
@@ -26,7 +29,7 @@ describe('section()', () => {
 });
 
 describe('blueprint docs', () => {
-  it("both docs say to turn on Templater's per-device trigger", () => {
+  it("both docs mention Templater's per-device trigger", () => {
     // Templater keeps this switch in Obsidian's local storage, so no settings file can set it.
     for (const doc of [readme, guide]) expect(doc).toContain('Trigger Templater on new file creation');
   });
@@ -37,7 +40,6 @@ describe('blueprint docs', () => {
   });
 
   it('the sample page names every sample note', () => {
-    const sample = readFileSync(join(BLUEPRINT, 'TRY-THE-SAMPLE.md'), 'utf8');
     expect(sample).toContain('tests/fixtures/layer1');
     const notes = readdirSync(SAMPLE, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
     for (const note of notes) expect(sample, note.name).toContain(basename(note.name, '.md'));
@@ -89,5 +91,56 @@ describe('blueprint docs', () => {
     for (const part of ['~/.kiln/config.json', 'KILN_VAULT', 'export KILN_VAULT=work', "$env:KILN_VAULT = 'work'"]) {
       expect(conventions, part).toContain(part);
     }
+  });
+});
+
+describe('setting up from any folder', () => {
+  it('the guides need no clone of the kiln repo', () => {
+    for (const doc of [guide, sample]) {
+      expect(doc).not.toContain('git clone');
+      expect(doc).not.toContain('Start Claude in the kiln repo');
+      expect(doc).not.toMatch(/^\s*cd kiln$/m);
+    }
+  });
+
+  it('getting started installs the plugin from the README, by an absolute link that works in a vault', () => {
+    expect(guide).toContain('](https://github.com/Kieranties/kiln#install)');
+    expect(repoReadme).toMatch(/^#+ Install$/m);
+  });
+
+  it('section 3 is one prompt, without the sample; the sample is asked for', () => {
+    const apply = section(guide, '3. Apply the blueprint');
+    expect(apply).toContain('/kiln:setup <vault folder>');
+    expect(apply).not.toMatch(/sample/i);
+    expect(sample).toContain('/kiln:setup <trial vault folder> with the Northwind Arena sample');
+  });
+
+  it('relative links in the blueprint docs stay in the blueprint, so they work in _kiln/', () => {
+    const installed = installedFiles(BLUEPRINT);
+    for (const doc of ['README.md', 'GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) {
+      const text = readFileSync(join(BLUEPRINT, doc), 'utf8');
+      for (const [, target = ''] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
+        if (/^(https?:|mailto:|#)/.test(target)) continue;
+        const file = decodeURI(target.split('#')[0] ?? '');
+        expect(installed.has(`_kiln/${file}`), `${doc}: ${target}`).toBe(true);
+      }
+    }
+  });
+
+  it('the README is the manual fallback: the record, overrides, generated choices and minimum versions', () => {
+    const steps = section(readme, 'Setting up a vault');
+    for (const part of [
+      '/kiln:setup',
+      'requires.json',
+      '.kiln/blueprint.json',
+      '_kiln/templates/kinds/',
+      '"kind": "apply", "mode": "doNothing"',
+      'kiln-<type>-<kind>',
+      '{{VALUE:title}}',
+      'Close Vault',
+    ]) {
+      expect(steps, part).toContain(part);
+    }
+    expect(section(readme, 'Adding or changing a type')).toContain('/kiln:setup');
   });
 });
