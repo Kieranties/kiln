@@ -14,14 +14,52 @@ Each release on GitHub also carries the blueprint as `kiln-blueprint-<version>.z
 
 ### The Claude plugin
 
-This repo is also a Claude Code plugin marketplace with one plugin, `kiln`. The commands are the same in Bash and PowerShell:
+This repo is also a Claude Code plugin marketplace with one plugin, `kiln`. The plugin carries the blueprint, kiln's skills and the rules every kiln skill follows in a vault. So far there is one skill: `/kiln:check` checks a vault's notes, or today's changes, against their type definitions. The commands are the same in Bash and PowerShell.
+
+#### Install
+
+Install it once, for your user (the default), so it reaches every Claude Code session in any folder:
 
 ```
 claude plugin marketplace add Kieranties/kiln
 claude plugin install kiln@kiln
 ```
 
-The plugin carries the blueprint and one skill so far: `/kiln:check` checks a vault's notes, or today's changes, against their type definitions. To try a branch, add the marketplace at that branch instead: `claude plugin marketplace add Kieranties/kiln#some-branch`.
+Claudian runs your own Claude Code inside Obsidian, so it loads the plugin too, as long as its **Load user Claude Code settings** switch is on (the default). Enabling kiln in a vault's `.claude/settings.json` isn't a substitute: it only turns on a plugin that is already installed, Claude Code ignores it in a folder you haven't trusted, and it reaches only that folder.
+
+To try a branch, add the marketplace at that branch instead: `claude plugin marketplace add Kieranties/kiln#some-branch`.
+
+#### Update
+
+Refresh the catalog, then update the plugin:
+
+```
+claude plugin marketplace update kiln
+claude plugin update kiln@kiln
+```
+
+The new version loads in your next session, or after `/reload-plugins`. Then run `/kiln:setup` to re-apply the blueprint to your vault, so the vault's types, templates, views and settings match the new version.
+
+Auto-update is off by default for marketplaces outside Anthropic's own. You can turn it on for `kiln` in `/plugin`, under **Marketplaces**, but it only runs in interactive sessions. Claudian never auto-updates, so if you mostly use Claudian, update from a terminal now and then.
+
+#### Turn it off in one repo
+
+kiln's skills show in every session. In a repo where they are noise, run this in the repo:
+
+```
+claude plugin disable kiln@kiln --scope local
+```
+
+It writes `"kiln@kiln": false` to the repo's `.claude/settings.local.json`, which applies only to you and only there. `claude plugin enable kiln@kiln --scope local` turns it back on.
+
+#### Companion skills
+
+kepano's [Obsidian skills](https://github.com/kepano/obsidian-skills) teach Claude the Obsidian CLI (`obsidian-cli`) and Obsidian's Markdown (`obsidian-markdown`), among others. kiln's skills work without them. To add them:
+
+```
+claude plugin marketplace add kepano/obsidian-skills
+claude plugin install obsidian@obsidian-skills
+```
 
 ## What's in the repo
 
@@ -30,6 +68,7 @@ The plugin carries the blueprint and one skill so far: `/kiln:check` checks a va
 | `.claude-plugin/marketplace.json` | The catalog: one plugin, `kiln`, from `./claude-plugin` |
 | `claude-plugin/` | The Claude plugin, and nothing else. Its manifest is `claude-plugin/.claude-plugin/plugin.json`, with no version: the plugin's version is the commit |
 | `claude-plugin/blueprint/` | The blueprint: type definitions, Templater templates, Bases views, Obsidian and plugin settings, and its guides |
+| `claude-plugin/reference/vault-rules.md` | The rules every kiln skill follows in a vault: find the vault, read the type definition, create through QuickAdd, rename through the Obsidian CLI, never write `<%`, check at the end |
 | `claude-plugin/skills/` | The plugin's skills, one folder each: `check` |
 | `claude-plugin/scripts/` | The scripts the skills run, such as `kiln-check.mjs` and `kiln-vault.mjs`: each one file built from `src/` by `npm run build`, committed, never edited by hand |
 | `src/` | The code: `blueprint/` reads a blueprint's definitions, `check/` is the note check, `vault/` finds the vault, `cli/` holds an entry point per script |
@@ -38,7 +77,7 @@ The plugin carries the blueprint and one skill so far: `/kiln:check` checks a va
 | `tests/blueprint/` | Checks reading the definitions, and the errors for a malformed one |
 | `tests/check/` | Checks the note check, the built `kiln-check.mjs` and the check skill |
 | `tests/vault/` | Checks finding the vault: the resolution order, the kiln file, Obsidian's vault list and the built `kiln-vault.mjs` |
-| `tests/plugin/` | Checks the catalog, the plugin manifest and folder, the release zip, and the living docs' links |
+| `tests/plugin/` | Checks the catalog, the plugin manifest and folder, the release zip, the vault rules and every skill, the README's plugin commands, and the living docs' links |
 | `tests/fixtures/layer1/` | The Northwind Arena sample vault |
 | `tests/fixtures/check/` | Broken notes for the note check, laid over the sample |
 | `docs/` | The vision, the user flows and story order, and each layer's design and plan |

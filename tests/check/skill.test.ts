@@ -16,8 +16,8 @@ describe('/kiln:check', () => {
     expect(meta.description.length).toBeLessThanOrEqual(300);
   });
   it('runs the bundled script for the whole vault and for today', () => {
-    expect(body).toContain('node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" "<vault>"');
-    expect(body).toContain('node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" --today "<vault>"');
+    expect(body).toContain("node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs' '<vault>'");
+    expect(body).toContain("node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs' --today '<vault>'");
     expect(existsSync(`${PLUGIN}scripts/kiln-check.mjs`)).toBe(true);
   });
   it('falls back to reading the definitions without Node, and never writes to notes unasked', () => {
@@ -25,15 +25,11 @@ describe('/kiln:check', () => {
       expect(body, part).toContain(part);
     }
   });
-  it('finds the vault with the resolver, and leaves the kiln file to setup', () => {
+  it('finds the vault by rule 1 of the vault rules, which say how to run the resolver', () => {
     const step = body.slice(body.indexOf('## 1. Find the vault'), body.indexOf('## 2.'));
-    expect(step).toContain('node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"');
-    expect(step).not.toContain('"<folder>"');
+    expect(step).toContain('rule 1 of the vault rules');
     expect(step).toContain('skip to step 2');
-    expect(step).toContain('Exit code 2');
-    for (const part of ['candidates', 'reasons', '/kiln:setup', '~/.kiln/config.json'])
-      expect(step, part).toContain(part);
-    expect(step).not.toContain('The vault resolver replaces this step');
-    expect(existsSync(`${PLUGIN}scripts/kiln-vault.mjs`)).toBe(true);
+    expect(step).not.toContain('kiln-vault.mjs');
+    expect(step).not.toContain('"<folder>"');
   });
 });

@@ -47,7 +47,7 @@ Auto-update is off by default for catalogs outside Anthropic's own. It can be tu
 | `skills/setup/` | `/kiln:setup`: set up a vault, re-apply the blueprint, load the sample |
 | `skills/check/` | `/kiln:check`: check the whole vault or today's changes |
 
-Skills reach these files through `${CLAUDE_PLUGIN_ROOT}`.
+Skills reach these files through `${CLAUDE_PLUGIN_ROOT}`. Claude Code fills it in only in skills, so the vault rules say `<plugin>`, and each skill's line pointing at them says what `<plugin>` is.
 
 **The vault rules** say how every kiln skill works in a vault:
 
