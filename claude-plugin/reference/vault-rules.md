@@ -1,8 +1,8 @@
 # kiln vault rules
 
-Every kiln skill follows these rules whenever it reads or changes notes in a kiln vault. Nobody runs this file; skills point at it. Commands are the same in Bash and pwsh unless a rule says otherwise. `<vault>` is the vault folder from rule 1.
+Every kiln skill follows these rules whenever it reads or changes notes in a kiln vault. Nobody runs this file; skills point at it. Commands are the same in Bash and pwsh unless a rule, or the section on calling the Obsidian CLI, says otherwise. `<vault>` is the vault folder from rule 1.
 
-Rules 3 and 4 use the Obsidian CLI and QuickAdd, which wait on trial T2 (https://github.com/Kieranties/kiln/issues/80), so their commands may change. If one fails, stop and tell the owner what failed. Never fall back to writing a new note as a file or renaming on disk.
+Rules 3 and 4 use the Obsidian CLI and QuickAdd, which wait on trial T2 (https://github.com/Kieranties/kiln/issues/80), so their commands may change. Call every `obsidian` command as "Calling the Obsidian CLI", at the end of this file, says: it differs by shell, and in Git Bash a bare `obsidian` starts the app. If one fails, stop and tell the owner what failed. Never fall back to writing a new note as a file or renaming on disk.
 
 ## 1. Find the vault with the resolver
 
@@ -35,7 +35,7 @@ Never create a note by writing a new file. With Templater's trigger on, Obsidian
 
 1. Work out the note's path from its definition (`folder` and `naming`) and check the file doesn't exist. If it does, use that note, or ask the owner.
 2. Run `obsidian quickadd:check`.
-3. Find the choice for the type and kind: kiln's choices have ids starting `kiln-` in `<vault>/.obsidian/plugins/quickadd/data.json`. Read that file; don't change it. Pass each `{{VALUE:<name>}}` the choice uses, in its file name format or its format, as a var:
+3. Find the choice for the type and kind: kiln's choices have ids starting `kiln-` in `<vault>/.obsidian/plugins/quickadd/data.json`. Read that file; don't change it. Pass each `{{VALUE:<name>}}` the choice uses, in its file name format, its template or its format, as a var:
 
    ```
    obsidian quickadd:run choice="<choice name>" vars='{"<name>":"<value>"}'

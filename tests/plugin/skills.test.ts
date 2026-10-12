@@ -70,7 +70,13 @@ describe('the vault rules', () => {
   });
 
   it('call the CLI in Git Bash and pwsh, from inside the vault or outside it, and say T2 is pending', () => {
-    for (const part of ['obsidian.com', 'pwsh', 'vault="', 'current-folder', 'T2']) expect(rules, part).toContain(part);
+    const start = rules.indexOf('\n## Calling the Obsidian CLI');
+    expect(start).toBeGreaterThan(0);
+    const section = rules.slice(start);
+    for (const part of ['obsidian.com', 'pwsh', 'vault="', 'current-folder']) expect(section, part).toContain(part);
+    // The intro, before rule 1, says T2 is pending and sends the reader to the section.
+    const intro = rules.slice(0, rules.indexOf('\n## 1. '));
+    for (const part of ['T2', 'Calling the Obsidian CLI']) expect(intro, part).toContain(part);
   });
 
   it('6. check what the flow touched, by full path, with --new for what it created', () => {
