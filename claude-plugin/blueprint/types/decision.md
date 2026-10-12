@@ -3,6 +3,7 @@ type: kiln-type
 name: decision
 folder: Decisions
 template: Decision.md
+naming: date-title
 icon: lucide-gavel
 color: "#ffb86c"
 statuses:

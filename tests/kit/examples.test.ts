@@ -3,7 +3,10 @@ import { basename, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { loadDefinitions, SHARED_PROPERTIES, sectionsOf, splitFrontmatter, type Definition } from './load.js';
+import { checkNote } from '../../src/check/check-note.js';
+import { formatResult } from '../../src/check/format.js';
+import { openVault } from '../../src/check/vault.js';
+import { BLUEPRINT, loadDefinitions, sectionsOf, splitFrontmatter } from './load.js';
 
 const EXAMPLES = fileURLToPath(new URL('../fixtures/layer1/', import.meta.url));
 const DENYLIST = fileURLToPath(new URL('../fixtures/denylist.txt', import.meta.url));
@@ -13,7 +16,6 @@ const PLUGIN = join(REPO, 'claude-plugin');
 const TOP_LEVEL = ['README.md', 'CLAUDE.md', 'tests/fixtures/README.md', '.claude-plugin/marketplace.json'].map((f) =>
   join(REPO, f),
 );
-const DATE_FIRST = ['research', 'decision', 'meeting', 'daily', 'capture'];
 
 type Note = { path: string; folder: string; name: string; data: Record<string, unknown>; body: string };
 
@@ -38,52 +40,15 @@ const notes: Note[] = filesUnder(EXAMPLES)
 const defs = new Map(loadDefinitions().map((d) => [d.name, d]));
 const names = new Set(notes.map((n) => n.name));
 
-function defOf(n: Note): Definition {
-  const d = defs.get(String(n.data.type));
-  if (!d) throw new Error(`${n.path}: unknown type ${String(n.data.type)}`);
-  return d;
-}
-
 describe('Northwind Arena example vault', () => {
   it('has a note of every type', () => {
     expect(new Set(notes.map((n) => n.data.type))).toEqual(new Set(defs.keys()));
   });
 
-  it('every note matches its definition', () => {
-    for (const n of notes) {
-      const d = defOf(n);
-      expect(n.folder, n.path).toBe(d.folder);
-      if (d.statuses.length) expect(d.statuses, n.path).toContain(n.data.status);
-      else expect(n.data.status ?? null, n.path).toBeNull();
-      if (n.data.kind) expect(Object.keys(d.kinds), n.path).toContain(n.data.kind);
-      const allowed = [...SHARED_PROPERTIES, ...Object.keys(d.properties)];
-      for (const key of Object.keys(n.data)) expect(allowed, `${n.path}: ${key}`).toContain(key);
-    }
-  });
-
-  it('relationships are lists of links that resolve', () => {
-    for (const n of notes) {
-      for (const [prop, type] of Object.entries(defOf(n).properties)) {
-        if (type !== 'links' || n.data[prop] === undefined) continue;
-        const value = n.data[prop];
-        expect(Array.isArray(value), `${n.path}: ${prop} is a list`).toBe(true);
-        for (const link of value as unknown[]) {
-          const target = /^\[\[([^\]|#]+)(\|[^\]]*)?\]\]$/.exec(String(link))?.[1];
-          expect(target, `${n.path}: ${prop} ${String(link)}`).toBeDefined();
-          expect(names.has(target ?? ''), `${n.path}: ${prop} -> ${target}`).toBe(true);
-        }
-      }
-    }
-  });
-
-  it('file names are linkable', () => {
-    for (const n of notes) expect(n.name, n.path).not.toMatch(/[#^[\]|:]/);
-  });
-
-  it('moments are named date first', () => {
-    for (const n of notes.filter((note) => DATE_FIRST.includes(String(note.data.type)))) {
-      expect(n.name, n.path).toMatch(/^\d{4}-\d{2}-\d{2}( |$)/);
-    }
+  it('every note passes the note check', () => {
+    const vault = openVault(EXAMPLES, BLUEPRINT);
+    const problems = vault.notes.map((n) => checkNote(vault, n)).filter((r) => r.findings.length > 0);
+    expect(problems.map(formatResult)).toEqual([]);
   });
 
   it('notes have no title heading', () => {
@@ -141,7 +106,7 @@ describe('Northwind Arena example vault', () => {
       );
     }
     const terms = readFileSync(DENYLIST, 'utf8')
-      .replace(/^﻿/, '')
+      .replace(/^\uFEFF/, '')
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter((l) => l !== '' && !l.startsWith('#'))

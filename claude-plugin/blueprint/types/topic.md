@@ -3,6 +3,7 @@ type: kiln-type
 name: topic
 folder: Topics
 template: Topic.md
+naming: title
 icon: lucide-book-open
 color: "#f1fa8c"
 statuses:

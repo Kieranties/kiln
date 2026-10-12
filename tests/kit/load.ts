@@ -2,82 +2,36 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
+import {
+  readDefinitions,
+  readPropertyCatalogue,
+  type Definition,
+  type PropertyEntry,
+} from '../../src/blueprint/load.js';
+import { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
 
 export const BLUEPRINT = fileURLToPath(new URL('../../claude-plugin/blueprint/', import.meta.url));
 
-export type PropType = 'text' | 'date' | 'datetime' | 'number' | 'links' | 'list';
-export const PROP_TYPES: readonly PropType[] = ['text', 'date', 'datetime', 'number', 'links', 'list'];
+export {
+  PROP_TYPES,
+  type Definition,
+  type PropertyEntry,
+  type PropType,
+  type ViewDef,
+} from '../../src/blueprint/load.js';
+export { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
 
-/** `via` is a relationship property on `type`, or 'link' for file.hasLink(this.file). */
-export type ViewDef = { type: string; via: string };
+/** The properties every note carries, in template order (properties.md `shared`). */
+export const SHARED_PROPERTIES: readonly string[] = readPropertyCatalogue(BLUEPRINT).shared;
 
-export type Definition = {
-  name: string;
-  folder: string;
-  template: string;
-  icon: string;
-  color: string;
-  statuses: string[];
-  properties: Record<string, PropType>;
-  kinds: Record<string, { icon?: string; color?: string }>;
-  sections: string[];
-  views: Record<string, ViewDef>;
-  body: string;
-};
-
-/** The properties every note carries, in template order. */
-export const SHARED_PROPERTIES = [
-  'type',
-  'kind',
-  'status',
-  'created',
-  'summary',
-  'aliases',
-  'keywords',
-  'tags',
-  'review',
-] as const;
-
-/** Splits a note into its frontmatter text and body. */
-export function splitFrontmatter(text: string): { frontmatter: string; body: string } {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/.exec(text);
-  if (!match) return { frontmatter: '', body: text };
-  return { frontmatter: match[1] ?? '', body: match[2] ?? '' };
-}
+/** The properties any note may carry (properties.md `optional`). */
+export const OPTIONAL_PROPERTIES: readonly string[] = readPropertyCatalogue(BLUEPRINT).optional;
 
 /** Every type definition in blueprint/types, parsed. */
-export function loadDefinitions(): Definition[] {
-  const dir = join(BLUEPRINT, 'types');
-  if (!existsSync(dir)) throw new Error(`blueprint/types is missing (${dir})`);
-  return readdirSync(dir)
-    .filter((f) => f.endsWith('.md'))
-    .map((f) => {
-      const { frontmatter, body } = splitFrontmatter(readFileSync(join(dir, f), 'utf8'));
-      const data = (parse(frontmatter) ?? {}) as Record<string, unknown>;
-      return {
-        name: data.name,
-        folder: data.folder,
-        template: data.template,
-        icon: data.icon,
-        color: data.color,
-        statuses: data.statuses ?? [],
-        properties: data.properties ?? {},
-        kinds: data.kinds ?? {},
-        sections: data.sections ?? [],
-        views: data.views ?? {},
-        body: body.trim(),
-      } as Definition;
-    });
-}
-
-/** A property's icon: its own, or (for a relationship) the type it links to. */
-export type PropertyEntry = { icon?: string; color?: string; links?: string };
+export const loadDefinitions = (): Definition[] => readDefinitions(BLUEPRINT);
 
 /** blueprint/properties.md: every property, with its icon or the type it links to. */
-export function loadProperties(): Record<string, PropertyEntry> {
-  const { frontmatter } = splitFrontmatter(readFileSync(join(BLUEPRINT, 'properties.md'), 'utf8'));
-  return ((parse(frontmatter) ?? {}) as { properties?: Record<string, PropertyEntry> }).properties ?? {};
-}
+export const loadProperties = (): Record<string, PropertyEntry> => readPropertyCatalogue(BLUEPRINT).entries;
 
 /** A JSON file in the blueprint, parsed. `path` is relative to blueprint/, e.g. 'settings/app.json'. */
 export function loadJson<T = Record<string, unknown>>(path: string): T {
@@ -132,26 +86,6 @@ export type Template = {
 /** The Base file a view heading embeds, e.g. viewFile('research', 'Work raised') === 'research-work-raised.base'. */
 export function viewFile(type: string, heading: string): string {
   return `${type}-${heading.toLowerCase().replace(/ /g, '-')}.base`;
-}
-
-/** Splits a body into its `## ` sections. */
-export function sectionsOf(body: string): Map<string, string> {
-  const sections = new Map<string, string>();
-  let current: string | undefined;
-  let lines: string[] = [];
-  const flush = () => {
-    if (current !== undefined) sections.set(current, lines.join('\n').trim());
-  };
-  for (const line of body.split(/\r?\n/)) {
-    const heading = /^## (.+)$/.exec(line);
-    if (heading) {
-      flush();
-      current = heading[1] ?? '';
-      lines = [];
-    } else lines.push(line);
-  }
-  flush();
-  return sections;
 }
 
 /**

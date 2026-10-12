@@ -17,13 +17,13 @@ function valueOf(t: Template, key: string): string | undefined {
 }
 
 /**
- * Headings in page order: the type's sections, then its views. The daily note keeps Log last,
- * so its views sit just before Log.
+ * Headings in page order: the type's sections, then its views. A type with a `last` section (the daily note's Log)
+ * keeps it last, so its views sit just before it.
  */
 function expectedHeadings(d: Definition): string[] {
   const views = Object.keys(d.views);
-  if (d.name !== 'daily') return [...d.sections, ...views];
-  return [...d.sections.filter((s) => s !== 'Log'), ...views, 'Log'];
+  if (!d.last) return [...d.sections, ...views];
+  return [...d.sections.filter((s) => s !== d.last), ...views, d.last];
 }
 
 describe('templates', () => {

@@ -3,6 +3,7 @@ type: kiln-type
 name: reference
 folder: References
 template: Reference.md
+naming: source-title
 icon: lucide-bookmark
 color: "#6272a4"
 statuses: []

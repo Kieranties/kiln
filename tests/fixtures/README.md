@@ -11,3 +11,7 @@ The Northwind Arena sample vault: one project, *Season Ticket Renewals 2027*, wi
 `tests/fixtures/denylist.txt` lists real names from the owner's organisation: people, clients, products and systems. It is in `.gitignore` and must never be committed. Put one term per line; blank lines and lines starting with `#` are ignored, and matching is a case-insensitive substring match.
 
 When the file exists, `tests/kit/examples.test.ts` fails if any term appears in `claude-plugin/`, the catalog, the sample, `docs/`, the README, `CLAUDE.md` or this file. When it is absent, the check is skipped with a message.
+
+## `check/`
+
+Broken notes for the note check, at their vault paths. `tests/check/` lays them over a copy of the sample. Each breaks the rules its test names.

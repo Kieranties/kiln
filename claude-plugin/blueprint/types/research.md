@@ -3,6 +3,7 @@ type: kiln-type
 name: research
 folder: Research
 template: Research.md
+naming: date-title
 icon: lucide-flask-conical
 color: "#bd93f9"
 statuses:

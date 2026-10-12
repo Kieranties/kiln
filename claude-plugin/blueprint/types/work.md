@@ -3,6 +3,7 @@ type: kiln-type
 name: work
 folder: Work
 template: Work.md
+naming: title
 icon: lucide-square-check
 color: "#8be9fd"
 statuses:
