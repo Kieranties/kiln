@@ -53,7 +53,7 @@ In the kiln repo, `tests/kit/` checks every blueprint file against the definitio
    | `plugins/iconic.json` | `plugins/iconic/data.json` | Set `showAllFileIcons`, `showAllFolderIcons` and `minimalFolderIcons` (folder icons replace the folder arrows). Set the `fileIcons` entries for the blueprint's folders, `_kiln`, `Home.md` and `Board.base`, and the `propertyIcons` entries for the properties in `properties.md`, keeping the rest. Remove `fileRules` entries whose `id` starts with `kiln-`, then put the blueprint's rules first, so they win over older rules |
    | `plugins/templater.json` | `plugins/templater-obsidian/data.json` | Set `templates_folder` and `trigger_on_file_creation_mode`; replace `folder_templates` entries for the blueprint's folders and keep the rest |
    | `plugins/quickadd.json` | `plugins/quickadd/data.json` | Remove `choices` entries whose `id` starts with `kiln-`, at any depth, then add the blueprint's, then the generated ones below |
-   | `plugins/homepage.json` | `plugins/homepage/data.json` | Set `homepages["Main Homepage"]` and `version` |
+   | `plugins/homepage.json` | `plugins/homepage/data.json` | Set `homepages["Main Homepage"]`. When it already opens the same `value` and `kind`, add only the keys it lacks and keep the rest. Set `version` only when it is missing or lower |
 
 ### QuickAdd choices and templates per kind
 

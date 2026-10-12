@@ -131,6 +131,46 @@ describe('the Obsidian settings', () => {
     ]);
   });
 
+  it("Homepage: keeps the owner's own keys on kiln's homepage, and never lowers the version", () => {
+    const current = {
+      version: 5,
+      homepages: {
+        'Main Homepage': {
+          value: 'Home',
+          kind: 'File',
+          openOnStartup: false,
+          view: 'Reading view',
+          commands: [{ id: 'editor:toggle-fold', period: 'Startup' }],
+        },
+      },
+      separateMobile: true,
+    };
+    const { value, overrides } = merge('settings/plugins/homepage.json', current);
+    expect(overrides).toEqual([]);
+    const result = value as { version: number; homepages: Record<string, Record<string, Json>>; separateMobile: Json };
+    expect(result.version).toBe(5);
+    expect(result.separateMobile).toBe(true);
+    expect(result.homepages['Main Homepage']).toMatchObject({
+      value: 'Home',
+      kind: 'File',
+      openOnStartup: false,
+      view: 'Reading view',
+      commands: [{ id: 'editor:toggle-fold', period: 'Startup' }],
+      // kiln's keys the owner doesn't have are added.
+      openMode: 'Keep open notes',
+      alwaysApply: true,
+    });
+    expect(merge('settings/plugins/homepage.json', { homepages: {} }).value).toMatchObject({ version: 4 });
+    expect(merge('settings/plugins/homepage.json', { version: 3 }).value).toMatchObject({ version: 4 });
+  });
+
+  it("appearance: adds kiln's snippet to the owner's", () => {
+    expect(merge('settings/appearance.json', { enabledCssSnippets: ['mine'], theme: 'obsidian' }).value).toEqual({
+      enabledCssSnippets: ['mine', 'kiln'],
+      theme: 'obsidian',
+    });
+  });
+
   it('never changes the value it was given', () => {
     const current = { userIgnoreFilters: ['Archive/'] };
     merge('settings/app.json', current);

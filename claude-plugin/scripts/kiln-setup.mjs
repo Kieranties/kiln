@@ -8074,19 +8074,26 @@ var appearance = (current, blueprint, m) => {
   m.set(o, "enabledCssSnippets", union(o["enabledCssSnippets"], asObject(blueprint, m)["enabledCssSnippets"]));
   return o;
 };
+var sameHomepage = (a, b) => isObject(a) && isObject(b) && a["value"] === b["value"] && a["kind"] === b["kind"];
 var homepage = (current, blueprint, m) => {
   const o = asObject(current, m);
   const b = asObject(blueprint, m);
-  m.set(o, "version", b["version"] ?? null);
+  const version = b["version"];
+  const own = o["version"];
+  if (typeof version === "number" && (own === void 0 || own === null || typeof own === "number" && own < version)) {
+    m.set(o, "version", version);
+  }
   const main = asObject(b["homepages"] ?? {}, m)["Main Homepage"];
   if (main !== void 0) {
-    m.setOwned(
-      m.object(o, "homepages"),
-      "Main Homepage",
-      main,
-      "homepages/Main Homepage",
-      (a, c) => isObject(a) && isObject(c) && a["value"] === c["value"] && a["kind"] === c["kind"]
-    );
+    const homepages = m.object(o, "homepages");
+    const mine = homepages["Main Homepage"];
+    if (isObject(mine) && isObject(main) && sameHomepage(mine, main)) {
+      for (const [key, value] of Object.entries(main)) {
+        if (!Object.hasOwn(mine, key)) m.set(mine, key, value, `homepages/Main Homepage/${key}`);
+      }
+    } else {
+      m.setOwned(homepages, "Main Homepage", main, "homepages/Main Homepage", sameHomepage);
+    }
   }
   return o;
 };
