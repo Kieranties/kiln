@@ -27,7 +27,7 @@ Keep to the conventions in `<vault>/_kiln/README.md`, "Conventions". The ones mo
 - Relationships are always lists of links, even with one entry: `projects: ["[[Season Ticket Renewals 2027]]"]`.
 - Change only the properties and sections you mean to.
 - Archive, never delete: retire a note through its `status`.
-- Leave `_kiln/` and `.obsidian/` alone. Only `/kiln:setup` changes them.
+- Leave `_kiln/`, `.obsidian/` and `.claude/` alone. Only `/kiln:setup` changes `_kiln/` and `.obsidian/`; kiln never writes to `.claude/`.
 
 ## 3. Create notes through QuickAdd, after checking the file doesn't exist
 
@@ -41,7 +41,7 @@ Never create a note by writing a new file. With Templater's trigger on, Obsidian
    obsidian vault='<folder name>' quickadd:run choice='<choice name>' vars='{"<name>":"<value>"}'
    ```
 
-4. Fill in the new note's properties and body as edits to its file, by rule 2.
+4. Read the new note before you edit it. If it still holds `<%`, Templater didn't run: stop and tell the owner. Otherwise fill in its properties and body as edits to its file, by rule 2.
 
 ## 4. Rename and move through the Obsidian CLI
 
@@ -54,7 +54,7 @@ obsidian vault='<folder name>' move path='<note path>' to='<folder>/'
 
 ## 5. Never write `<%`
 
-Not in a new note, an existing note or captured text: Templater runs it as code. If text you are saving contains `<%`, leave that part out and tell the owner.
+Not in a new note, an existing note or captured text, including a QuickAdd var: QuickAdd puts each `{{VALUE:…}}` into the template, and Templater runs any `<%` as code. If text you are saving contains `<%`, leave that part out and tell the owner.
 
 ## 6. Run kiln-check on the notes the flow touched
 
@@ -65,7 +65,7 @@ node '<plugin>/scripts/kiln-check.mjs' '<note>' '<note>'
 node '<plugin>/scripts/kiln-check.mjs' --new '<new note>'
 ```
 
-A flow that touched much of the day's work may check `--today '<vault>'` instead. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix. Without Node 24, check each note against its definition, as `/kiln:check` describes.
+A flow that touched much of the day's work may check `--today '<vault>'` instead. That lists other notes too: fix only the notes this flow touched, and report the rest. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix. Without Node 24, check each note against its definition, as `/kiln:check` describes.
 
 ## Calling the Obsidian CLI
 

@@ -63,6 +63,8 @@ describe('the vault rules', () => {
     for (const part of ['_kiln/types/<type>.md', '_kiln/properties.md', '_kiln/README.md']) {
       expect(rule(2), part).toContain(part);
     }
+    // Leave alone what only setup changes, and the vault's .claude/, which kiln never writes.
+    for (const part of ['`_kiln/`', '`.obsidian/`', '`.claude/`']) expect(rule(2), part).toContain(part);
   });
 
   it('3. look before creating, then create through QuickAdd', () => {
@@ -77,9 +79,17 @@ describe('the vault rules', () => {
     }
     expect(text).toContain('exactly the name from step 1');
     expect(text.indexOf("obsidian vault='<folder name>' quickadd:check")).toBeGreaterThan(look);
-    expect(text.indexOf("obsidian vault='<folder name>' quickadd:run choice='")).toBeGreaterThan(
-      text.indexOf("obsidian vault='<folder name>' quickadd:check"),
-    );
+    const run = text.indexOf("obsidian vault='<folder name>' quickadd:run choice='");
+    expect(run).toBeGreaterThan(text.indexOf("obsidian vault='<folder name>' quickadd:check"));
+    // Then read the new note before editing it: a <% left in it means Templater didn't run.
+    const reread = text.indexOf('Read the new note before you edit it');
+    expect(reread).toBeGreaterThan(run);
+    expect(text.slice(reread)).toMatch(/still holds `<%`[^.]*stop and tell the owner/);
+  });
+
+  it('5. no <% anywhere, a QuickAdd var included', () => {
+    for (const part of ['including a QuickAdd var', '{{VALUE:', 'Templater runs'])
+      expect(rule(5), part).toContain(part);
   });
 
   it('4. rename and move with the CLI', () => {
@@ -129,6 +139,9 @@ describe('the vault rules', () => {
       "node '<plugin>/scripts/kiln-check.mjs' '<note>'",
       "node '<plugin>/scripts/kiln-check.mjs' --new '<new note>'",
       '<vault>/<note path>',
+      // --today lists other notes too: writes stay targeted.
+      "--today '<vault>'",
+      'fix only the notes this flow touched, and report the rest',
     ]) {
       expect(rule(6), part).toContain(part);
     }
