@@ -16,9 +16,10 @@ export type Override = {
 };
 /**
  * `choices`: the QuickAdd choices generated from the definitions. `vaultOnlyTypes`: types defined only in the
- * vault, whose kiln- QuickAdd choices and Iconic rules stay.
+ * vault, whose kiln- QuickAdd choices and Iconic rules stay. `mode`: `setup` for a vault's first setup, which
+ * alone shows File properties in the right sidebar; anything else leaves the owner's sidebar as it is.
  */
-export type MergeExtra = { choices: Json[]; vaultOnlyTypes?: readonly string[] };
+export type MergeExtra = { choices: Json[]; vaultOnlyTypes?: readonly string[]; mode?: 'setup' | 'reapply' };
 
 const scalar = (v: Json | undefined) => v === undefined || v === null || typeof v !== 'object';
 const blank = (v: Json | undefined) => v === undefined || v === null || v === '';
@@ -311,28 +312,33 @@ function tabGroups(node: Json, out: JsonObject[] = []): JsonObject[] {
 const isFileProperties = (v: Json): boolean =>
   isObject(v) && isObject(v['state']) && v['state']['type'] === 'file-properties';
 
-const workspace: Rule = (current, blueprint, m) => {
+/**
+ * File properties in the right sidebar. A missing leaf is always added; only first setup makes it the visible
+ * tab and opens the sidebar, so a re-apply leaves the owner's choice of tab and sidebar alone.
+ */
+const workspace: Rule = (current, blueprint, m, extra) => {
+  const first = extra.mode === 'setup';
   const o = asObject(current, m);
   const right = o['right'];
   if (!isObject(right)) return o;
   const groups = tabGroups(right);
   const holder = groups.find((g) => Array.isArray(g['children']) && g['children'].some(isFileProperties));
   if (holder !== undefined && Array.isArray(holder['children'])) {
-    m.set(holder, 'currentTab', holder['children'].findIndex(isFileProperties), 'right/currentTab');
+    if (first) m.set(holder, 'currentTab', holder['children'].findIndex(isFileProperties), 'right/currentTab');
   } else {
     const leaf = structuredClone(blueprint);
-    const first = groups[0];
-    if (first !== undefined) {
-      const children = [...(Array.isArray(first['children']) ? first['children'] : []), leaf];
-      m.set(first, 'children', children, 'right/children');
-      m.set(first, 'currentTab', children.length - 1, 'right/currentTab');
+    const group = groups[0];
+    if (group !== undefined) {
+      const children = [...(Array.isArray(group['children']) ? group['children'] : []), leaf];
+      m.set(group, 'children', children, 'right/children');
+      if (first) m.set(group, 'currentTab', children.length - 1, 'right/currentTab');
     } else {
       const children = [...(Array.isArray(right['children']) ? right['children'] : [])];
       children.push({ id: '6b696c6e74616273', type: 'tabs', children: [leaf], currentTab: 0 });
       m.set(right, 'children', children, 'right/children');
     }
   }
-  if (right['collapsed'] === true) m.set(right, 'collapsed', false, 'right/collapsed');
+  if (first && right['collapsed'] === true) m.set(right, 'collapsed', false, 'right/collapsed');
   return o;
 };
 

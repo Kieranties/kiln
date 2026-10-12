@@ -8202,28 +8202,29 @@ function tabGroups(node, out = []) {
   return out;
 }
 var isFileProperties = (v) => isObject(v) && isObject(v["state"]) && v["state"]["type"] === "file-properties";
-var workspace = (current, blueprint, m) => {
+var workspace = (current, blueprint, m, extra) => {
+  const first = extra.mode === "setup";
   const o = asObject(current, m);
   const right = o["right"];
   if (!isObject(right)) return o;
   const groups = tabGroups(right);
   const holder = groups.find((g) => Array.isArray(g["children"]) && g["children"].some(isFileProperties));
   if (holder !== void 0 && Array.isArray(holder["children"])) {
-    m.set(holder, "currentTab", holder["children"].findIndex(isFileProperties), "right/currentTab");
+    if (first) m.set(holder, "currentTab", holder["children"].findIndex(isFileProperties), "right/currentTab");
   } else {
     const leaf = structuredClone(blueprint);
-    const first = groups[0];
-    if (first !== void 0) {
-      const children = [...Array.isArray(first["children"]) ? first["children"] : [], leaf];
-      m.set(first, "children", children, "right/children");
-      m.set(first, "currentTab", children.length - 1, "right/currentTab");
+    const group = groups[0];
+    if (group !== void 0) {
+      const children = [...Array.isArray(group["children"]) ? group["children"] : [], leaf];
+      m.set(group, "children", children, "right/children");
+      if (first) m.set(group, "currentTab", children.length - 1, "right/currentTab");
     } else {
       const children = [...Array.isArray(right["children"]) ? right["children"] : []];
       children.push({ id: "6b696c6e74616273", type: "tabs", children: [leaf], currentTab: 0 });
       m.set(right, "children", children, "right/children");
     }
   }
-  if (right["collapsed"] === true) m.set(right, "collapsed", false, "right/collapsed");
+  if (first && right["collapsed"] === true) m.set(right, "collapsed", false, "right/collapsed");
   return o;
 };
 var RULES = {
@@ -8612,7 +8613,11 @@ function prepare(o) {
     const m = new Merger(s.target, { take, kept });
     try {
       current = readJson(file);
-      next = mergeFragment(s.fragment, current, fragment, m, { choices, vaultOnlyTypes: report.vaultOnlyTypes });
+      next = mergeFragment(s.fragment, current, fragment, m, {
+        choices,
+        vaultOnlyTypes: report.vaultOnlyTypes,
+        mode: report.mode
+      });
     } catch (error) {
       problems.push(fix(error));
       continue;

@@ -25,7 +25,7 @@ function merge(
   current: Json | undefined,
   take: string[] = [],
   kept: Record<string, Json> = {},
-  extra: MergeExtra = { choices: [] },
+  extra: MergeExtra = { choices: [], mode: 'setup' },
 ) {
   const blueprint = JSON.parse(readFileSync(join(BLUEPRINT, fragment), 'utf8')) as Json;
   const m = new Merger(TARGET[fragment] ?? fragment, { take: new Set(take), kept });
@@ -412,5 +412,34 @@ describe('the plugin settings', () => {
     };
     expect(value.right.children[0]?.currentTab).toBe(0);
     expect(merge('settings/workspace-file-properties.json', undefined).value).toBeUndefined();
+  });
+
+  it("the workspace on re-apply: adds a missing leaf, and leaves the owner's tab and sidebar alone", () => {
+    const reapply: MergeExtra = { choices: [], mode: 'reapply' };
+    const leaf = { id: 'p', type: 'leaf', state: { type: 'file-properties', state: {} } };
+    const hidden = {
+      right: {
+        id: 'r',
+        type: 'split',
+        collapsed: true,
+        children: [{ id: 't', type: 'tabs', currentTab: 0, children: [{ id: 'o', type: 'leaf' }, leaf] }],
+      },
+    };
+    expect(merge('settings/workspace-file-properties.json', hidden, [], {}, reapply).changes).toEqual([]);
+
+    const without = {
+      right: {
+        id: 'r',
+        type: 'split',
+        collapsed: true,
+        children: [{ id: 't', type: 'tabs', currentTab: 0, children: [{ id: 'o', type: 'leaf' }] }],
+      },
+    };
+    const added = merge('settings/workspace-file-properties.json', without, [], {}, reapply).value as {
+      right: { collapsed: boolean; children: { currentTab: number; children: { state?: { type: string } }[] }[] };
+    };
+    expect(added.right.collapsed).toBe(true);
+    expect(added.right.children[0]?.currentTab).toBe(0);
+    expect(added.right.children[0]?.children[1]?.state?.type).toBe('file-properties');
   });
 });

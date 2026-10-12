@@ -407,7 +407,11 @@ function prepare(o: SetupOptions): Prepared {
     try {
       // The owner's file: unreadable JSON, or a shape the merge can't use, stops setup.
       current = readJson(file);
-      next = mergeFragment(s.fragment, current, fragment, m, { choices, vaultOnlyTypes: report.vaultOnlyTypes });
+      next = mergeFragment(s.fragment, current, fragment, m, {
+        choices,
+        vaultOnlyTypes: report.vaultOnlyTypes,
+        mode: report.mode,
+      });
     } catch (error) {
       problems.push(fix(error));
       continue;

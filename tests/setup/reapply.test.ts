@@ -148,6 +148,23 @@ describe('re-applying a changed blueprint', () => {
     expect(planSetup(t.options()).files).toEqual([]);
   });
 
+  it("leaves the owner's right sidebar as they left it", async () => {
+    const t = testVault();
+    await applySetup(t.options());
+    const workspace = t.json('.obsidian/workspace.json') as {
+      right: { collapsed: boolean; children: { currentTab: number }[] };
+    };
+    expect(workspace.right).toMatchObject({ collapsed: false, children: [{ currentTab: 1 }] });
+    workspace.right.collapsed = true;
+    const group = workspace.right.children[0];
+    if (group !== undefined) group.currentTab = 0;
+    const text = JSON.stringify(workspace, null, 2);
+    t.write('.obsidian/workspace.json', text);
+    const again = await applySetup(t.options());
+    expect(again.settings).toEqual([]);
+    expect(t.read('.obsidian/workspace.json')).toBe(text);
+  });
+
   it('reads a copy saved with CRLF endings as unchanged', async () => {
     const t = testVault();
     await applySetup(t.options());
