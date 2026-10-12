@@ -195,3 +195,43 @@ describe('the docs and the skills', () => {
     }
   });
 });
+
+describe('the docs site', () => {
+  type Step = { uses?: string; run?: string; with?: Record<string, unknown> };
+  type Job = { if?: string; needs?: string[]; steps: Step[] };
+  const ci = parse(readFileSync(join(REPO, '.github', 'workflows', 'ci.yml'), 'utf8')) as {
+    jobs: Record<string, Job>;
+  };
+  const config = readFileSync(join(REPO, 'docs', '.vitepress', 'config.mts'), 'utf8');
+
+  it('is built by every check, so a broken page or link fails the PR', () => {
+    expect(ci.jobs.check?.steps.map((s) => s.run)).toContain('npm run docs:build');
+  });
+
+  it('is deployed to GitHub Pages from main, after the check', () => {
+    const docs = ci.jobs.docs;
+    expect(docs?.if).toContain("github.ref == 'refs/heads/main'");
+    expect(docs?.needs).toContain('check');
+    const upload = docs?.steps.find((s) => s.uses?.startsWith('actions/upload-pages-artifact@'));
+    expect(upload?.with?.path).toBe('docs/.vitepress/dist');
+    expect(docs?.steps.some((s) => s.uses?.startsWith('actions/deploy-pages@'))).toBe(true);
+  });
+
+  it('is served from the repo name, and leaves out the agents notes', () => {
+    expect(config).toContain("base: '/kiln/'");
+    expect(config).toContain("srcExclude: ['agents/**']");
+  });
+
+  it('has one copy of the glossary, the blueprint README and the vault rules', () => {
+    for (const [page, source] of [
+      ['docs/glossary.md', '../GLOSSARY.md'],
+      ['docs/reference/blueprint.md', '../../claude-plugin/blueprint/README.md'],
+      ['docs/reference/vault-rules.md', '../../claude-plugin/reference/vault-rules.md'],
+    ] as const) {
+      const text = readFileSync(join(REPO, page), 'utf8');
+      // From line 2: the page has its own title.
+      expect(text, page).toContain(`<!--@include: ${source}{2,}-->`);
+      expect(readFileSync(join(REPO, page, '..', source), 'utf8'), source).toMatch(/^# /);
+    }
+  });
+});
