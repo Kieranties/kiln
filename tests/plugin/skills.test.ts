@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { splitFrontmatter } from '../../src/blueprint/markdown.js';
+import { obsidianUri } from '../../src/setup/setup.js';
 
 const PLUGIN = fileURLToPath(new URL('../../claude-plugin/', import.meta.url));
 const RULES = 'reference/vault-rules.md';
@@ -132,6 +133,36 @@ describe('the vault rules', () => {
     // The intro, before rule 1, says T2 is pending and sends the reader to the section.
     const intro = rules.slice(0, rules.indexOf('\n## 1. '));
     for (const part of ['T2', 'Calling the Obsidian CLI']) expect(intro, part).toContain(part);
+  });
+
+  it('open a closed Obsidian by the vault link and retry while it loads, in every shell (#114)', () => {
+    const section = rules.slice(rules.indexOf('\n## Calling the Obsidian CLI'));
+    for (const part of [
+      'unable to find Obsidian',
+      // The link, encoded as setup's helper encodes it, with an example that needs the encoding.
+      'obsidian://open?vault=<encoded name>',
+      `\`${obsidianUri("Bob's notes")}\``,
+      // The open command per shell and OS: rundll32 from Git Bash and WSL, never explorer.exe.
+      "Start-Process '<link>'",
+      "rundll32.exe url.dll,FileProtocolHandler '<link>'",
+      '`WSL_DISTRO_NAME`',
+      "open '<link>'",
+      "xdg-open '<link>'",
+      'judge by the retry',
+      // "not found" means still loading only right after Claude opened Obsidian.
+      '"command not found"',
+      'still loading',
+      'only right after you opened',
+      'really is missing',
+      'up to three times',
+      'ask the owner to open the vault in Obsidian',
+    ]) {
+      expect(section, part).toContain(part);
+    }
+    expect(rules).not.toContain('explorer.exe');
+    // The intro's "stop if a call fails" leaves the closed and loading cases to the section.
+    const intro = rules.slice(0, rules.indexOf('\n## 1. '));
+    expect(intro).toContain('still loading');
   });
 
   it('6. check what the flow touched, by full path, with --new for what it created', () => {
