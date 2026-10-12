@@ -160,6 +160,98 @@ const homepage: Rule = (current, blueprint, m) => {
   return o;
 };
 
+export const isKiln = (v: Json): boolean => isObject(v) && typeof v.id === 'string' && v.id.startsWith('kiln-');
+
+/** The choices without any kiln one, at any depth (a kiln choice inside a Multi goes too). */
+function withoutKiln(choices: Json[]): Json[] {
+  return choices
+    .filter((c) => !isKiln(c))
+    .map((c) => (isObject(c) && Array.isArray(c.choices) ? { ...c, choices: withoutKiln(c.choices) } : c));
+}
+
+const iconic: Rule = (current, blueprint, m) => {
+  const o = asObject(current, m);
+  const b = asObject(blueprint, m);
+  for (const key of ['showAllFileIcons', 'showAllFolderIcons', 'minimalFolderIcons']) m.set(o, key, b[key] ?? null);
+  for (const group of ['fileIcons', 'propertyIcons']) {
+    const icons = m.object(o, group);
+    for (const [name, value] of Object.entries(asObject(b[group] ?? {}, m)))
+      m.set(icons, name, value, `${group}/${name}`);
+  }
+  m.set(o, 'fileRules', [
+    ...asArray(b['fileRules'] ?? [], m),
+    ...asArray(o['fileRules'] ?? [], m).filter((r) => !isKiln(r)),
+  ]);
+  return o;
+};
+
+const templater: Rule = (current, blueprint, m) => {
+  const o = asObject(current, m);
+  const b = asObject(blueprint, m);
+  m.setOwned(o, 'templates_folder', b['templates_folder'] ?? null);
+  m.set(o, 'trigger_on_file_creation_mode', b['trigger_on_file_creation_mode'] ?? null);
+  const ours = asArray(b['folder_templates'] ?? [], m).filter(isObject);
+  const folders = new Set(ours.map((e) => e['folder']));
+  const theirs = asArray(o['folder_templates'] ?? [], m);
+  const next = theirs.filter((e) => !(isObject(e) && folders.has(e['folder'] ?? null)));
+  for (const entry of ours) {
+    const own = theirs.find((e): e is JsonObject => isObject(e) && e['folder'] === entry['folder']);
+    // Not String(entry.folder): typescript/no-base-to-string rejects it for a Json value.
+    const folder = typeof entry['folder'] === 'string' ? entry['folder'] : '';
+    const useOurs = !own || m.decide(`folder_templates/${folder}`, own['template'], entry['template'] ?? null);
+    next.push(useOurs ? entry : own);
+  }
+  m.set(o, 'folder_templates', next);
+  return o;
+};
+
+const quickadd: Rule = (current, blueprint, m, extra) => {
+  const o = asObject(current, m);
+  const b = asObject(blueprint, m);
+  m.set(o, 'choices', [
+    ...withoutKiln(asArray(o['choices'] ?? [], m)),
+    ...asArray(b['choices'] ?? [], m),
+    ...extra.choices,
+  ]);
+  return o;
+};
+
+/** Every `tabs` group under `node`, depth first. */
+function tabGroups(node: Json, out: JsonObject[] = []): JsonObject[] {
+  if (!isObject(node)) return out;
+  if (node['type'] === 'tabs') out.push(node);
+  if (Array.isArray(node['children'])) for (const child of node['children']) tabGroups(child, out);
+  return out;
+}
+
+const isFileProperties = (v: Json): boolean =>
+  isObject(v) && isObject(v['state']) && v['state']['type'] === 'file-properties';
+
+const workspace: Rule = (current, blueprint, m) => {
+  const o = asObject(current, m);
+  const right = o['right'];
+  if (!isObject(right)) return o;
+  const groups = tabGroups(right);
+  const holder = groups.find((g) => Array.isArray(g['children']) && g['children'].some(isFileProperties));
+  if (holder !== undefined && Array.isArray(holder['children'])) {
+    m.set(holder, 'currentTab', holder['children'].findIndex(isFileProperties), 'right/currentTab');
+  } else {
+    const leaf = structuredClone(blueprint);
+    const first = groups[0];
+    if (first !== undefined) {
+      const children = [...(Array.isArray(first['children']) ? first['children'] : []), leaf];
+      m.set(first, 'children', children, 'right/children');
+      m.set(first, 'currentTab', children.length - 1, 'right/currentTab');
+    } else {
+      const children = [...(Array.isArray(right['children']) ? right['children'] : [])];
+      children.push({ id: '6b696c6e74616273', type: 'tabs', children: [leaf], currentTab: 0 });
+      m.set(right, 'children', children, 'right/children');
+    }
+  }
+  if (right['collapsed'] === true) m.set(right, 'collapsed', false, 'right/collapsed');
+  return o;
+};
+
 const RULES: Record<string, Rule> = {
   'settings/app.json': setKeys('settings/app.json'),
   'settings/types.json': types,
@@ -168,6 +260,10 @@ const RULES: Record<string, Rule> = {
   'settings/community-plugins.json': communityPlugins,
   'settings/appearance.json': appearance,
   'settings/plugins/homepage.json': homepage,
+  'settings/plugins/iconic.json': iconic,
+  'settings/plugins/templater.json': templater,
+  'settings/plugins/quickadd.json': quickadd,
+  'settings/workspace-file-properties.json': workspace,
 };
 
 /** The new value for the target; `undefined` means leave the target alone. Never mutates `current`. */
