@@ -48,7 +48,7 @@ Only when `install` isn't `null`. `install.plugins` are the ids of the plugins t
   - macOS: `open '<install.uri>'`
   - Linux: `xdg-open '<install.uri>'`
 
-  Don't go by the open command's exit code (`rundll32` can't report whether the link opened: the functions it runs return nothing); judge by the retry. Wait about five seconds, then run the CLI command again, up to three times. The vault may still be loading: the CLI can say "unable to find Obsidian" again, or "command not found" (Obsidian words it `Command "<name>" not found`). Both mean still loading, so wait and retry. That holds only right after you opened the vault: at any other time, "not found" means the command, or the plugin that provides it, really is missing.
+  Don't go by the open command's exit code (`rundll32` can't report whether the link opened: the functions it runs return nothing); judge by the retry. Wait about five seconds, then run the CLI command again, up to three times. The vault may still be loading: the CLI can say "unable to find Obsidian" again, or "command not found" (Obsidian words it `Command "<name>" not found`). Both mean still loading, so wait and retry. That holds only right after you opened the vault: at any other time, "not found" means the command, or the Obsidian plugin that provides it, really is missing.
 
   The URI opens only a vault Obsidian already knows, one opened in it before. If the command still fails after three tries, ask the owner to open the vault in Obsidian, then run it again. From WSL, the CLI itself is untested: a forum report says some of its commands exit with code 255 there. For any other failure, or a command that doesn't return, stop, tell the owner what happened, and ask them to install the rest in Obsidian. Never write plugin files yourself. Then plan again: each plugin should now be installed.
 - **A plugin older than the blueprint's minimum** (a warning says so) isn't in `install`, because the CLI can't update one. Ask the owner to update it in Obsidian: Settings → Community plugins → Check for updates.
@@ -102,4 +102,4 @@ If you can fetch web pages, get the latest from the guides and pass on anything 
 - Load the sample unless the owner asked for it.
 - Write a vault's `.claude/` folder, or change the user settings without the owner's consent.
 - Call the Obsidian CLI anywhere but step 3, or install a plugin without the owner's consent. The CLI needs Obsidian open, and the apply step needs it closed.
-- Change the plugin's blueprint. That is "Adding or changing a type", in the kiln repo.
+- Change the Claude plugin's blueprint. That is "Adding or changing a type", in the kiln repo.

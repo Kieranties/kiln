@@ -1,6 +1,6 @@
 # kiln vault rules
 
-Every kiln skill follows these rules whenever it reads or changes notes in a kiln vault. Nobody runs this file; skills point at it. Commands are the same in Bash and pwsh unless a rule, or the section on calling the Obsidian CLI, says otherwise. `<plugin>` is the plugin folder the skill named in its Follow line, and `<vault>` is the vault folder from rule 1.
+Every kiln skill follows these rules whenever it reads or changes notes in a kiln vault. Nobody runs this file; skills point at it. Commands are the same in Bash and pwsh unless a rule, or the section on calling the Obsidian CLI, says otherwise. `<plugin>` is the Claude plugin's folder, which the skill named in its Follow line, and `<vault>` is the vault folder from rule 1.
 
 Rules 3 and 4 use the Obsidian CLI and QuickAdd, which wait on trial T2 (https://github.com/Kieranties/kiln/issues/80), so their commands may change. Call every `obsidian` command as "Calling the Obsidian CLI", at the end of this file, says: it differs by shell, and in Git Bash a bare `obsidian` starts the app. If one fails, stop and tell the owner what failed, unless Obsidian is closed or still loading: that section says how to open it and try again. Never fall back to writing a new note as a file or renaming on disk.
 
@@ -19,7 +19,7 @@ Without Node 24 (`node --version`), use the current folder if it or a folder abo
 
 ## 2. Read the type definition before changing a note
 
-Before you write to a note, read `<vault>/_kiln/types/<type>.md` for its `type`, and `<vault>/_kiln/properties.md` before you add a property. They give the folder, naming, kinds, statuses, properties and sections. Use the vault's copies, not the plugin's blueprint: the vault may have types of its own.
+Before you write to a note, read `<vault>/_kiln/types/<type>.md` for its `type`, and `<vault>/_kiln/properties.md` before you add a property. They give the folder, naming, kinds, statuses, properties and sections. Use the vault's copies, not the Claude plugin's blueprint: the vault may have types of its own.
 
 Keep to the conventions in `<vault>/_kiln/README.md`, "Conventions". The ones most often missed:
 
@@ -78,5 +78,5 @@ A flow that touched much of the day's work may check `--today '<vault>'` instead
   - macOS: `open '<link>'`
   - Linux: `xdg-open '<link>'`
 
-  Don't go by the open command's exit code (`rundll32` can't report whether the link opened: the functions it runs return nothing); judge by the retry. Wait about five seconds, then run the CLI command again, up to three times. The vault may still be loading: the CLI can say "unable to find Obsidian" again, or "command not found" (Obsidian words it `Command "<name>" not found`). Both mean still loading, so wait and retry. That holds only right after you opened the vault: at any other time, "not found" means the command, or the plugin that provides it, really is missing, so stop and tell the owner. The link opens only a vault Obsidian already knows. If the call still fails after three tries, or doesn't return, ask the owner to open the vault in Obsidian, then try again.
+  Don't go by the open command's exit code (`rundll32` can't report whether the link opened: the functions it runs return nothing); judge by the retry. Wait about five seconds, then run the CLI command again, up to three times. The vault may still be loading: the CLI can say "unable to find Obsidian" again, or "command not found" (Obsidian words it `Command "<name>" not found`). Both mean still loading, so wait and retry. That holds only right after you opened the vault: at any other time, "not found" means the command, or the Obsidian plugin that provides it, really is missing, so stop and tell the owner. The link opens only a vault Obsidian already knows. If the call still fails after three tries, or doesn't return, ask the owner to open the vault in Obsidian, then try again.
 - From WSL, calling the CLI itself is untested: a forum report says some of its commands exit with code 255 through WSL's Windows interop. If a call fails that way, stop and tell the owner.

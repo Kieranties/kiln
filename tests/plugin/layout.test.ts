@@ -118,10 +118,10 @@ describe('the living docs', () => {
     expect(broken).toEqual([]);
   });
 
-  it('use the glossary: no kit, layer or kiln plugin, except where an ADR or the glossary quotes history', () => {
+  it('use the glossary: no kit, layer, kiln plugin or the plugin, except where an ADR or the glossary names them', () => {
     const quoting = (doc: string) => doc === 'GLOSSARY.md' || doc.startsWith('docs/adr/');
     const stale = LIVING.filter((doc) => !quoting(doc)).flatMap((doc) =>
-      [...text(doc).matchAll(/\b(kit|layers?|layer\s?1|kiln plugin)\b/gi)].map((m) => `${doc}: ${m[0]}`),
+      [...text(doc).matchAll(/\b(kit|layers?|layer\s?1|kiln plugin|the plugin)\b/gi)].map((m) => `${doc}: ${m[0]}`),
     );
     expect(stale).toEqual([]);
   });
@@ -237,15 +237,14 @@ describe('the docs site', () => {
 });
 
 describe('the pre-push checks', () => {
-  it("are the steps of CI's check job, in CLAUDE.md and the repo reference", () => {
+  it("are the steps of CI's check job, in the repo reference, which CLAUDE.md points to", () => {
     type Step = { run?: string };
     const ci = parse(readFileSync(join(REPO, '.github', 'workflows', 'ci.yml'), 'utf8')) as {
       jobs: { check: { steps: Step[] } };
     };
     const runs = ci.jobs.check.steps.flatMap((s) => (s.run && s.run !== 'npm ci' ? [s.run] : []));
-    for (const doc of ['CLAUDE.md', 'docs/reference/repo.md']) {
-      const text = readFileSync(join(REPO, doc), 'utf8');
-      for (const run of runs) expect(text, `${doc}: ${run}`).toContain(`\`${run}\``);
-    }
+    const reference = readFileSync(join(REPO, 'docs', 'reference', 'repo.md'), 'utf8');
+    for (const run of runs) expect(reference, run).toContain('`' + run + '`');
+    expect(readFileSync(join(REPO, 'CLAUDE.md'), 'utf8')).toContain('](docs/reference/repo.md)');
   });
 });

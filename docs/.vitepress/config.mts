@@ -37,8 +37,8 @@ export default withMermaid(
     // docs/agents/ is for the engineering skills, not readers.
     srcExclude: ['agents/**'],
     vite: {
-      // Mermaid 11's CommonJS dependencies (fastdom among them) need bundling for `docs:dev`; the plugin
-      // only lists older ones.
+      // Mermaid 11's CommonJS dependencies (fastdom among them) need bundling for `docs:dev`;
+      // vitepress-plugin-mermaid only lists older ones.
       optimizeDeps: { include: ['mermaid'] },
       plugins: [
         {

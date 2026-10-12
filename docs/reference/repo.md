@@ -5,7 +5,7 @@ What is where in [Kieranties/kiln](https://github.com/Kieranties/kiln), and how 
 | Path | What |
 |---|---|
 | `.claude-plugin/marketplace.json` | The catalog: one plugin, `kiln`, from `./claude-plugin` |
-| `claude-plugin/` | The Claude plugin, and nothing else. Its manifest is `claude-plugin/.claude-plugin/plugin.json`, with no version: its version is the commit |
+| `claude-plugin/` | The Claude plugin, and nothing else. Its manifest is `claude-plugin/.claude-plugin/plugin.json`, with no version: its version is the commit. It has no `package.json`, so installing it never runs npm ([ADR 0005](../adr/0005-one-user-scope-claude-plugin-with-bundled-scripts.md)) |
 | `claude-plugin/blueprint/` | The blueprint: type definitions, Templater templates, Bases views, Obsidian and plugin settings, `properties.md` and its README |
 | `claude-plugin/reference/vault-rules.md` | The [vault rules](./vault-rules.md) every kiln skill follows |
 | `claude-plugin/skills/` | The Claude plugin's [skills](./skills.md), one folder each: `check`, `setup` |
@@ -20,7 +20,7 @@ What is where in [Kieranties/kiln](https://github.com/Kieranties/kiln), and how 
 
 ## Working on kiln
 
-Node 24 or later. `npm ci`, then before pushing: `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build:check` and `npm run docs:build`. After changing `src/`, run `npm run build` and commit the scripts it writes. CI runs the same as its `check` job, which `main` requires. To check the catalog and the Claude plugin, run `claude plugin validate .`; its warning that the Claude plugin has no version is expected, since its version is the commit.
+Node 24 or later. `npm ci`, then before pushing: `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build:check` and `npm run docs:build`. After changing `src/`, run `npm run build` and commit the scripts it writes. CI runs the same as its `check` job, which `main` requires. To check the catalog and the Claude plugin, run `claude plugin validate .`; its warning that the Claude plugin has no version is expected, since its version is the commit. To try an install, point `CLAUDE_CONFIG_DIR` at a throwaway folder first, so your own Claude Code config is never touched.
 
 Work goes issue, then PR. Design is discussed in the issue; plans aren't committed. An [ADR](../adr/0001-remove-the-v0-1-engine.md) records a decision only when it is hard to reverse, surprising without context, and the result of a real trade-off.
 
