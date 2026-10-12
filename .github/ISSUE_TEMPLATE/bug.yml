@@ -1,0 +1,36 @@
+name: Bug
+description: Something kiln does is wrong.
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Title the issue with a plain sentence of what goes wrong, with no prefix.
+        The repo is public: no employer or client names, no private links, and only example paths such as `D:\src\kiln`.
+  - type: textarea
+    id: seen
+    attributes:
+      label: Seen
+      description: What happened, and where. Versions, steps and output help.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should have happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: cause
+    attributes:
+      label: Cause so far
+      description: What you know or suspect about why. Leave it empty if nothing yet.
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: How we'll know it's fixed, as a list.
+      value: '- '
+    validations:
+      required: true

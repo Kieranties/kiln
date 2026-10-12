@@ -4,7 +4,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
+- **Create an issue**: `gh issue create --title "..." --body-file <file> --label <kind> --label needs-triage`. Write multi-line bodies to a file first; long heredocs can fail to parse.
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
@@ -15,6 +15,17 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 
 ## kiln's conventions
 
+- **Bodies follow the issue forms** in `.github/ISSUE_TEMPLATE/`. Each form is a shape of headings, and applies its kind label and `needs-triage`:
+
+  | Form | Headings | Kind label |
+  |---|---|---|
+  | `bug.yml` | Seen, Expected, Cause so far, Done when | `bug` |
+  | `change.yml` | Change, Why, Done when, Questions | `feature`, or `docs` or `chore` at triage |
+  | `epic.yml` | Trigger, Result, Done when, Open questions | `epic` |
+  | `research.yml` | Question, Method, Findings | `research`, or `trial` at triage |
+
+  `gh issue create` doesn't use the forms. Write the same headings as `##` in a body file, pass it with `--body-file`, and add the labels with `--label`.
+- **PR bodies follow** `.github/pull_request_template.md`: For #N, Summary, Evidence, Merge Danger.
 - **Titles are plain sentences** of the outcome, with no prefix such as `Bug:` or `Flow:`.
 - **Labels:** one kind label (`bug`, `feature`, `docs`, `chore`, `research`, `decision`, `epic`, `trial`) and one triage label (see `triage-labels.md`). The repo belongs to a user account, so GitHub's issue types aren't available; the kind label does their job.
 - **Parents:** an issue that belongs to a flow or an area is a sub-issue of that epic. Chores and small one-offs can stand alone.

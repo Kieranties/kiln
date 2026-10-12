@@ -1,0 +1,37 @@
+name: Change
+description: A feature, a docs change or a chore.
+labels: [feature, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Title the issue with a plain sentence of the outcome, with no prefix.
+        The form labels it `feature`; triage swaps that for `docs` or `chore` where it fits.
+        The repo is public: no employer or client names, no private links, and only example paths such as `D:\src\kiln`.
+  - type: textarea
+    id: change
+    attributes:
+      label: Change
+      description: What changes.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The problem it solves, or what it makes possible.
+    validations:
+      required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: How we'll know it's done, as a list.
+      value: '- '
+    validations:
+      required: true
+  - type: textarea
+    id: questions
+    attributes:
+      label: Questions
+      description: Anything to settle before or during the work.
