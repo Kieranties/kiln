@@ -15,7 +15,7 @@ kiln records vaults in `~/.kiln/config.json`, not in a Claude Code plugin settin
 - **Obsidian's vault list** is a fallback for discovery only: its format isn't documented, so it is used only when exactly one vault in it has `_kiln/`.
 - **Asking** comes last, and the answer is recorded through setup, so there is one writer.
 
-A small Node resolver in the plugin, `kiln-vault.mjs`, implements the order. It behaves the same in Bash and pwsh.
+A small Node resolver in the Claude plugin, `kiln-vault.mjs`, implements the order. It behaves the same in Bash and pwsh.
 
 ## Found when first needed
 

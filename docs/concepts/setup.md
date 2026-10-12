@@ -27,7 +27,7 @@ The blueprint's settings can collide with yours: Homepage, the new-note folder, 
 
 ## The record, and re-applying
 
-Machine-only state goes in a hidden `.kiln/blueprint.json` at the vault root: the plugin version, a hash of the whole blueprint, and a hash of each file setup installed. Obsidian doesn't index dot-folders, so it never shows in the vault. `_kiln/` holds only what Obsidian must see: templates, views and the type definitions.
+Machine-only state goes in a hidden `.kiln/blueprint.json` at the vault root: the Claude plugin's version, a hash of the whole blueprint, and a hash of each file setup installed. Obsidian doesn't index dot-folders, so it never shows in the vault. `_kiln/` holds only what Obsidian must see: templates, views and the type definitions.
 
 After an update, setup compares three versions of each file: what it installed last time, what is in the vault now, and the new blueprint.
 
@@ -51,7 +51,7 @@ Claude creates a note by running a QuickAdd choice, so every kind needs one. Set
 
 ## The sample
 
-Loading the Northwind Arena sample is an option, for a trial vault, never the default. Setup fetches it from GitHub only when asked, at the plugin's own commit, so the sample and the blueprint always match.
+Loading the Northwind Arena sample is an option, for a trial vault, never the default. Setup fetches it from GitHub only when asked, at the Claude plugin's own commit, so the sample and the blueprint always match.
 
 ## Minimum versions
 

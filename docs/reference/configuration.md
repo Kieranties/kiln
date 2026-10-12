@@ -53,7 +53,7 @@ The first answer wins:
 | Path | Holds | Written by |
 |---|---|---|
 | `_kiln/` | The blueprint: type definitions, templates, views, `properties.md` and its README | `/kiln:setup` |
-| `.kiln/blueprint.json` | The plugin version and a hash of the blueprint and of each file setup installed, for re-applying. Hidden from Obsidian | `/kiln:setup` |
+| `.kiln/blueprint.json` | The Claude plugin's version and a hash of the blueprint and of each file setup installed, for re-applying. Hidden from Obsidian | `/kiln:setup` |
 | `.kiln/backup/<date and time>/` | A copy of each file and setting setup replaced, one folder per run | `/kiln:setup` |
 | `.obsidian/` | Obsidian's and the plugins' settings, with the blueprint's merged in | `/kiln:setup`, and Obsidian |
 
