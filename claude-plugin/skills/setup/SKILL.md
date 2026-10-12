@@ -34,7 +34,7 @@ Add `--sample` if the owner asked for the sample. The commands are the same in B
 Only when `install` isn't `null`. `install.plugins` are the ids of the plugins that are missing, and `install.vault` is the vault's name for the Obsidian CLI.
 
 - **`cli` is `null`:** the CLI isn't on PATH. Ask the owner to install and switch on the plugins in Obsidian, as section 2 of `${CLAUDE_PLUGIN_ROOT}/blueprint/GETTING-STARTED.md` says, then plan again.
-- **Otherwise,** offer to install and switch them on through the CLI. Say what that does first: it turns off restricted mode, which lets community plugins run, then downloads each plugin from Obsidian's community directory and turns it on. Run nothing until the owner says yes. The CLI needs Obsidian running with this vault open, and it may not start Obsidian itself: ask the owner to open the vault in Obsidian and keep it open until the commands are done. Call it as "Calling the Obsidian CLI" in the vault rules says: `obsidian.com` in Git Bash, `obsidian` in pwsh, and every value in single quotes. Turn off restricted mode, install each id in `install.plugins`, then list what is installed:
+- **Otherwise,** offer to install and switch them on through the CLI. Say what that does first: it turns off restricted mode, which lets community plugins run, then downloads each plugin from Obsidian's community directory and turns it on. Run nothing until the owner says yes. The CLI needs Obsidian running with this vault open: ask the owner to open the vault in Obsidian and keep it open until the commands are done. Call it as "Calling the Obsidian CLI" in the vault rules says: `obsidian.com` in Git Bash, `obsidian` in pwsh, and every value in single quotes. Turn off restricted mode, install each id in `install.plugins`, then list what is installed:
 
   ```
   obsidian vault='<install.vault>' plugins:restrict off
@@ -42,7 +42,13 @@ Only when `install` isn't `null`. `install.plugins` are the ids of the plugins t
   obsidian vault='<install.vault>' plugins filter=community versions
   ```
 
-  If a command fails or doesn't return, stop and tell the owner what happened. "The CLI is unable to find Obsidian" means Obsidian isn't running, not that a plugin is missing: ask the owner to open the vault in Obsidian, then run the command again. Do the same when Obsidian is open without this vault. For any other failure, ask them to install the rest in Obsidian. Never write plugin files yourself. Then plan again: each plugin should now be installed.
+  "The CLI is unable to find Obsidian" means Obsidian isn't running, not that a plugin is missing. The CLI doesn't start Obsidian itself, so open the vault by its URI, `install.uri`, which needs no escaping. Wait about five seconds while it loads, then run the command again, up to three times:
+  - pwsh: `Start-Process '<install.uri>'`
+  - Git Bash on Windows: `explorer.exe '<install.uri>'` (its exit code is 1 even when it worked)
+  - macOS: `open '<install.uri>'`
+  - Linux: `xdg-open '<install.uri>'`
+
+  The URI opens only a vault Obsidian already knows, one opened in it before. If the command still fails, ask the owner to open the vault in Obsidian, then run it again. For any other failure, or a command that doesn't return, stop, tell the owner what happened, and ask them to install the rest in Obsidian. Never write plugin files yourself. Then plan again: each plugin should now be installed.
 - **A plugin older than the blueprint's minimum** (a warning says so) isn't in `install`, because the CLI can't update one. Ask the owner to update it in Obsidian: Settings → Community plugins → Check for updates.
 
 Obsidian is now open. Step 5 asks the owner to close it.

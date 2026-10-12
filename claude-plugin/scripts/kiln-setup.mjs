@@ -8422,6 +8422,13 @@ function ownNotes(vault, folder = "") {
 function scalars(from, to) {
   return (from === null || typeof from !== "object") && (to === null || typeof to !== "object") ? { from, to } : {};
 }
+function obsidianUri(name) {
+  const encoded = encodeURIComponent(name).replaceAll(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+  return `obsidian://open?vault=${encoded}`;
+}
 function permissionRules(vault, platform) {
   let posix = vault.replaceAll("\\", "/");
   if (platform === "win32") posix = posix.replace(/^([A-Za-z]):/, (_, drive) => `/${drive.toLowerCase()}`);
@@ -8523,7 +8530,9 @@ function prepare(o) {
     }
   }
   const toInstall = report.plugins.filter((p) => p.status === "missing").map((p) => p.id);
-  if (toInstall.length > 0) report.install = { vault: basename3(vault), plugins: toInstall };
+  if (toInstall.length > 0) {
+    report.install = { vault: basename3(vault), uri: obsidianUri(basename3(vault)), plugins: toInstall };
+  }
   let record;
   try {
     record = readRecord(vault);

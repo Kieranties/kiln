@@ -66,9 +66,10 @@ export type SetupReport = {
   plugins: PluginCheck[];
   /**
    * The missing plugins, for Claude to install through the Obsidian CLI: `vault` is the name the CLI takes
-   * (the folder name) and `plugins` their ids. `null` when none is missing. The helper never runs the CLI.
+   * (the folder name), `uri` opens that vault in Obsidian, and `plugins` are their ids. `null` when none is
+   * missing. The helper never runs the CLI or opens the URI.
    */
-  install: { vault: string; plugins: string[] } | null;
+  install: { vault: string; uri: string; plugins: string[] } | null;
   obsidian: { running: boolean | null; minimum: string };
   cli: string | null;
   folders: { path: string; action: 'add' | 'wait' }[];
@@ -137,6 +138,19 @@ function ownNotes(vault: string, folder = ''): string[] {
 /** `from` and `to` for a step, only when both are scalars (as `Change` has them). */
 function scalars(from: Json, to: Json): { from?: Json; to?: Json } {
   return (from === null || typeof from !== 'object') && (to === null || typeof to !== 'object') ? { from, to } : {};
+}
+
+/**
+ * The URI that opens the vault named `name` in Obsidian, for a vault Obsidian already knows. Everything
+ * but letters, digits and `-_.~` is percent-encoded, `'` included, so the URI needs no escaping inside
+ * single quotes in any shell.
+ */
+export function obsidianUri(name: string): string {
+  const encoded = encodeURIComponent(name).replaceAll(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+  return `obsidian://open?vault=${encoded}`;
 }
 
 /** The rules for the owner's Claude Code settings: the vault as a working folder, and edits to its setup asked first. */
@@ -273,7 +287,9 @@ function prepare(o: SetupOptions): Prepared {
     }
   }
   const toInstall = report.plugins.filter((p) => p.status === 'missing').map((p) => p.id);
-  if (toInstall.length > 0) report.install = { vault: basename(vault), plugins: toInstall };
+  if (toInstall.length > 0) {
+    report.install = { vault: basename(vault), uri: obsidianUri(basename(vault)), plugins: toInstall };
+  }
 
   let record: ReturnType<typeof readRecord>;
   try {

@@ -113,11 +113,16 @@ describe('/kiln:setup', () => {
       '`cli` is `null`',
       'restricted mode',
       'Run nothing until the owner says yes',
-      // The CLI was seen not to start Obsidian on Windows: the owner opens it, and nothing is written by hand.
-      'open the vault in Obsidian and keep it open',
-      'run the command again',
-      // What the CLI prints when Obsidian is closed (seen on Windows with Obsidian 1.14.4).
+      // The CLI doesn't start Obsidian on Windows (1.14.4), and says so: open the vault by its URI and retry,
+      // then ask the owner. Nothing is written by hand.
       '"The CLI is unable to find Obsidian" means Obsidian isn\'t running, not that a plugin is missing',
+      '`install.uri`',
+      "Start-Process '<install.uri>'",
+      "explorer.exe '<install.uri>'",
+      "open '<install.uri>'",
+      "xdg-open '<install.uri>'",
+      'up to three times',
+      'open the vault in Obsidian',
       'Never write plugin files yourself',
       'obsidian.com',
       'Calling the Obsidian CLI',

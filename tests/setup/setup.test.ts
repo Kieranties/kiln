@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { applySetup, permissionRules, planSetup, vaultName } from '../../src/setup/setup.js';
+import { applySetup, obsidianUri, permissionRules, planSetup, vaultName } from '../../src/setup/setup.js';
 import { blueprintHash, hash } from '../../src/setup/hash.js';
 import { cleanupAll, fingerprint, PLUGIN_ROOT, testVault } from './fixture.js';
 
@@ -81,10 +81,19 @@ describe('what stops setup', () => {
   it('missing plugins are listed to install through the CLI, by id and with the vault name the CLI takes', () => {
     const report = planSetup(testVault({ plugins: { quickadd: null, iconic: null, homepage: '4.4.4' } }).options());
     // In the blueprint's order; an old plugin isn't listed, because the CLI can't update it.
-    expect(report.install).toEqual({ vault: 'Trial Vault', plugins: ['iconic', 'quickadd'] });
+    expect(report.install).toEqual({
+      vault: 'Trial Vault',
+      uri: 'obsidian://open?vault=Trial%20Vault',
+      plugins: ['iconic', 'quickadd'],
+    });
     // Listed even without the CLI: the skill then falls back to installing by hand.
     const noCli = planSetup(testVault({ plugins: { homepage: null } }).options({ cliPath: null }));
-    expect(noCli.install).toEqual({ vault: 'Trial Vault', plugins: ['homepage'] });
+    expect(noCli.install).toMatchObject({ vault: 'Trial Vault', plugins: ['homepage'] });
+  });
+
+  it('opens a vault by a URI that needs no escaping inside single quotes', () => {
+    expect(obsidianUri('notes')).toBe('obsidian://open?vault=notes');
+    expect(obsidianUri("Bob's notes & more?")).toBe('obsidian://open?vault=Bob%27s%20notes%20%26%20more%3F');
   });
 
   it('an old plugin only warns', () => {
