@@ -1,0 +1,36 @@
+name: Epic or flow
+description: A user flow or a larger piece of work, broken into sub-issues.
+labels: [epic, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Title the issue with the flow's name or a plain sentence of the outcome, with no prefix.
+        The repo is public: no employer or client names, no private links, and only example paths such as `D:\src\kiln`.
+  - type: textarea
+    id: trigger
+    attributes:
+      label: Trigger
+      description: What starts it.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Where things stand once it has run.
+    validations:
+      required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: How we'll know it's done, as a list.
+      value: '- '
+    validations:
+      required: true
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: What is still to decide.

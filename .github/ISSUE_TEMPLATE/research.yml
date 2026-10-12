@@ -1,0 +1,27 @@
+name: Research or trial
+description: A question to answer with evidence, by reading or by trying it.
+labels: [research, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Title the issue with the question or what the trial tries, with no prefix.
+        The form labels it `research`; triage swaps that for `trial` when it's hands-on.
+        The repo is public: no employer or client names, no private links, and only example paths such as `D:\src\kiln`.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What we need to know, and what depends on the answer.
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Method
+      description: How to find out, such as sources to read or steps to try, with versions.
+  - type: textarea
+    id: findings
+    attributes:
+      label: Findings
+      description: Leave it empty when opening the issue. Results go here or in comments, with the recommendation.
