@@ -1,10 +1,10 @@
 import { statSync } from 'node:fs';
 import { dirname, join, parse, resolve } from 'node:path';
 
-/** `process.env` fits this. */
+/** The environment variables as a plain map; the running process's own fit this. */
 export type Env = Readonly<Record<string, string | undefined>>;
 
-/** Everything the resolver would otherwise read from the process. */
+/** Everything the resolver would otherwise read from the running program. */
 export type Where = { cwd: string; env: Env; home: string; platform: NodeJS.Platform };
 
 /** The value, trimmed; `undefined` when unset or blank. */
