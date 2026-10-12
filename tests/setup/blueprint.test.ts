@@ -18,8 +18,6 @@ describe('installedFiles', () => {
       '_kiln/views/today.base',
       '_kiln/properties.md',
       '_kiln/README.md',
-      '_kiln/GETTING-STARTED.md',
-      '_kiln/TRY-THE-SAMPLE.md',
       'Home.md',
       'Board.base',
       '.obsidian/snippets/kiln.css',

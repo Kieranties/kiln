@@ -6,11 +6,13 @@ import { installedFiles } from '../../src/setup/blueprint.js';
 import { BLUEPRINT } from '../support/blueprint.js';
 
 const SAMPLE = fileURLToPath(new URL('../fixtures/sample/', import.meta.url));
+const SITE = 'https://kieranties.github.io/kiln';
 
+const GUIDES = fileURLToPath(new URL('../../docs/guides/', import.meta.url));
 const readme = readFileSync(join(BLUEPRINT, 'README.md'), 'utf8');
-const guide = readFileSync(join(BLUEPRINT, 'GETTING-STARTED.md'), 'utf8');
-const sample = readFileSync(join(BLUEPRINT, 'TRY-THE-SAMPLE.md'), 'utf8');
-const repoReadme = readFileSync(join(BLUEPRINT, '..', '..', 'README.md'), 'utf8');
+const guide = readFileSync(join(GUIDES, 'getting-started.md'), 'utf8');
+const sample = readFileSync(join(GUIDES, 'try-the-sample.md'), 'utf8');
+const install = readFileSync(join(GUIDES, 'install.md'), 'utf8');
 
 /** The text of a `## ` section of a Markdown document. */
 function section(document: string, heading: string): string {
@@ -28,7 +30,7 @@ describe('section()', () => {
   });
 });
 
-describe('blueprint docs', () => {
+describe('the blueprint README and the guides', () => {
   it("both docs mention Templater's per-device trigger", () => {
     // Templater keeps this switch in Obsidian's local storage, so no settings file can set it.
     for (const doc of [readme, guide]) expect(doc).toContain('Trigger Templater on new file creation');
@@ -36,7 +38,7 @@ describe('blueprint docs', () => {
 
   it('getting started sets up your own vault and links the sample as an extension', () => {
     expect(guide).not.toContain('tests/fixtures');
-    expect(guide).toContain('](TRY-THE-SAMPLE.md)');
+    expect(guide).toContain('](./try-the-sample.md)');
   });
 
   it('the sample page names every sample note', () => {
@@ -65,9 +67,16 @@ describe('blueprint docs', () => {
     expect(guide).not.toContain('Run **Show file properties**');
   });
 
-  it('setting up a vault copies all three blueprint docs', () => {
+  it('setting up a vault copies the README, and points at the guides on the docs site', () => {
     const steps = section(readme, 'Setting up a vault');
-    for (const doc of ['GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) expect(steps, doc).toContain(doc);
+    expect(steps).toContain('this README');
+    for (const page of [
+      'guides/getting-started#_2-make-your-vault',
+      'guides/try-the-sample',
+      'guides/getting-started#_4-check-it',
+    ]) {
+      expect(steps, page).toContain(`${SITE}/${page}`);
+    }
   });
 
   it('adding a type names every place that must change', () => {
@@ -103,9 +112,9 @@ describe('setting up from any folder', () => {
     }
   });
 
-  it('getting started installs the plugin from the README, by an absolute link that works in a vault', () => {
-    expect(guide).toContain('](https://github.com/Kieranties/kiln#install)');
-    expect(repoReadme).toMatch(/^#+ Install$/m);
+  it('getting started installs the plugin by the install guide', () => {
+    expect(guide).toContain('](./install.md)');
+    expect(install).toMatch(/^## Install$/m);
   });
 
   it('section 3 is one prompt, without the sample; the sample is asked for', () => {
@@ -160,7 +169,7 @@ describe('setting up from any folder', () => {
 
   it('relative links in the blueprint docs stay in the blueprint, so they work in _kiln/', () => {
     const installed = installedFiles(BLUEPRINT);
-    for (const doc of ['README.md', 'GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) {
+    for (const doc of readdirSync(BLUEPRINT).filter((f) => f.endsWith('.md'))) {
       const text = readFileSync(join(BLUEPRINT, doc), 'utf8');
       for (const [, target = ''] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
         if (/^(https?:|mailto:|#)/.test(target)) continue;

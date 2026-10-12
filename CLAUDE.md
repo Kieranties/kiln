@@ -6,23 +6,19 @@ A personal knowledge and work system: unshaped things in, finished things out. O
 
 | What | Where |
 |---|---|
-| **The language and the decisions**: canonical terms, and why kiln is shaped the way it is | [GLOSSARY.md](GLOSSARY.md), [docs/adr/](docs/adr/). Where an older doc below disagrees with an ADR, the ADR wins |
-| **Why kiln exists, principles, entities, types and kinds, layers** | [docs/vision.md](docs/vision.md) |
-| **User flows** | Each flow's epic on GitHub (label `epic`); how they hand off is in [docs/vision.md](docs/vision.md#flows). Board order is the priority |
-| **Layer 1, the vault structure: design and plan** | [design](docs/specs/2026-10-11-layer-1-structure-design.md), [plan](docs/plans/2026-10-11-layer-1-structure.md) |
-| **Foundation: Claude in the vault (#79)**, one design note per sub-issue | [vault access](docs/specs/2026-10-11-vault-access-design.md), [repo layout](docs/specs/2026-10-11-repo-layout-design.md), [note check](docs/specs/2026-10-11-note-check-design.md), [finding the vault](docs/specs/2026-10-11-finding-the-vault-design.md), [plugin install](docs/specs/2026-10-11-plugin-install-design.md), [vault setup](docs/specs/2026-10-11-vault-setup-design.md) |
-| **The blueprint** (types, templates, views, settings), its guides and checks | [claude-plugin/blueprint/README.md](claude-plugin/blueprint/README.md), [Getting started](claude-plugin/blueprint/GETTING-STARTED.md), [Try the sample](claude-plugin/blueprint/TRY-THE-SAMPLE.md); tests in `tests/blueprint/` |
-| **The Claude plugin** and its catalog | `claude-plugin/` (manifest in `claude-plugin/.claude-plugin/plugin.json`), the catalog in `.claude-plugin/marketplace.json`, and the [repo layout](docs/specs/2026-10-11-repo-layout-design.md); tests in `tests/plugin/` |
-
-The blueprint was called the kit, at the repo root, until #105. The dated plans and the design notes still call it the kit.
-
-kiln 0.1 (an MCP server, SQLite index and CLI) was removed in 0.2. It is in the git history and the `v0.1.1` tag; the vision's "What v1 taught us" says why.
+| **The language and the decisions** | [GLOSSARY.md](GLOSSARY.md), [docs/adr/](docs/adr/). Where a doc disagrees with an ADR, the ADR wins |
+| **Why kiln exists, and how it works** | [docs/concepts/](docs/concepts/): the vision, how notes are shaped, Claude in the vault, finding the vault, setting up and re-applying |
+| **What exists and its exact shape** | [docs/reference/](docs/reference/): the blueprint, the vault rules, the skills, configuration and the repo layout |
+| **How to use kiln** | [docs/guides/](docs/guides/) |
+| **Flows not yet built** | Their epics on GitHub (label `epic`). Board order is the priority |
+| **The blueprint** | `claude-plugin/blueprint/`: its README and `properties.md` are read by Claude in a vault; tests in `tests/blueprint/` |
+| **The Claude plugin** | `claude-plugin/`, with its catalog in `.claude-plugin/marketplace.json`; tests in `tests/plugin/` |
 
 ## Working rules
 
 - **Everything is exploratory.** Present choices as current direction, never as final, and revisit them when the evidence changes.
 - **Confirm scope before broad changes.** When asked to investigate, investigate; don't jump to fixes.
-- **Obsidian first, then Claude, then everything else.** New work follows the layers in the vision. Notes are shaped for a person reading them in Obsidian.
+- **Obsidian first, then Claude, then everything else.** Notes are shaped for a person reading them in Obsidian.
 - **The blueprint's type definitions are the source of truth.** Change a definition, then everything written from it; `npx vitest run tests/blueprint` names anything out of step.
 - **No real knowledge in this repo, its tests or its docs.** Test data and doc examples use the fictional "Northwind Arena" organisation in `tests/fixtures/`. Never copy notes from the owner's own vault into the repo.
 - **Archive, never delete.** Notes are retired through their `status`.
@@ -33,7 +29,7 @@ kiln 0.1 (an MCP server, SQLite index and CLI) was removed in 0.2. It is in the 
 - **An issue, then a PR.** Design discussion lives in the issue's body and comments. A plan you write to do the work is a working file: keep it in scratch, and put what a reviewer needs in the PR body. Each PR closes or advances its issue.
 - **The glossary changes with the work.** Use its terms in code, docs, issues and skills, and add or sharpen a term in the same PR that settles it.
 - **An ADR only when a decision is hard to reverse, surprising without context, and the result of a real trade-off.** Add the next number in `docs/adr/`. An accepted ADR is superseded by a new one, never rewritten.
-- **The dated specs and plans in `docs/` are being retired** into ADRs, guides and the docs site. Leave them as they are; new design goes in issues.
+- **Docs are guides, reference, concepts and decisions,** published from `docs/` as the docs site. Each fact has one home. A flow's design stays in its epic until the flow is built, then it gets a guide. `docs/agents/` is for the engineering skills and isn't published.
 
 ## Agent skills
 

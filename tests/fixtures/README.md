@@ -4,7 +4,7 @@ Fictional test data for kiln. **Nothing here is real.** Every organisation, pers
 
 ## `sample/`
 
-The Northwind Arena sample vault: one project, *Season Ticket Renewals 2027*, with a note of every type around it, in the blueprint's folders. [Try the sample](../../claude-plugin/blueprint/TRY-THE-SAMPLE.md) loads it into a trial vault. `tests/blueprint/examples.test.ts` checks every note against the blueprint's type definitions.
+The Northwind Arena sample vault: one project, *Season Ticket Renewals 2027*, with a note of every type around it, in the blueprint's folders. [Try the sample](../../docs/guides/try-the-sample.md) loads it into a trial vault. `tests/blueprint/examples.test.ts` checks every note against the blueprint's type definitions.
 
 ## `denylist.txt` (local only)
 

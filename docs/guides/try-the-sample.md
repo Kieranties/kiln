@@ -6,7 +6,7 @@ Use a separate trial vault, so the sample never mixes with your own notes.
 
 ## 1. Make a trial vault
 
-1. Follow [Getting started](GETTING-STARTED.md) **sections 1 and 2 only**, with a new empty folder, for example `D:\tmp\kiln-sample`. Keep the trial vault open in Obsidian: Claude installs the plugins through it, then asks you to close it.
+1. Follow [Getting started](./getting-started.md) **sections 1 and 2 only**, with a new empty folder, for example `D:\tmp\kiln-sample`. Keep the trial vault open in Obsidian: Claude installs the plugins through it, then asks you to close it.
 2. Come back here instead of going on to Getting started section 3. Start Claude in any folder (`claude`) and give it this prompt, with your trial folder filled in:
 
    ```text

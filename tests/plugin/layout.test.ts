@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
@@ -78,14 +78,18 @@ describe('the release', () => {
 });
 
 describe('the living docs', () => {
-  // The dated plans and the design notes are records, and keep the paths they were written with.
+  const markdownUnder = (dir: string): string[] =>
+    readdirSync(join(REPO, dir), { recursive: true, withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.endsWith('.md'))
+      .map((e) => relative(REPO, join(e.parentPath, e.name)).split(sep).join('/'));
   const LIVING = [
     'README.md',
     'CLAUDE.md',
-    'docs/vision.md',
-    'docs/specs/2026-10-11-layer-1-structure-design.md',
+    'GLOSSARY.md',
     'tests/fixtures/README.md',
-    'claude-plugin/reference/vault-rules.md',
+    ...markdownUnder('docs'),
+    ...markdownUnder('claude-plugin/reference'),
+    ...markdownUnder('claude-plugin/skills'),
     ...readdirSync(join(PLUGIN, 'blueprint'))
       .filter((f) => f.endsWith('.md'))
       .map((f) => `claude-plugin/blueprint/${f}`),
@@ -104,15 +108,49 @@ describe('the living docs', () => {
     expect(broken).toEqual([]);
   });
 
-  it('name no kit/ path, since the kit is now the blueprint', () => {
-    const stale = LIVING.filter((doc) => /(?<![\w/])kit\//.test(text(doc)));
+  it('include only files that exist', () => {
+    const broken: string[] = [];
+    for (const doc of LIVING) {
+      for (const [, target = ''] of text(doc).matchAll(/<!--\s*@include:\s*([^\s{]+)/g)) {
+        if (!existsSync(join(REPO, doc, '..', target))) broken.push(`${doc}: ${target}`);
+      }
+    }
+    expect(broken).toEqual([]);
+  });
+
+  it('use the glossary: no kit, layer or kiln plugin, except where an ADR or the glossary quotes history', () => {
+    const quoting = (doc: string) => doc === 'GLOSSARY.md' || doc.startsWith('docs/adr/');
+    const stale = LIVING.filter((doc) => !quoting(doc)).flatMap((doc) =>
+      [...text(doc).matchAll(/\b(kit|layers?|layer\s?1|kiln plugin)\b/gi)].map((m) => `${doc}: ${m[0]}`),
+    );
     expect(stale).toEqual([]);
+  });
+
+  it('are only guides, reference, concepts, decisions and the agents notes', () => {
+    const top = readdirSync(join(REPO, 'docs'), { withFileTypes: true })
+      .filter((e) => !e.name.startsWith('.'))
+      .map((e) => (e.isDirectory() ? `${e.name}/` : e.name));
+    const allowed = ['guides/', 'reference/', 'concepts/', 'adr/', 'agents/', 'index.md', 'glossary.md'];
+    expect(top.filter((entry) => !allowed.includes(entry))).toEqual([]);
   });
 });
 
 describe('the README', () => {
   const readme = readFileSync(join(REPO, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
   const commands = [...readme.matchAll(/^claude plugin .+$/gm)].map((m) => m[0].trim());
+
+  it('installs kiln by the names in the catalog, and links the docs site', () => {
+    expect(commands).toEqual([
+      'claude plugin marketplace add Kieranties/kiln',
+      `claude plugin install ${catalog.plugins[0]?.name}@${catalog.name}`,
+    ]);
+    expect(readme).toContain('](https://kieranties.github.io/kiln/)');
+  });
+});
+
+describe('the install guide', () => {
+  const guide = readFileSync(join(REPO, 'docs', 'guides', 'install.md'), 'utf8').replace(/\r\n/g, '\n');
+  const commands = [...guide.matchAll(/^claude plugin .+$/gm)].map((m) => m[0].trim());
   const id = `${catalog.plugins[0]?.name}@${catalog.name}`;
 
   it('installs, updates and turns off kiln by the names in the catalog', () => {
@@ -139,20 +177,20 @@ describe('the README', () => {
 
   it('documents the companion Obsidian skills and Claudian', () => {
     expect(commands).toContain('claude plugin install obsidian@obsidian-skills');
-    expect(readme).toContain('Load user Claude Code settings');
+    expect(guide).toContain('Load user Claude Code settings');
   });
 });
 
-describe('the README and the skills', () => {
-  it('names every skill, in the plugin section and the repo table', () => {
-    const readme = readFileSync(join(REPO, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
+describe('the docs and the skills', () => {
+  it('name every skill, in the skills reference and the repo reference', () => {
+    const skillsPage = readFileSync(join(REPO, 'docs', 'reference', 'skills.md'), 'utf8').replace(/\r\n/g, '\n');
+    const repoPage = readFileSync(join(REPO, 'docs', 'reference', 'repo.md'), 'utf8').replace(/\r\n/g, '\n');
     const skills = readdirSync(join(PLUGIN, 'skills'), { withFileTypes: true })
       .filter((e) => e.isDirectory())
       .map((e) => e.name);
-    const intro = /^This repo is also a Claude Code plugin marketplace.*$/m.exec(readme)?.[0] ?? '';
-    const row = /^\| `claude-plugin\/skills\/` \|(.*)$/m.exec(readme)?.[1] ?? '';
+    const row = /^\| `claude-plugin\/skills\/` \|(.*)$/m.exec(repoPage)?.[1] ?? '';
     for (const skill of skills) {
-      expect(intro, skill).toContain(`/kiln:${skill}`);
+      expect(skillsPage, skill).toMatch(new RegExp(`^## \`/kiln:${skill}\`$`, 'm'));
       expect(row, skill).toContain(`\`${skill}\``);
     }
   });

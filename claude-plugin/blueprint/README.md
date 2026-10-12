@@ -1,8 +1,8 @@
 # The kiln blueprint
 
-**New here? Follow [Getting started](GETTING-STARTED.md)** to set up your vault from an empty folder. To see the whole blueprint working first, [try the sample](TRY-THE-SAMPLE.md) in a trial vault.
+**New here? Follow [Getting started](https://kieranties.github.io/kiln/guides/getting-started)** to set up your vault from an empty folder. To see the whole blueprint working first, [try the sample](https://kieranties.github.io/kiln/guides/try-the-sample) in a trial vault.
 
-The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist, how each one looks, and how they link. It is configuration, not code. The design is in [Layer 1: structure](https://github.com/Kieranties/kiln/blob/main/docs/specs/2026-10-11-layer-1-structure-design.md).
+The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist, how each one looks, and how they link. It is configuration, not code. Why it is shaped this way: [How notes are shaped](https://kieranties.github.io/kiln/concepts/notes).
 
 ## What the blueprint is
 
@@ -34,7 +34,7 @@ In the kiln repo, `tests/blueprint/` checks every blueprint file against the def
 
 ## Setting up a vault
 
-`/kiln:setup` does all of this with a Node helper, from any Claude session, and re-applies the blueprint after an update. These are the steps it follows, and the steps Claude follows by hand when Node isn't installed. `<vault>` is the vault folder. For the owner's walk-through, see [Getting started](GETTING-STARTED.md).
+`/kiln:setup` does all of this with a Node helper, from any Claude session, and re-applies the blueprint after an update. These are the steps it follows, and the steps Claude follows by hand when Node isn't installed. `<vault>` is the vault folder. For the owner's walk-through, see [Getting started](https://kieranties.github.io/kiln/guides/getting-started).
 
 1. **Install the plugins, then check Obsidian is closed.** `<vault>/.obsidian/plugins/` must have `iconic`, `templater-obsidian`, `quickadd`, `homepage` and `realclaudian` (Claudian), each with `manifest.json` and `main.js`, at or above the versions in `requires.json`. If any is missing and the Obsidian CLI is on PATH, offer to install and switch them on through it. Ask first: it turns off restricted mode and downloads community plugin code. Say that Claudian is the one Obsidian staff haven't reviewed, and that it runs Claude Code with the vault as its working folder. The owner opens the vault in Obsidian and keeps it open: the CLI doesn't start Obsidian, and fails with "The CLI is unable to find Obsidian" when it is closed. Opening `obsidian://open?vault=<folder name>` (URI-encoded) starts it on the vault: `rundll32.exe url.dll,FileProtocolHandler '<link>'` in Git Bash, `Start-Process '<link>'` in pwsh. Then try the call again after a few seconds. Right after that launch, a call can still say "unable to find Obsidian", or that a command isn't found, while the vault loads: wait and try again. Name the vault by its folder name, and call `obsidian.com` in Git Bash, `obsidian` in pwsh:
 
@@ -43,9 +43,9 @@ In the kiln repo, `tests/blueprint/` checks every blueprint file against the def
    obsidian vault='<folder name>' plugin:install id='<id>' enable
    ```
 
-   Without the CLI, the owner installs them in Obsidian ([Getting started](GETTING-STARTED.md), section 2). The CLI can't update a plugin: warn about older ones, and ask the owner to update them in Obsidian, under Settings → Community plugins → Check for updates. Then Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up; with Run in Background installed, that means the tray's Close Vault. Suggest, but don't require, **Trigger Templater on new file creation**: it is kept per device, so no settings file can set it, and it only matters for notes made by hand.
+   Without the CLI, the owner installs them in Obsidian ([Getting started](https://kieranties.github.io/kiln/guides/getting-started#_2-make-your-vault), section 2). The CLI can't update a plugin: warn about older ones, and ask the owner to update them in Obsidian, under Settings → Community plugins → Check for updates. Then Obsidian must be closed, because QuickAdd and Homepage read their settings only at start-up; with Run in Background installed, that means the tray's Close Vault. Suggest, but don't require, **Trigger Templater on new file creation**: it is kept per device, so no settings file can set it, and it only matters for notes made by hand.
 2. **Create the type folders** in `<vault>`: the `folder` of every definition in `types/`.
-3. **Copy the blueprint in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md`, this README, `GETTING-STARTED.md` and `TRY-THE-SAMPLE.md`. Everything in `root/` goes to `<vault>/`. The Northwind Arena sample (`tests/fixtures/sample` in the kiln repo) is added only when asked for, at the plugin's version (see `TRY-THE-SAMPLE.md`).
+3. **Copy the blueprint in.** `types/`, `templates/` and `views/` go to `<vault>/_kiln/` under the same names, with `properties.md` and this README. Everything in `root/` goes to `<vault>/`. The Northwind Arena sample (`tests/fixtures/sample` in the kiln repo) is added only when asked for, at the plugin's version ([Try the sample](https://kieranties.github.io/kiln/guides/try-the-sample)).
 4. **Merge each settings fragment.** Keep every setting the vault already has unless the rule says otherwise. When a target file is missing, write the fragment as it is. Before changing a file that is there, copy it to `<vault>/.kiln/backup/<date and time>/`, as for any file setup replaces; a run never reuses an earlier run's backup folder. In a vault already in use, ask before changing the owner's Homepage, new-note folder, new-link format, where properties show in a note (`propertiesInDocument`), daily-note folder, format or template, Templater template folder or folder templates, and property types, and before replacing an existing `Home.md`.
 
    | Fragment | Target in `<vault>/.obsidian/` | Rule |
@@ -78,7 +78,7 @@ Claude creates notes by running a QuickAdd choice, so every kind has one. They c
    - If `workspace.json` does not exist yet, skip this step. Obsidian creates it on first start, and Getting started has the fallback.
 6. **Record.** Write `<vault>/.kiln/blueprint.json`: the plugin's version, a hash of the blueprint, and a hash of each file installed. Re-applying compares each file three ways: what was installed, what is in the vault and the new blueprint. It updates what only the blueprint changed, keeps the owner's edits, asks when both changed, adds new files, and leaves dropped ones in place. A file it installed that the owner has since deleted stays deleted, and is reported; the owner can ask for it back. Then record the vault in `~/.kiln/config.json`. By hand, skip both: the next `/kiln:setup` treats `_kiln/` as the blueprint's.
 7. **Report** each file copied and each setting changed.
-8. **Open Obsidian and check** with the list in [Getting started](GETTING-STARTED.md).
+8. **Open Obsidian and check** with the list in [Getting started](https://kieranties.github.io/kiln/guides/getting-started#_4-check-it).
 
 ## Adding or changing a type
 

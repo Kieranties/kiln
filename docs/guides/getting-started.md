@@ -1,15 +1,15 @@
-# Getting started with the kiln blueprint
+# Getting started
 
 This guide sets up your vault with the kiln blueprint, from an empty folder, then walks you through your first notes. It takes about fifteen minutes. Claude does the copying and settings; you do the parts in Obsidian.
 
-Want to look around before adding anything of your own? [Try the sample](TRY-THE-SAMPLE.md) loads a fictional project into a trial vault.
+Want to look around before adding anything of your own? [Try the sample](./try-the-sample.md) loads a fictional project into a trial vault.
 
 ## 1. What you need
 
 - **Obsidian 1.14 or later.** Check in Settings → About. The board needs Bases' built-in kanban, added in 1.14.
 - **Claude Code** (`claude --version`), on the same computer as Obsidian. Setup installs **Claudian**, which runs it in a panel inside Obsidian. Claudian works only in Obsidian's desktop app.
 - **Node 24** (`node --version`). Setup runs a small Node script. Without Node, Claude follows the steps by hand, more slowly.
-- **The kiln plugin for Claude Code.** Install it once, as [the README says](https://github.com/Kieranties/kiln#install). It carries the blueprint, so you need no copy of the kiln repo. If you install it during a Claude session, run `/reload-plugins` or start a new session before `/kiln:setup` exists.
+- **kiln's Claude plugin.** [Install it](./install.md) once. It carries the blueprint, so you need no copy of the kiln repo. If you install it during a Claude session, run `/reload-plugins` or start a new session before `/kiln:setup` exists.
 
 ## 2. Make your vault
 
@@ -77,7 +77,7 @@ Tell Claude about anything that doesn't match, with the line it failed on.
 
 ## 6. Next steps
 
-- **Keep up with kiln:** after [updating the plugin](https://github.com/Kieranties/kiln#update), run `/kiln:setup` again. It updates what the new blueprint changed and keeps your own edits, asking when both changed. A kiln file you deleted stays deleted; ask Claude if you want it back.
-- **Try the sample:** [Try the sample](TRY-THE-SAMPLE.md) shows every type and view with a fictional project, in a separate trial vault.
-- **Add a type:** a new type changes the blueprint itself, so it's done in the kiln repo: [Adding or changing a type](README.md#adding-or-changing-a-type). A change you make in a checkout reaches your vault only when Claude runs with the plugin loaded from that checkout, for example `claude --plugin-dir D:/src/kiln/claude-plugin` and then `/kiln:setup`. Otherwise it applies once the change is in the installed plugin, after a release and `claude plugin update kiln@kiln`.
-- **How the blueprint works:** [The kiln blueprint](README.md) covers the types, conventions and how the blueprint is applied.
+- **Keep up with kiln:** after [updating the plugin](./install.md#update), run `/kiln:setup` again. It updates what the new blueprint changed and keeps your own edits, asking when both changed. A kiln file you deleted stays deleted; ask Claude if you want it back.
+- **Try the sample:** [Try the sample](./try-the-sample.md) shows every type and view with a fictional project, in a separate trial vault.
+- **Add a type:** a new type changes the blueprint itself, so it's done in the kiln repo: [Adding or changing a type](../reference/blueprint.md#adding-or-changing-a-type). A change you make in a checkout reaches your vault only when Claude runs with the plugin loaded from that checkout, for example `claude --plugin-dir D:/src/kiln/claude-plugin` and then `/kiln:setup`. Otherwise it applies once the change is in the installed plugin, after a release and `claude plugin update kiln@kiln`.
+- **How the blueprint works:** [How notes are shaped](../concepts/notes.md) explains the types and why they look as they do, and [the blueprint reference](../reference/blueprint.md) has its conventions and how it is applied.

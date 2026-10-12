@@ -155,6 +155,20 @@ describe('/kiln:setup', () => {
     expect(never).toContain('Call the Obsidian CLI anywhere but step 3');
   });
 
+  it('says how to install the plugins by hand itself, since the guides are on the docs site, not in the plugin', () => {
+    const step3 = body.slice(body.indexOf('## 3.'), body.indexOf('## 4.'));
+    const byHand = step3.slice(step3.indexOf('`cli` is `null`'), step3.indexOf('**Otherwise,**'));
+    for (const part of ['Exit restricted mode', 'Browse', 'Iconic', 'Templater', 'QuickAdd', 'Homepage', 'Claudian']) {
+      expect(byHand, part).toContain(part);
+    }
+    expect(byHand).toContain('Yishen Tu');
+    expect(body).not.toMatch(/GETTING-STARTED|TRY-THE-SAMPLE/);
+    const step8 = body.slice(body.indexOf('## 8.'), body.indexOf('## Never'));
+    for (const page of ['guides/getting-started#_4-check-it', 'guides/try-the-sample#_3-look-around']) {
+      expect(step8, page).toContain(`https://kieranties.github.io/kiln/${page}`);
+    }
+  });
+
   it('keeps the Never list true without Node, and offers the permission rules by hand', () => {
     const never = body.slice(body.indexOf('## Never'));
     expect(never).toContain('With Node, write to the vault yourself');
