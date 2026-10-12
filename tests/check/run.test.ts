@@ -91,6 +91,21 @@ describe('runCheck', () => {
     expect(output).toContain("error  can't read the vault's definitions: types/work.md: naming must be one of");
   });
 
+  it('says how to fix a vault set up from an older blueprint', () => {
+    const old = makeVault();
+    for (const file of readdirSync(join(old, '_kiln', 'types'))) {
+      const path = join(old, '_kiln', 'types', file);
+      writeFileSync(path, readFileSync(path, 'utf8').replace(/^naming: .*\n/m, ''));
+    }
+    const { output, exitCode } = runCheck([join(old, 'Work')]);
+    rmSync(old, { recursive: true, force: true });
+    expect(exitCode).toBe(1);
+    expect(output).toContain(
+      "  error  can't read the vault's definitions: types/capture.md: naming must be one of title, date, date-title, source-title" +
+        "; if the vault was set up from an older blueprint, copy the current blueprint's types/ and properties.md into its _kiln/",
+    );
+  });
+
   it('exits 2 with usage for bad arguments', () => {
     expect(runCheck([]).exitCode).toBe(2);
     expect(runCheck(['--frobnicate', sample])).toMatchObject({

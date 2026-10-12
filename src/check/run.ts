@@ -25,6 +25,10 @@ function onDisk(path: string): string {
   }
 }
 
+/** The likely fix when a vault's definitions don't load: they predate a field the blueprint now has. */
+const OLDER_BLUEPRINT =
+  "; if the vault was set up from an older blueprint, copy the current blueprint's types/ and properties.md into its _kiln/";
+
 const message = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 const failure = (path: string, text: string): NoteResult => ({ path, findings: [{ level: 'error', message: text }] });
 
@@ -59,7 +63,7 @@ export function runCheck(argv: string[], options: RunOptions = {}): { output: st
       try {
         vault = openVault(root);
       } catch (e) {
-        vault = new Error(`can't read the vault's definitions: ${message(e)}`);
+        vault = new Error(`can't read the vault's definitions: ${message(e)}${OLDER_BLUEPRINT}`);
       }
       vaults.set(root, vault);
     }

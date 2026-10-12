@@ -7770,6 +7770,7 @@ function onDisk(path) {
     return path;
   }
 }
+var OLDER_BLUEPRINT = "; if the vault was set up from an older blueprint, copy the current blueprint's types/ and properties.md into its _kiln/";
 var message = (e) => e instanceof Error ? e.message : String(e);
 var failure = (path, text2) => ({ path, findings: [{ level: "error", message: text2 }] });
 function runCheck(argv, options = {}) {
@@ -7800,7 +7801,7 @@ function runCheck(argv, options = {}) {
       try {
         vault = openVault(root);
       } catch (e) {
-        vault = new Error(`can't read the vault's definitions: ${message(e)}`);
+        vault = new Error(`can't read the vault's definitions: ${message(e)}${OLDER_BLUEPRINT}`);
       }
       vaults.set(root, vault);
     }
