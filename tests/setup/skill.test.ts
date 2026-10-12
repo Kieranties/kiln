@@ -71,4 +71,36 @@ describe('/kiln:setup', () => {
       expect(body, part).toContain(part);
     }
   });
+
+  it('checks Obsidian only at step 4, and says what each exit code means', () => {
+    const step2 = body.slice(body.indexOf('## 2. Plan'), body.indexOf('## 3.'));
+    expect(step2).toContain('deal with it at step 4');
+    expect(step2).toContain("carry on to step 3 with the plan's `asks`");
+    expect(step2).toContain('Exit code 2 prints usage text, not JSON');
+    const step4 = body.slice(body.indexOf('## 4.'), body.indexOf('## 5.'));
+    for (const part of ['`mode`', '`setup`', '`reapply`', 'ask them to close it']) expect(step4, part).toContain(part);
+    const step5 = body.slice(body.indexOf('## 5.'), body.indexOf('## 6.'));
+    for (const part of [
+      '(`kiln.recorded`)',
+      'set to `new`',
+      'a recorded vault keeps its name',
+      '`error`',
+      '`.kiln/backup/`',
+    ])
+      expect(step5, part).toContain(part);
+    expect(step5).not.toContain('stopped before writing anything');
+  });
+
+  it('keeps the Never list true without Node, and offers the permission rules by hand', () => {
+    const never = body.slice(body.indexOf('## Never'));
+    expect(never).toContain('With Node, write to the vault yourself');
+    const step6 = body.slice(body.indexOf('## 6.'), body.indexOf('## 7.'));
+    for (const part of [
+      'only entries not already there',
+      'Without Node there is no plan',
+      'Edit(//<vault, forward slashes>/.obsidian/**)',
+      'Edit(//<vault, forward slashes>/_kiln/**)',
+    ])
+      expect(step6, part).toContain(part.replace('only entries', 'only entries'));
+  });
 });
