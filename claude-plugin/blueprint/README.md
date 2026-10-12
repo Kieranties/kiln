@@ -16,7 +16,7 @@ The blueprint is kiln's vault structure for Obsidian: what kinds of notes exist,
 | `settings/` | Obsidian and plugin settings, as fragments to merge | `.obsidian/` |
 | `requires.json` | The oldest Obsidian and plugin versions the blueprint is written for. Setup warns when a plugin is older | Read by setup; not copied |
 
-`tests/kit/` checks every blueprint file against the definitions: `npx vitest run tests/kit`.
+In the kiln repo, `tests/kit/` checks every blueprint file against the definitions: `npx vitest run tests/kit`.
 
 ## Conventions
 
@@ -86,4 +86,4 @@ Claude creates notes by running a QuickAdd choice, so every kind has one. They c
    - `tests/kit/definitions.test.ts`: the type list; the folder, naming, status, kind, property and section tables; which type keeps a section `last`; and the shared and optional properties in `properties.md`;
    - `tests/fixtures/layer1`: add an example note of the new type in its folder, since every type needs one.
 4. Run `npx vitest run tests/kit` until it passes. The tests name anything that is out of step.
-5. In the vault, run `/kiln:setup`. With Obsidian open it updates `_kiln/`, Iconic and Templater, and the rest waits until Obsidian is closed and setup runs again.
+5. In the vault, run `/kiln:setup`. An installed plugin carries the blueprint from its own commit, so a local edit reaches the vault only when Claude runs with the plugin loaded from your checkout (`claude --plugin-dir D:srckilnclaude-plugin`); otherwise it applies once the change is released and installed with `claude plugin update kiln@kiln`. With Obsidian open it updates `_kiln/`, Iconic and Templater, and the rest waits until Obsidian is closed and setup runs again.

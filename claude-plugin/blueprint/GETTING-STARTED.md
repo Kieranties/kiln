@@ -9,7 +9,7 @@ Want to look around before adding anything of your own? [Try the sample](TRY-THE
 - **Obsidian 1.14 or later.** Check in Settings → About. The board needs Bases' built-in kanban, added in 1.14.
 - **Claude Code** (`claude --version`).
 - **Node 24** (`node --version`). Setup runs a small Node script. Without Node, Claude follows the steps by hand, more slowly.
-- **The kiln plugin for Claude Code.** Install it once, as [the README says](https://github.com/Kieranties/kiln#install). It carries the blueprint, so you need no copy of the kiln repo.
+- **The kiln plugin for Claude Code.** Install it once, as [the README says](https://github.com/Kieranties/kiln#install). It carries the blueprint, so you need no copy of the kiln repo. If you install it during a Claude session, run `/reload-plugins` or start a new session before `/kiln:setup` exists.
 
 ## 2. Make your vault
 
@@ -47,7 +47,7 @@ Each step is something you'll do every day. Check the result as you go.
 
 - [ ] Run **QuickAdd: Capture to inbox** from the command palette and type a few words. A note appears in `Inbox` with an inbox icon, and Home's Inbox lists it.
 - [ ] Open it: there is no properties block in the text. Its properties show in the file properties view in the right sidebar, filled in once. They read with capitals, as **Type: Capture** and **Status: Inbox**, although the note stores them in lowercase. Each property has an icon; relationships such as `projects` show the icon and colour of the type they link to.
-- [ ] Create a note with **New note**: it lands in `Inbox` as a capture too.
+- [ ] Create a note with **New note**: it lands in `Inbox` as a capture too. Notes you create by hand need Templater's trigger (section 2, step 6); without it, ask Claude to create the note.
 
 **Log your day**
 
@@ -74,5 +74,5 @@ Tell Claude about anything that doesn't match, with the line it failed on.
 
 - **Keep up with kiln:** after [updating the plugin](https://github.com/Kieranties/kiln#update), run `/kiln:setup` again. It updates what the new blueprint changed and keeps your own edits, asking when both changed.
 - **Try the sample:** [Try the sample](TRY-THE-SAMPLE.md) shows every type and view with a fictional project, in a separate trial vault.
-- **Add a type:** a new type changes the blueprint itself, so it's done in the kiln repo: [Adding or changing a type](README.md#adding-or-changing-a-type). Then run `/kiln:setup` to apply it.
+- **Add a type:** a new type changes the blueprint itself, so it's done in the kiln repo: [Adding or changing a type](README.md#adding-or-changing-a-type). A change you make in a checkout reaches your vault only when Claude runs with the plugin loaded from that checkout, for example `claude --plugin-dir D:srckilnclaude-plugin` and then `/kiln:setup`. Otherwise it applies once the change is in the installed plugin, after a release and `claude plugin update kiln@kiln`.
 - **How the blueprint works:** [The kiln blueprint](README.md) covers the types, conventions and how the blueprint is applied.

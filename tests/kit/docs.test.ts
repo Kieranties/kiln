@@ -144,3 +144,17 @@ describe('setting up from any folder', () => {
     expect(section(readme, 'Adding or changing a type')).toContain('/kiln:setup');
   });
 });
+
+describe('guide caveats', () => {
+  it('says where a locally edited type reaches the vault from', () => {
+    for (const doc of [guide, section(readme, 'Adding or changing a type')]) {
+      expect(doc).toContain('--plugin-dir');
+      expect(doc).toContain('claude plugin update kiln@kiln');
+    }
+  });
+
+  it('warns that hand-made notes need the trigger, and that a new plugin needs a reload', () => {
+    expect(section(guide, '5. Your first notes')).toContain('Templater');
+    expect(section(guide, '1. What you need')).toContain('/reload-plugins');
+  });
+});
