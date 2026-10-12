@@ -19,7 +19,7 @@ export function kilnConfigPath(where: { env: Env; home: string }): string {
 /** `undefined` when there is no file. Throws an `Error` that says what is wrong with a file that is there. */
 export function readKilnConfig(file: string): KilnConfig | undefined {
   if (!existsSync(file)) return undefined;
-  const source = readFileSync(file, 'utf8').replace(/^﻿/, '');
+  const source = readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
   let data: unknown;
   try {
     data = JSON.parse(source);
