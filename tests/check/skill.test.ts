@@ -25,4 +25,15 @@ describe('/kiln:check', () => {
       expect(body, part).toContain(part);
     }
   });
+  it('finds the vault with the resolver, and leaves the kiln file to setup', () => {
+    const step = body.slice(body.indexOf('## 1. Find the vault'), body.indexOf('## 2.'));
+    expect(step).toContain('node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"');
+    expect(step).not.toContain('"<folder>"');
+    expect(step).toContain('skip to step 2');
+    expect(step).toContain('Exit code 2');
+    for (const part of ['candidates', 'reasons', '/kiln:setup', '~/.kiln/config.json'])
+      expect(step, part).toContain(part);
+    expect(step).not.toContain('The vault resolver replaces this step');
+    expect(existsSync(`${PLUGIN}scripts/kiln-vault.mjs`)).toBe(true);
+  });
 });

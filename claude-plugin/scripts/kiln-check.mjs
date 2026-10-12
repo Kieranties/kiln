@@ -7284,7 +7284,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse3(src, reviver, options) {
+    function parse4(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7325,7 +7325,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports.parse = parse3;
+    exports.parse = parse4;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
     exports.stringify = stringify;
@@ -7386,7 +7386,7 @@ var require_dist = __commonJS({
 
 // src/check/run.ts
 import { realpathSync, statSync as statSync2 } from "node:fs";
-import { relative as relative2, resolve as resolve2, sep as sep2 } from "node:path";
+import { relative as relative2, resolve as resolve3, sep as sep2 } from "node:path";
 import { parseArgs } from "node:util";
 
 // src/check/check-note.ts
@@ -7642,8 +7642,8 @@ function summarise(results) {
 }
 
 // src/check/vault.ts
-import { existsSync as existsSync2, readdirSync as readdirSync2, statSync } from "node:fs";
-import { basename as basename2, dirname, join as join3, relative, resolve, sep } from "node:path";
+import { readdirSync as readdirSync2 } from "node:fs";
+import { basename as basename2, join as join4, relative, resolve as resolve2, sep } from "node:path";
 
 // src/blueprint/load.ts
 var import_yaml2 = __toESM(require_dist(), 1);
@@ -7749,21 +7749,37 @@ function readBlueprint(dir) {
   return { definitions: readDefinitions(dir), properties: readPropertyCatalogue(dir) };
 }
 
-// src/check/vault.ts
-function findVault(path) {
-  const start = resolve(path);
-  let current = statSync(start, { throwIfNoEntry: false })?.isDirectory() ? start : dirname(start);
+// src/vault/paths.ts
+import { statSync } from "node:fs";
+import { dirname, join as join3, parse as parse3, resolve } from "node:path";
+function isFolder(path) {
+  try {
+    return statSync(path, { throwIfNoEntry: false })?.isDirectory() === true;
+  } catch {
+    return false;
+  }
+}
+function findUp(start, ...marker) {
+  const from = resolve(start);
+  let current = isFolder(from) ? from : dirname(from);
   for (; ; ) {
-    if (existsSync2(join3(current, "_kiln", "types"))) return current;
+    if (isFolder(join3(current, ...marker))) return current;
     const parent = dirname(current);
     if (parent === current) return void 0;
     current = parent;
   }
 }
+
+// src/vault/find.ts
+function findVault(path) {
+  return findUp(path, "_kiln", "types");
+}
+
+// src/check/vault.ts
 function openVault(path, blueprintDir) {
-  const root = resolve(path);
-  const blueprint = readBlueprint(blueprintDir ?? join3(root, "_kiln"));
-  const files = readdirSync2(root, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => relative(root, join3(entry.parentPath, entry.name)).split(sep).join("/")).filter((path2) => !path2.split("/").some((segment) => segment.startsWith(".")));
+  const root = resolve2(path);
+  const blueprint = readBlueprint(blueprintDir ?? join4(root, "_kiln"));
+  const files = readdirSync2(root, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => relative(root, join4(entry.parentPath, entry.name)).split(sep).join("/")).filter((path2) => !path2.split("/").some((segment) => segment.startsWith(".")));
   const notes = files.filter((path2) => path2.endsWith(".md") && !path2.startsWith("_kiln/")).sort();
   const names = /* @__PURE__ */ new Map();
   for (const path2 of files) {
@@ -7827,12 +7843,12 @@ function runCheck(argv, options = {}) {
   const results = [];
   const seen = /* @__PURE__ */ new Set();
   for (const typed of positionals) {
-    const stats = statSync2(resolve2(cwd, typed), { throwIfNoEntry: false });
+    const stats = statSync2(resolve3(cwd, typed), { throwIfNoEntry: false });
     if (!stats) {
       results.push(failure(typed, "no such note or folder"));
       continue;
     }
-    const absolute = onDisk(resolve2(cwd, typed));
+    const absolute = onDisk(resolve3(cwd, typed));
     const root = findVault(absolute);
     if (!root) {
       results.push(failure(typed, "not in a kiln vault: no _kiln/types/ folder here or above"));
@@ -7857,7 +7873,7 @@ function runCheck(argv, options = {}) {
       if (values.today) {
         let modified;
         try {
-          modified = statSync2(resolve2(root, note)).mtimeMs;
+          modified = statSync2(resolve3(root, note)).mtimeMs;
         } catch (e) {
           results.push(failure(display, `can't read the note: ${message(e)}`));
           continue;

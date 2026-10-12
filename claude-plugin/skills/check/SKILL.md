@@ -9,8 +9,13 @@ Checks notes against the type definitions in the vault's `_kiln/types/`. The che
 
 ## 1. Find the vault
 
-<!-- The vault resolver replaces this step when it lands. -->
-Use the vault folder the owner named. Otherwise use the current folder, if it or a folder above it holds `_kiln/types/`. Otherwise ask the owner for the vault folder.
+If the owner named notes or folders to check, skip to step 2. Otherwise run the resolver:
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"
+```
+
+It prints JSON, the same in Bash and pwsh. Exit code 0: `vault` is the vault folder to use. Exit code 1: no vault was found. Tell the owner the `reasons`, list the `candidates`, and ask which vault to use. Offer to record the answer through `/kiln:setup`, which is the only writer of `~/.kiln/config.json`; never edit that file yourself. Exit code 2: wrong arguments; run it again without arguments.
 
 ## 2. Run the check
 
