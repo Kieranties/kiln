@@ -1,11 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { makeVault } from './fixture.js';
 
-const BUNDLE = fileURLToPath(new URL('../../claude-plugin/scripts/kiln-check.mjs', import.meta.url));
+const REPO = fileURLToPath(new URL('../../', import.meta.url));
+const BUNDLE = join(REPO, 'claude-plugin', 'scripts', 'kiln-check.mjs');
 const sample = makeVault();
 const broken = makeVault({ broken: true });
 afterAll(() => {
@@ -26,5 +27,21 @@ describe('kiln-check.mjs', () => {
   });
   it('exits 2 on bad arguments', () => {
     expect(run().status).toBe(2);
+  });
+  it('carries the copyright and licence of each package it inlines', () => {
+    const bundle = readFileSync(BUNDLE, 'utf8').replace(/\r\n/g, '\n');
+    const packages = [
+      ...new Set([...bundle.matchAll(/^\/\/ node_modules\/((?:@[^/]+\/)?[^/]+)\//gm)].map((m) => m[1])),
+    ];
+    expect(packages).toContain('yaml');
+    for (const name of packages) {
+      const licence = readFileSync(join(REPO, 'node_modules', name ?? '', 'LICENSE'), 'utf8').replace(/\r\n/g, '\n');
+      const notice = licence
+        .trim()
+        .split('\n')
+        .map((line) => ` * ${line}`.trimEnd())
+        .join('\n');
+      expect(bundle, name).toContain(notice);
+    }
   });
 });
