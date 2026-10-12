@@ -85,6 +85,7 @@ describe('the living docs', () => {
     'docs/vision.md',
     'docs/specs/2026-10-11-layer-1-structure-design.md',
     'tests/fixtures/README.md',
+    'claude-plugin/reference/vault-rules.md',
     ...readdirSync(join(PLUGIN, 'blueprint'))
       .filter((f) => f.endsWith('.md'))
       .map((f) => `claude-plugin/blueprint/${f}`),
