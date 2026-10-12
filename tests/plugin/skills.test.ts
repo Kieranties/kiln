@@ -42,6 +42,7 @@ describe('the vault rules', () => {
     for (const part of [
       'node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs"',
       'node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-vault.mjs" "<folder>"',
+      'Exit code 2: the arguments were wrong; run it again with only the path (or none)',
       'candidates',
       'reasons',
       "isn't set up for kiln",
