@@ -8469,6 +8469,7 @@ function prepare(o) {
     stop: [],
     warnings: [],
     plugins: [],
+    install: null,
     obsidian: { running: o.obsidianRunning, minimum: requires.obsidian },
     cli: o.cliPath,
     folders: [],
@@ -8517,10 +8518,12 @@ function prepare(o) {
       );
     } else if (p.status === "old") {
       warnings.old.push(
-        `${p.id} ${p.version ?? ""} is older than ${p.minimum}, the oldest the blueprint is written for. Update it in Obsidian.`
+        `${p.id} ${p.version ?? ""} is older than ${p.minimum}, the oldest the blueprint is written for. Update it in Obsidian: Settings \u2192 Community plugins \u2192 Check for updates.`
       );
     }
   }
+  const toInstall = report.plugins.filter((p) => p.status === "missing").map((p) => p.id);
+  if (toInstall.length > 0) report.install = { vault: basename3(vault), plugins: toInstall };
   let record;
   try {
     record = readRecord(vault);

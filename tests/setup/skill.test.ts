@@ -38,6 +38,8 @@ describe('/kiln:setup', () => {
     for (const key of [
       'stop',
       'warnings',
+      'install',
+      'cli',
       'asks',
       'backups',
       'obsidian',
@@ -82,14 +84,15 @@ describe('/kiln:setup', () => {
     }
   });
 
-  it('checks Obsidian only at step 4, and says what each exit code means', () => {
+  it('checks Obsidian only at step 5, and says what each exit code means', () => {
     const step2 = body.slice(body.indexOf('## 2. Plan'), body.indexOf('## 3.'));
-    expect(step2).toContain('deal with it at step 4');
-    expect(step2).toContain("carry on to step 3 with the plan's `asks`");
+    expect(step2).toContain('deal with it at step 5');
+    expect(step2).toContain('handled at step 3');
+    expect(step2).toContain("carry on to step 4 with the plan's `asks`");
     expect(step2).toContain('Exit code 2 prints usage text, not JSON');
-    const step4 = body.slice(body.indexOf('## 4.'), body.indexOf('## 5.'));
-    for (const part of ['`mode`', '`setup`', '`reapply`', 'ask them to close it']) expect(step4, part).toContain(part);
     const step5 = body.slice(body.indexOf('## 5.'), body.indexOf('## 6.'));
+    for (const part of ['`mode`', '`setup`', '`reapply`', 'ask them to close it']) expect(step5, part).toContain(part);
+    const step6 = body.slice(body.indexOf('## 6.'), body.indexOf('## 7.'));
     for (const part of [
       '(`kiln.recorded`)',
       'set to `new`',
@@ -97,25 +100,59 @@ describe('/kiln:setup', () => {
       '`error`',
       '`.kiln/backup/`',
     ])
-      expect(step5, part).toContain(part);
-    expect(step5).not.toContain('stopped before writing anything');
+      expect(step6, part).toContain(part);
+    expect(step6).not.toContain('stopped before writing anything');
+  });
+
+  it('installs missing plugins through the Obsidian CLI at step 3 only, with consent, as the vault rules call it', () => {
+    const step3 = body.slice(body.indexOf('## 3.'), body.indexOf('## 4.'));
+    for (const part of [
+      '`install`',
+      '`install.vault`',
+      '`install.plugins`',
+      '`cli` is `null`',
+      'restricted mode',
+      'Run nothing until the owner says yes',
+      // The CLI was seen not to start Obsidian on Windows: the owner opens it, and nothing is written by hand.
+      'open the vault in Obsidian and keep it open',
+      'run the command again',
+      // What the CLI prints when Obsidian is closed (seen on Windows with Obsidian 1.14.4).
+      '"The CLI is unable to find Obsidian" means Obsidian isn\'t running, not that a plugin is missing',
+      'Never write plugin files yourself',
+      'obsidian.com',
+      'Calling the Obsidian CLI',
+      'Check for updates',
+      'plan again',
+    ]) {
+      expect(step3, part).toContain(part);
+    }
+    // Every CLI call in the skill is in step 3, and names the vault first with a single-quoted value.
+    const calls = [...body.matchAll(/^\s*(obsidian .*)$/gm)].map((m) => m[1]);
+    expect(calls).toEqual([
+      "obsidian vault='<install.vault>' plugins:restrict off",
+      "obsidian vault='<install.vault>' plugin:install id='<id>' enable",
+      "obsidian vault='<install.vault>' plugins filter=community versions",
+    ]);
+    for (const call of calls) expect(step3).toContain(call);
+    const never = body.slice(body.indexOf('## Never'));
+    expect(never).toContain('Call the Obsidian CLI anywhere but step 3');
   });
 
   it('keeps the Never list true without Node, and offers the permission rules by hand', () => {
     const never = body.slice(body.indexOf('## Never'));
     expect(never).toContain('With Node, write to the vault yourself');
-    const step6 = body.slice(body.indexOf('## 6.'), body.indexOf('## 7.'));
+    const step7 = body.slice(body.indexOf('## 7.'), body.indexOf('## 8.'));
     const template = ['Edit(<rule path>/.obsidian/**)', 'Edit(<rule path>/_kiln/**)'];
     for (const part of ['only entries not already there', 'Without Node there is no plan', ...template]) {
-      expect(step6, part).toContain(part);
+      expect(step7, part).toContain(part);
     }
     // The examples, filled into the template, are what the helper writes.
     for (const [vault, platform, rulePath] of [
       ['D:\\notes', 'win32', '//d/notes'],
       ['/home/me/notes', 'linux', '//home/me/notes'],
     ] as const) {
-      expect(step6, rulePath).toContain(`\`${rulePath}\``);
-      expect(step6, vault).toContain(`\`${vault}\``);
+      expect(step7, rulePath).toContain(`\`${rulePath}\``);
+      expect(step7, vault).toContain(`\`${vault}\``);
       expect(permissionRules(vault, platform).ask).toEqual(template.map((t) => t.replace('<rule path>', rulePath)));
     }
   });

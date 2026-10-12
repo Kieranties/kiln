@@ -64,6 +64,11 @@ export type SetupReport = {
   stop: string[];
   warnings: string[];
   plugins: PluginCheck[];
+  /**
+   * The missing plugins, for Claude to install through the Obsidian CLI: `vault` is the name the CLI takes
+   * (the folder name) and `plugins` their ids. `null` when none is missing. The helper never runs the CLI.
+   */
+  install: { vault: string; plugins: string[] } | null;
   obsidian: { running: boolean | null; minimum: string };
   cli: string | null;
   folders: { path: string; action: 'add' | 'wait' }[];
@@ -203,6 +208,7 @@ function prepare(o: SetupOptions): Prepared {
     stop: [],
     warnings: [],
     plugins: [],
+    install: null,
     obsidian: { running: o.obsidianRunning, minimum: requires.obsidian },
     cli: o.cliPath,
     folders: [],
@@ -262,10 +268,12 @@ function prepare(o: SetupOptions): Prepared {
       );
     } else if (p.status === 'old') {
       warnings.old.push(
-        `${p.id} ${p.version ?? ''} is older than ${p.minimum}, the oldest the blueprint is written for. Update it in Obsidian.`,
+        `${p.id} ${p.version ?? ''} is older than ${p.minimum}, the oldest the blueprint is written for. Update it in Obsidian: Settings → Community plugins → Check for updates.`,
       );
     }
   }
+  const toInstall = report.plugins.filter((p) => p.status === 'missing').map((p) => p.id);
+  if (toInstall.length > 0) report.install = { vault: basename(vault), plugins: toInstall };
 
   let record: ReturnType<typeof readRecord>;
   try {

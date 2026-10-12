@@ -115,6 +115,36 @@ describe('setting up from any folder', () => {
     expect(sample).toContain('/kiln:setup <trial vault folder> with the Northwind Arena sample');
   });
 
+  it('Claude installs the four plugins through the Obsidian CLI, and the owner does it by hand only without the CLI', () => {
+    const make = section(guide, '2. Make your vault');
+    for (const part of ['Command line interface', 'keep it open', 'Without the Obsidian CLI', 'Exit restricted mode']) {
+      expect(make, part).toContain(part);
+    }
+    // The manual steps are the fallback, after the CLI, not numbered steps of their own.
+    expect(make.indexOf('Without the Obsidian CLI')).toBeLessThan(make.indexOf('Exit restricted mode'));
+    expect(make).not.toMatch(/^\d+\. .*Exit restricted mode/m);
+    const apply = section(guide, '3. Apply the blueprint');
+    for (const part of [
+      'installs',
+      'restricted mode',
+      'asks first',
+      'Close Vault',
+      'Trigger Templater on new file creation',
+    ]) {
+      expect(apply, part).toContain(part);
+    }
+    expect(guide).not.toContain('section 2, step 6');
+    const steps = section(readme, 'Setting up a vault');
+    for (const part of [
+      'plugins:restrict off',
+      "plugin:install id='<id>' enable",
+      'obsidian.com',
+      'Check for updates',
+    ]) {
+      expect(steps, part).toContain(part);
+    }
+  });
+
   it('relative links in the blueprint docs stay in the blueprint, so they work in _kiln/', () => {
     const installed = installedFiles(BLUEPRINT);
     for (const doc of ['README.md', 'GETTING-STARTED.md', 'TRY-THE-SAMPLE.md']) {
