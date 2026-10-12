@@ -46,8 +46,8 @@ describe('the vault rules', () => {
 
   it('1. run the resolver, and leave the kiln file to setup', () => {
     for (const part of [
-      'node "<plugin>/scripts/kiln-vault.mjs"',
-      'node "<plugin>/scripts/kiln-vault.mjs" "<folder>"',
+      "node '<plugin>/scripts/kiln-vault.mjs'",
+      "node '<plugin>/scripts/kiln-vault.mjs' '<folder>'",
       'Exit code 2: the arguments were wrong; run it again with only the path (or none)',
       'candidates',
       'reasons',
@@ -70,14 +70,20 @@ describe('the vault rules', () => {
     // "check the file", not the heading's "checking the file": the step itself must come first.
     const look = text.indexOf("check the file doesn't exist");
     expect(look).toBeGreaterThan(0);
-    expect(text.indexOf('obsidian vault="<folder name>" quickadd:check')).toBeGreaterThan(look);
-    expect(text.indexOf('obsidian vault="<folder name>" quickadd:run choice="')).toBeGreaterThan(
-      text.indexOf('obsidian vault="<folder name>" quickadd:check'),
+    // The name is made linkable first, so the check and the var use the same name.
+    for (const part of ['`naming`', 'File names stay linkable']) {
+      expect(text.indexOf(part), part).toBeGreaterThan(0);
+      expect(text.indexOf(part), part).toBeLessThan(look);
+    }
+    expect(text).toContain('exactly the name from step 1');
+    expect(text.indexOf("obsidian vault='<folder name>' quickadd:check")).toBeGreaterThan(look);
+    expect(text.indexOf("obsidian vault='<folder name>' quickadd:run choice='")).toBeGreaterThan(
+      text.indexOf("obsidian vault='<folder name>' quickadd:check"),
     );
   });
 
   it('4. rename and move with the CLI', () => {
-    for (const part of ['obsidian vault="<folder name>" rename path="', 'obsidian vault="<folder name>" move path="'])
+    for (const part of ["obsidian vault='<folder name>' rename path='", "obsidian vault='<folder name>' move path='"])
       expect(rule(4), part).toContain(part);
   });
 
@@ -88,7 +94,7 @@ describe('the vault rules', () => {
     for (const part of ['obsidian.com', 'pwsh']) expect(section, part).toContain(part);
     // Name the vault on every call: from a folder inside a vault the CLI may act on the active vault.
     for (const part of [
-      'vault="<folder name>"',
+      "vault='<folder name>'",
       'active vault',
       "the last part of rule 1's `vault`",
       '_kiln/types/',
@@ -100,6 +106,19 @@ describe('the vault rules', () => {
     const calls = [...rules.matchAll(/\bobsidian (\S+)/g)].map((m) => m[1] ?? '');
     expect(calls.length).toBeGreaterThanOrEqual(4);
     for (const call of calls) expect(call).toMatch(/^vault=/);
+    // Values go in single quotes in both shells, with each shell's escape for a quote, and JSON-escaped in vars.
+    for (const part of [
+      'single quotes',
+      "`'\\''` in Bash",
+      "`''` in pwsh",
+      'JSON-escape',
+      'pwsh 7.3 or later',
+      // The examples the report shows working, in each shell, with a quote and a $.
+      `vars='{"title":"Bob'\\''s \\"big\\" $5 idea"}'`,
+      `vars='{"title":"Bob''s \\"big\\" $5 idea"}'`,
+    ]) {
+      expect(section, part).toContain(part);
+    }
     // The intro, before rule 1, says T2 is pending and sends the reader to the section.
     const intro = rules.slice(0, rules.indexOf('\n## 1. '));
     for (const part of ['T2', 'Calling the Obsidian CLI']) expect(intro, part).toContain(part);
@@ -107,12 +126,27 @@ describe('the vault rules', () => {
 
   it('6. check what the flow touched, by full path, with --new for what it created', () => {
     for (const part of [
-      'node "<plugin>/scripts/kiln-check.mjs" "<note>"',
-      'node "<plugin>/scripts/kiln-check.mjs" --new "<new note>"',
+      "node '<plugin>/scripts/kiln-check.mjs' '<note>'",
+      "node '<plugin>/scripts/kiln-check.mjs' --new '<new note>'",
       '<vault>/<note path>',
     ]) {
       expect(rule(6), part).toContain(part);
     }
+  });
+});
+
+describe('commands in the rules and the skills', () => {
+  it('put every value in single quotes; only the JSON in vars holds double quotes', () => {
+    const docs = [RULES, ...SKILLS.map((s) => `skills/${s}/SKILL.md`)];
+    const commands: string[] = [];
+    for (const doc of docs) {
+      const text = read(doc);
+      for (const [, block = ''] of text.matchAll(/```\n([\s\S]*?)```/g)) commands.push(...block.trim().split('\n'));
+      for (const [, span = ''] of text.matchAll(/`((?:node|obsidian|--today) [^`]+)`/g)) commands.push(span);
+    }
+    expect(commands.length).toBeGreaterThanOrEqual(10);
+    const doubled = commands.filter((c) => c.replace(/vars='[^']*'/g, '').includes('"'));
+    expect(doubled).toEqual([]);
   });
 });
 

@@ -16,8 +16,8 @@ describe('/kiln:check', () => {
     expect(meta.description.length).toBeLessThanOrEqual(300);
   });
   it('runs the bundled script for the whole vault and for today', () => {
-    expect(body).toContain('node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" "<vault>"');
-    expect(body).toContain('node "${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs" --today "<vault>"');
+    expect(body).toContain("node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs' '<vault>'");
+    expect(body).toContain("node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs' --today '<vault>'");
     expect(existsSync(`${PLUGIN}scripts/kiln-check.mjs`)).toBe(true);
   });
   it('falls back to reading the definitions without Node, and never writes to notes unasked', () => {

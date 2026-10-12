@@ -9,8 +9,8 @@ Rules 3 and 4 use the Obsidian CLI and QuickAdd, which wait on trial T2 (https:/
 Run it the first time the flow needs the vault. Pass a folder only if the owner named one:
 
 ```
-node "<plugin>/scripts/kiln-vault.mjs"
-node "<plugin>/scripts/kiln-vault.mjs" "<folder>"
+node '<plugin>/scripts/kiln-vault.mjs'
+node '<plugin>/scripts/kiln-vault.mjs' '<folder>'
 ```
 
 It prints JSON. Exit code 0: `vault` is the vault folder, and `source` says how it was found. Exit code 1: no vault was found. Tell the owner the `reasons`, which may include that the vault they have open isn't set up for kiln. List the `candidates` (each a `path`, with a `name` if the owner recorded one), and ask which vault to use. Offer to record the answer, or to set up the open vault, with `/kiln:setup`, the only writer of `~/.kiln/config.json`; never edit that file yourself. Exit code 2: the arguments were wrong; run it again with only the path (or none).
@@ -33,12 +33,12 @@ Keep to the conventions in `<vault>/_kiln/README.md`, "Conventions". The ones mo
 
 Never create a note by writing a new file. With Templater's trigger on, Obsidian runs any `<%` in a new file, and merges the template over a file with only properties. (`/kiln:setup` is the one exception: it writes with Obsidian closed.)
 
-1. Work out the note's path from its definition (`folder` and `naming`) and check the file doesn't exist. If it does, use that note, or ask the owner.
-2. Run `obsidian vault="<folder name>" quickadd:check`.
-3. Find the choice for the type and kind: kiln's choices have ids starting `kiln-` in `<vault>/.obsidian/plugins/quickadd/data.json`. Read that file; don't change it. Pass each `{{VALUE:<name>}}` the choice uses, in its file name format, its template or its format, as a var:
+1. Name the note by its definition's `naming`, and keep the name linkable by the convention "File names stay linkable". Work out its path from the definition's `folder` and that name, and check the file doesn't exist. If it does, use that note, or ask the owner.
+2. Run `obsidian vault='<folder name>' quickadd:check`.
+3. Find the choice for the type and kind: kiln's choices have ids starting `kiln-` in `<vault>/.obsidian/plugins/quickadd/data.json`. Read that file; don't change it. Pass each `{{VALUE:<name>}}` the choice uses, in its file name format, its template or its format, as a var. The file name's vars give exactly the name from step 1:
 
    ```
-   obsidian vault="<folder name>" quickadd:run choice="<choice name>" vars='{"<name>":"<value>"}'
+   obsidian vault='<folder name>' quickadd:run choice='<choice name>' vars='{"<name>":"<value>"}'
    ```
 
 4. Fill in the new note's properties and body as edits to its file, by rule 2.
@@ -48,8 +48,8 @@ Never create a note by writing a new file. With Templater's trigger on, Obsidian
 Obsidian then rewrites every link to the note. A rename on disk breaks them. Paths are relative to the vault, with `/`:
 
 ```
-obsidian vault="<folder name>" rename path="<note path>" name="<new name>"
-obsidian vault="<folder name>" move path="<note path>" to="<folder>/"
+obsidian vault='<folder name>' rename path='<note path>' name='<new name>'
+obsidian vault='<folder name>' move path='<note path>' to='<folder>/'
 ```
 
 ## 5. Never write `<%`
@@ -61,14 +61,15 @@ Not in a new note, an existing note or captured text: Templater runs it as code.
 At the end of the flow, check every note it changed. Check the notes it created in a separate run with `--new`. Pass each note's full path, `<vault>/<note path>`: the check reads a shorter path from the current folder.
 
 ```
-node "<plugin>/scripts/kiln-check.mjs" "<note>" "<note>"
-node "<plugin>/scripts/kiln-check.mjs" --new "<new note>"
+node '<plugin>/scripts/kiln-check.mjs' '<note>' '<note>'
+node '<plugin>/scripts/kiln-check.mjs' --new '<new note>'
 ```
 
-A flow that touched much of the day's work may check `--today "<vault>"` instead. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix. Without Node 24, check each note against its definition, as `/kiln:check` describes.
+A flow that touched much of the day's work may check `--today '<vault>'` instead. Exit code 0: no errors; report any warnings. Exit code 1: fix each error by these rules (move a note by rule 4), run the check again, and report what you couldn't fix. Without Node 24, check each note against its definition, as `/kiln:check` describes.
 
 ## Calling the Obsidian CLI
 
 - In Git Bash, call `obsidian.com`: bare `obsidian` there starts the app. In pwsh, and on macOS and Linux, call `obsidian`.
-- Name the vault first on every call, `vault="<folder name>"`: unless the current folder is the vault folder itself, the CLI may act on the active vault instead. The folder name is the last part of rule 1's `vault` (not the `name` in the kiln file): for `D:\notes`, `obsidian vault="notes" quickadd:check`. If rule 1 was skipped because the owner named notes, use the name of the folder above the note that holds `_kiln/types/`. If two vaults share that folder name, stop and ask the owner: naming a vault by its id waits on T2.
+- Name the vault first on every call, `vault='<folder name>'`: unless the current folder is the vault folder itself, the CLI may act on the active vault instead. The folder name is the last part of rule 1's `vault` (not the `name` in the kiln file): for `D:\notes`, `obsidian vault='notes' quickadd:check`. If rule 1 was skipped because the owner named notes, use the name of the folder above the note that holds `_kiln/types/`. If two vaults share that folder name, stop and ask the owner: naming a vault by its id waits on T2.
+- Put every value in single quotes, in both shells: nothing in single quotes runs or expands. Inside a value, write `'` as `'\''` in Bash and `''` in pwsh. In `vars`, JSON-escape the value first (`\"` for `"`, `\\` for `\`): `vars='{"title":"Bob'\''s \"big\" $5 idea"}'` in Bash, `vars='{"title":"Bob''s \"big\" $5 idea"}'` in pwsh. pwsh before 7.3 drops the double quotes inside `vars`, so use pwsh 7.3 or later.
 - The CLI needs Obsidian running. The first command starts it.
