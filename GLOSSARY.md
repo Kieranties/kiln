@@ -53,6 +53,9 @@ The top-level classification of an entity, such as `work`, `person` or `meeting`
 An optional narrowing within a type, such as a `bug` within `work`. It can override anything its type decides.
 _Avoid_: subtype
 
+**Linkable name**:
+The file name a title becomes by the blueprint's convention "File names stay linkable": no character that splits a path or breaks a link, and short enough for Windows. A title with none is refused, and the owner names the note.
+
 **Type definition**:
 The blueprint file that defines a type and its kinds. It is the single source of truth that everything else in the blueprint is written from.
 _Avoid_: schema

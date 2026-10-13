@@ -33,7 +33,7 @@ Keep to the conventions in `<vault>/_kiln/README.md`, "Conventions". The ones mo
 
 Never create a note by writing a new file. With Templater's trigger on, Obsidian runs any `<%` in a new file, and merges the template over a file with only properties. (`/kiln:setup` is the one exception: it writes with Obsidian closed.)
 
-1. Name the note by its definition's `naming`, and keep the name linkable by the convention "File names stay linkable". Work out its path from the definition's `folder` and that name, and check the file doesn't exist. If it does, use that note, or ask the owner.
+1. Name the note by its definition's `naming`, and keep the whole name, date included, linkable by the convention "File names stay linkable": `/`, `\` and `:` become `-`; `#`, `^`, `[`, `]`, `|`, `*`, `?`, `"`, `<`, `>` and control characters become a space; repeated spaces, non-breaking ones included, collapse to one; leading dots, and trailing dots and spaces, are stripped; a name longer than 120 characters is cut at the last space that keeps it within them, or at 120 characters when one word crosses the limit. If nothing is left, or the name is one Windows reserves (`CON`, `NUL` and the rest), ask the owner for another name. Work out its path from the definition's `folder` and that name, directly in the folder, and check the file doesn't exist. If it does, use that note, or ask the owner.
 2. Run `obsidian vault='<folder name>' quickadd:check`.
 3. Find the choice for the type and kind: kiln's choices have ids starting `kiln-` in `<vault>/.obsidian/plugins/quickadd/data.json`. Read that file; don't change it. Pass each `{{VALUE:<name>}}` the choice uses, in its file name format, its template or its format, as a var. The file name's vars give exactly the name from step 1:
 
@@ -51,6 +51,8 @@ Obsidian then rewrites every link to the note. A rename on disk breaks them. Pat
 obsidian vault='<folder name>' rename path='<note path>' name='<new name>'
 obsidian vault='<folder name>' move path='<note path>' to='<folder>/'
 ```
+
+Moving a note out of a folder can leave the folder empty. The CLI can't remove a folder, and kiln never deletes on disk: tell the owner the empty folder is there.
 
 ## 5. Never write `<%`
 

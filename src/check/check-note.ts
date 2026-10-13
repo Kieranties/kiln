@@ -3,6 +3,7 @@ import { basename, join } from 'node:path';
 import { parse } from 'yaml';
 import type { Definition } from '../blueprint/load.js';
 import { sectionsOf, splitFrontmatter } from '../blueprint/markdown.js';
+import { linkableName } from '../blueprint/name.js';
 import { frontmatterLinkTarget, linkTargets, nearestOf } from './links.js';
 import type { Vault } from './vault.js';
 
@@ -86,9 +87,22 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
   const findings: Finding[] = [];
   const add = (message: string) => findings.push(error(message));
 
-  if (folder !== definition.folder) {
-    const where = folder === undefined ? 'the vault root' : `${folder}/`;
-    add(`type is ${t} but the note is in ${where}; ${t} notes live in ${definition.folder}/`);
+  const dir = path.slice(0, Math.max(path.lastIndexOf('/'), 0));
+  const nested = dir.includes('/');
+  // A folder inside a type's folder is most likely a title QuickAdd split at a / or \, so join it back up.
+  const unsplit =
+    nested && definitions.some((d) => d.folder === folder)
+      ? linkableName(path.slice(slash + 1).replace(/\.md$/, ''))
+      : undefined;
+  const fileName = basename(path).replace(/\.md$/, '');
+  // The naming rules judge the name the note should have; links still find it by its file name.
+  const name = unsplit?.ok ? unsplit.name : fileName;
+  if (folder !== definition.folder || nested) {
+    const where = dir === '' ? 'the vault root' : `${dir}/`;
+    const what = folder === definition.folder ? 'the note' : `type is ${t} but the note`;
+    const live = `${t} notes live ${nested ? 'directly ' : ''}in ${definition.folder}/`;
+    const rename = unsplit?.ok ? `, so move it there and rename it to "${unsplit.name}"` : '';
+    add(`${what} is in ${where}; ${live}${rename}`);
   }
 
   const kinds = Object.keys(definition.kinds);
@@ -107,12 +121,12 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
     add(`${t} has no status; leave status empty`);
   }
 
-  const name = basename(path).replace(/\.md$/, '');
   const naming = namingError(definition, name);
   if (naming) add(naming);
 
-  const bad = [...new Set(name.match(/[#^[\]|:]/g) ?? [])];
-  if (bad.length > 0) add(`file name contains ${bad.join(', ')}; replace # ^ [ ] | with a space and : with -`);
+  const linkable = linkableName(name);
+  if (!linkable.ok) add(`file name isn't usable: ${linkable.reason}; ask the owner for another name`);
+  else if (linkable.name !== name) add(`file name isn't linkable; rename it to "${linkable.name}"`);
 
   if (isNew && body.trim() === '') {
     add('new note has properties and no body; create it from its template through QuickAdd');
@@ -178,7 +192,7 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
     findings.push({ level: 'warn', message: `[[${target}]] doesn't exist yet${hint}` });
   }
 
-  const sameName = (vault.names.get(name.toLowerCase()) ?? [])
+  const sameName = (vault.names.get(fileName.toLowerCase()) ?? [])
     .filter((other) => other !== path && other.endsWith('.md') && !other.startsWith('_kiln/'))
     .sort();
   if (sameName.length > 0) findings.push({ level: 'warn', message: `file name also used by ${sameName.join(', ')}` });

@@ -23,7 +23,14 @@ In the kiln repo, `tests/blueprint/` checks every blueprint file against the def
 - **Every note is an entity** with a `type`, and optionally a `kind` within it.
 - **No title heading.** Obsidian's inline title shows the file name.
 - **File names are the title.** Things that persist or end use their name (`Fan App.md`). Moments start with the date (`2026-10-11.md`, `2026-10-11 Club Console standup.md`). References use the source's own title.
-- **File names stay linkable.** Replace `#`, `^`, `[`, `]` and `|` with a space, and `/`, `\` and `:` with `-`, then collapse repeated spaces. `northwind-arena/club-console#88` becomes `northwind-arena-club-console 88`.
+- **File names stay linkable.** A title becomes a file name by this rule, applied to the whole name, date included:
+  1. `/`, `\` and `:` become `-`.
+  2. `#`, `^`, `[`, `]`, `|`, `*`, `?`, `"`, `<`, `>` and control characters become a space. `%%` and other punctuation stay as typed.
+  3. Repeated spaces, non-breaking ones included, collapse to one. Leading dots, and trailing dots and spaces, are stripped.
+  4. A name longer than 120 characters is cut at the last space that keeps it within them, or at 120 characters when one word crosses the limit.
+  5. A name with nothing left, or one Windows reserves (`CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9` and their superscript forms, alone or before a `.`), is refused: ask the owner for another name.
+
+  `northwind-arena/club-console#88` becomes `northwind-arena-club-console 88`, and `Collect ticket status from the Northwind/Arena project` becomes `Collect ticket status from the Northwind-Arena project`. A note lives directly in its type's folder, never in a folder inside it: a `/` that split a title into a folder is joined back with `-`.
 - **Relationships point up the chain,** and views show the reverse. A work item lists its `projects`; the project's Board view lists its work.
 - **Relationships are always lists of links,** even with one entry: `projects: ["[[Season Ticket Renewals 2027]]"]`.
 - **Dates** are `YYYY-MM-DD`; date-times are `YYYY-MM-DDTHH:mm`.
