@@ -92,7 +92,7 @@ Claude creates notes by running a QuickAdd choice, so every kind has one. They c
 1. Add or edit the definition in `types/`. Its body says what the type is for and when to use it. Set its `naming`: `title`, `date`, `date-title` or `source-title`. `last` names a section that must stay last, as Log does for the daily note.
 2. Update what is written from it. QuickAdd choices and kind templates need nothing: setup generates them.
    - the template in `templates/`;
-   - a Base in `views/` for each view (`<type>-<view>.base`);
+   - a Base in `views/` for each view (`<type>-<view>.base`), with a `displayName` for each column under `properties:`, keyed `note.<name>` (Bases ignores a bare `<name>:` key);
    - the type's Iconic rules in `settings/plugins/iconic.json`, kind rules before the type rule;
    - its folder and template in `settings/plugins/templater.json`;
    - its properties in `settings/types.json`;

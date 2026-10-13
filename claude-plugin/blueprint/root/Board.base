@@ -10,11 +10,11 @@ filters:
 properties:
   file.name:
     displayName: Name
-  kind:
+  note.kind:
     displayName: Kind
-  projects:
+  note.projects:
     displayName: Projects
-  priority:
+  note.priority:
     displayName: Priority
 views:
   - type: kanban
