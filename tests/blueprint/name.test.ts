@@ -18,6 +18,10 @@ describe('linkableName', () => {
     expect(named('Retry #3 [card] ^ref | gate')).toEqual({ ok: true, name: 'Retry 3 card ref gate' });
   });
 
+  it('treats any space as a space: pasted non-breaking and wide spaces collapse and trim', () => {
+    expect(named(' Ask  Priya　today ')).toEqual({ ok: true, name: 'Ask Priya today' });
+  });
+
   it('turns characters Windows refuses into a space, on every platform', () => {
     expect(named('Why *does* "renewal" fail? <again>')).toEqual({ ok: true, name: 'Why does renewal fail again' });
   });
@@ -50,6 +54,8 @@ describe('linkableName', () => {
       'com9',
       'LPT1',
       'lpt9',
+      'COM¹',
+      'LPT³',
       'Con.notes',
       'NUL .txt',
       'Con.',
@@ -106,6 +112,14 @@ describe('linkableName', () => {
         reason: '"Con" is a reserved name on Windows',
       });
     });
+  });
+
+  it('gives back a linkable name as it is, so the check can judge a name it suggested', () => {
+    for (const title of ['Northwind/Arena: #3 [card]. ', 'x '.repeat(100), ' .Ask? Priya*\u0000']) {
+      const once = named(title);
+      expect(once.ok, title).toBe(true);
+      if (once.ok) expect(named(once.name)).toEqual(once);
+    }
   });
 
   it('leaves %% and other punctuation as typed', () => {

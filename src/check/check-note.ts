@@ -100,9 +100,7 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
   if (folder !== definition.folder || nested) {
     const where = dir === '' ? 'the vault root' : `${dir}/`;
     const what = folder === definition.folder ? 'the note' : `type is ${t} but the note`;
-    const live = nested
-      ? `${t} notes live directly in ${definition.folder}/`
-      : `${t} notes live in ${definition.folder}/`;
+    const live = `${t} notes live ${nested ? 'directly ' : ''}in ${definition.folder}/`;
     const rename = unsplit?.ok ? `, so move it there and rename it to "${unsplit.name}"` : '';
     add(`${what} is in ${where}; ${live}${rename}`);
   }
@@ -126,7 +124,7 @@ export function checkNote(vault: Vault, path: string, options: CheckOptions = {}
   const naming = namingError(definition, name);
   if (naming) add(naming);
 
-  const linkable = unsplit ?? linkableName(name);
+  const linkable = linkableName(name);
   if (!linkable.ok) add(`file name isn't usable: ${linkable.reason}; ask the owner for another name`);
   else if (linkable.name !== name) add(`file name isn't linkable; rename it to "${linkable.name}"`);
 

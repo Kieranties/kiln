@@ -7432,11 +7432,11 @@ function cut(name) {
 }
 function linkableName(title) {
   const cleaned = stripEnds(
-    title.replace(/[/\\:]/g, "-").replace(/[#^[\]|*?"<>\p{Cc}]/gu, " ").replace(/ {2,}/g, " ")
+    title.replace(/[/\\:]/g, "-").replace(/[#^[\]|*?"<>\p{Cc}]/gu, " ").replace(/\s+/gu, " ")
   );
   if (cleaned === "") return { ok: false, reason: "nothing is left once path and link characters are removed" };
   const name = stripEnds(cut(cleaned));
-  const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9]) *(\.|$)/i.exec(name)?.[1];
+  const reserved = /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³]) *(\.|$)/i.exec(name)?.[1];
   if (reserved) return { ok: false, reason: `"${reserved}" is a reserved name on Windows` };
   return { ok: true, name };
 }
@@ -7576,7 +7576,7 @@ function checkNote(vault, path, options = {}) {
   if (folder !== definition.folder || nested) {
     const where = dir === "" ? "the vault root" : `${dir}/`;
     const what = folder === definition.folder ? "the note" : `type is ${t} but the note`;
-    const live = nested ? `${t} notes live directly in ${definition.folder}/` : `${t} notes live in ${definition.folder}/`;
+    const live = `${t} notes live ${nested ? "directly " : ""}in ${definition.folder}/`;
     const rename = unsplit?.ok ? `, so move it there and rename it to "${unsplit.name}"` : "";
     add(`${what} is in ${where}; ${live}${rename}`);
   }
@@ -7596,7 +7596,7 @@ function checkNote(vault, path, options = {}) {
   }
   const naming = namingError(definition, name);
   if (naming) add(naming);
-  const linkable = unsplit ?? linkableName(name);
+  const linkable = linkableName(name);
   if (!linkable.ok) add(`file name isn't usable: ${linkable.reason}; ask the owner for another name`);
   else if (linkable.name !== name) add(`file name isn't linkable; rename it to "${linkable.name}"`);
   if (isNew && body.trim() === "") {

@@ -26,9 +26,9 @@ In the kiln repo, `tests/blueprint/` checks every blueprint file against the def
 - **File names stay linkable.** A title becomes a file name by this rule, applied to the whole name, date included:
   1. `/`, `\` and `:` become `-`.
   2. `#`, `^`, `[`, `]`, `|`, `*`, `?`, `"`, `<`, `>` and control characters become a space. `%%` and other punctuation stay as typed.
-  3. Repeated spaces collapse to one. Leading dots, and trailing dots and spaces, are stripped.
-  4. A name longer than 120 characters is cut at the last space that keeps it within them.
-  5. A name with nothing left, or one Windows reserves (`CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9`, alone or before a `.`), is refused: ask the owner for another name.
+  3. Repeated spaces, non-breaking ones included, collapse to one. Leading dots, and trailing dots and spaces, are stripped.
+  4. A name longer than 120 characters is cut at the last space that keeps it within them, or at 120 characters when one word crosses the limit.
+  5. A name with nothing left, or one Windows reserves (`CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9` and their superscript forms, alone or before a `.`), is refused: ask the owner for another name.
 
   `northwind-arena/club-console#88` becomes `northwind-arena-club-console 88`, and `Collect ticket status from the Northwind/Arena project` becomes `Collect ticket status from the Northwind-Arena project`. A note lives directly in its type's folder, never in a folder inside it: a `/` that split a title into a folder is joined back with `-`.
 - **Relationships point up the chain,** and views show the reverse. A work item lists its `projects`; the project's Board view lists its work.

@@ -24,11 +24,11 @@ export function linkableName(title: string): LinkableName {
     title
       .replace(/[/\\:]/g, '-')
       .replace(/[#^[\]|*?"<>\p{Cc}]/gu, ' ')
-      .replace(/ {2,}/g, ' '),
+      .replace(/\s+/gu, ' '),
   );
   if (cleaned === '') return { ok: false, reason: 'nothing is left once path and link characters are removed' };
   const name = stripEnds(cut(cleaned));
-  const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9]) *(\.|$)/i.exec(name)?.[1];
+  const reserved = /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³]) *(\.|$)/i.exec(name)?.[1];
   if (reserved) return { ok: false, reason: `"${reserved}" is a reserved name on Windows` };
   return { ok: true, name };
 }

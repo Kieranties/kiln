@@ -39,7 +39,7 @@ Show the output as it is: each note's path, then its `error` and `warn` lines. T
 
 | Result | Rule |
 |---|---|
-| Error | Wrong folder, type, kind or status, or a note in a folder inside its type's folder (the error names the folder to move it to, and the name to give it) |
+| Error | Wrong folder, type, kind or status, or a note in a folder inside its type's folder (the error names the folder to move it to and, when the note is inside a type's folder, the name to give it) |
 | Error | A section of the type is missing (extra sections are fine), or the daily note's Log isn't last |
 | Error | A property that isn't shared, optional or the type's own; a relationship that isn't a list of links |
 | Error | A file name that breaks the type's `naming`, or the convention "File names stay linkable" (the error names the linkable name, or says to ask the owner for another) |

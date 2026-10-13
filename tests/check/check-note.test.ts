@@ -139,6 +139,14 @@ describe('checkNote errors', () => {
         'type is project but the note is in Archive/2025/; project notes live directly in Projects/',
       ]);
     });
+
+    it('warns about a file name another note uses by its own name, which links find, not the name to move it to', () => {
+      nest(project, 'Projects/Renewal payments/Season Ticket Renewals 2027.md');
+      expect(checkNote(vault, 'Projects/Renewal payments/Season Ticket Renewals 2027.md').findings).toContainEqual({
+        level: 'warn',
+        message: 'file name also used by Projects/Season Ticket Renewals 2027.md',
+      });
+    });
   });
 
   it('unknown and missing types', () => {
