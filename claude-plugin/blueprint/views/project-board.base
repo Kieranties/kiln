@@ -5,9 +5,9 @@ filters:
 properties:
   file.name:
     displayName: Name
-  kind:
+  note.kind:
     displayName: Kind
-  priority:
+  note.priority:
     displayName: Priority
 views:
   - type: kanban

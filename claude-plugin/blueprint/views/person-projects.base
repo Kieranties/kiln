@@ -5,9 +5,9 @@ filters:
 properties:
   file.name:
     displayName: Name
-  status:
+  note.status:
     displayName: Status
-  summary:
+  note.summary:
     displayName: Summary
 views:
   - type: table

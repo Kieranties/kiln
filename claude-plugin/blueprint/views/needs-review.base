@@ -4,9 +4,9 @@ filters:
 properties:
   file.name:
     displayName: Name
-  type:
+  note.type:
     displayName: Type
-  review:
+  note.review:
     displayName: Review
 views:
   - type: table
