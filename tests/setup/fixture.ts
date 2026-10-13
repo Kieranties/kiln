@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, sep } from 'node:path';
+import { delimiter, dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readRequires } from '../../src/setup/blueprint.js';
 import type { Fetch, FetchResponse, SetupOptions } from '../../src/setup/setup.js';
@@ -9,6 +9,17 @@ import type { Fetch, FetchResponse, SetupOptions } from '../../src/setup/setup.j
 export const PLUGIN_ROOT = fileURLToPath(new URL('../../claude-plugin/', import.meta.url));
 
 const made: string[] = [];
+
+/**
+ * A PATH with a stand-in Obsidian CLI first, in `root/bin`. Setup needs the CLI on PATH but only looks for it,
+ * never runs it, so an empty file will do, and the tests pass on machines without Obsidian.
+ */
+export function pathWithObsidianCli(root: string): string {
+  const bin = join(root, 'bin');
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(join(bin, process.platform === 'win32' ? 'Obsidian.com' : 'obsidian'), '');
+  return [bin, process.env.PATH].join(delimiter);
+}
 
 /**
  * A temporary copy of the plugin's blueprint at `<temp>/<name>/blueprint`, changed by `change`.
@@ -140,7 +151,7 @@ export function testVault(o: { plugins?: Record<string, string | null>; fresh?: 
   };
 }
 
-const SAMPLE_DIR = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'layer1');
+const SAMPLE_DIR = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'sample');
 
 /** An answer with a JSON body or a text body. */
 function answer(body: { json: unknown } | { text: string }): FetchResponse {
@@ -154,7 +165,7 @@ function answer(body: { json: unknown } | { text: string }): FetchResponse {
 
 /**
  * GitHub for the sample at commit `version` (the full SHA is `version` padded with `0`s): the commits,
- * tree and raw endpoints, served from `tests/fixtures/layer1`; the API ones only with GitHub's headers. Records every URL in `urls`.
+ * tree and raw endpoints, served from `tests/fixtures/sample`; the API ones only with GitHub's headers. Records every URL in `urls`.
  * `options.extra` adds files (sample path to text) after the real ones. A URL containing `options.fail`
  * answers 403; any other URL rejects.
  */
@@ -172,10 +183,10 @@ export function fakeGitHub(
   const tree = [
     { path: 'README.md', type: 'blob' },
     { path: 'tests/fixtures', type: 'tree' },
-    { path: 'tests/fixtures/layer1', type: 'tree' },
-    ...folders.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'tree' })),
-    ...files.map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
-    ...Object.keys(options.extra ?? {}).map((f) => ({ path: `tests/fixtures/layer1/${f}`, type: 'blob' })),
+    { path: 'tests/fixtures/sample', type: 'tree' },
+    ...folders.map((f) => ({ path: `tests/fixtures/sample/${f}`, type: 'tree' })),
+    ...files.map((f) => ({ path: `tests/fixtures/sample/${f}`, type: 'blob' })),
+    ...Object.keys(options.extra ?? {}).map((f) => ({ path: `tests/fixtures/sample/${f}`, type: 'blob' })),
   ];
   const urls: string[] = [];
   const fetch: Fetch = (url, init) => {
@@ -196,7 +207,7 @@ export function fakeGitHub(
     if (api && url === `https://api.github.com/repos/${repo}/git/trees/${sha}?recursive=1`) {
       return Promise.resolve(answer({ json: { sha, truncated: false, tree } }));
     }
-    const prefix = `${raw}tests/fixtures/layer1/`;
+    const prefix = `${raw}tests/fixtures/sample/`;
     if (url.startsWith(prefix)) {
       const path = url.slice(prefix.length).split('/').map(decodeURIComponent);
       if (files.includes(path.join('/'))) {

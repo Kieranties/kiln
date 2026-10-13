@@ -1,6 +1,7 @@
 # Check every PR and every push to main. A green push to main is a release: version 0.2.<n>
 # (version.json plus the commits since it last changed), tagged v0.2.<n>, with the blueprint
 # attached as kiln-blueprint-<version>.zip. main is squash-merge only, so each merged PR is one release.
+# A green push to main also publishes the docs site to GitHub Pages.
 name: ci
 
 on:
@@ -33,6 +34,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build:check
+      - run: npm run docs:build
 
   release:
     name: release
@@ -67,3 +69,35 @@ jobs:
           else
             gh release create "v$VERSION" "dist/kiln-blueprint-$VERSION.zip" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes
           fi
+
+  docs:
+    name: docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # each page's last-updated date comes from git
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run docs:build
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/.vitepress/dist
+      - id: deploy
+        uses: actions/deploy-pages@v5

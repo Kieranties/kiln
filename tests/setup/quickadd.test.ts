@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { readBlueprint } from '../../src/blueprint/load.js';
 import { kindChoices, kindTemplates, type Choice } from '../../src/setup/quickadd.js';
-import { BLUEPRINT } from '../kit/load.js';
+import { BLUEPRINT } from '../support/blueprint.js';
 
 const { definitions } = readBlueprint(BLUEPRINT);
 const read = (file: string) => readFileSync(join(BLUEPRINT, 'templates', file), 'utf8');

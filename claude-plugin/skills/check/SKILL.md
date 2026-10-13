@@ -29,7 +29,7 @@ node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs' --today '<vault>'
 
 To check particular notes or folders, pass their paths instead of `<vault>`. Quote each path as the vault rules say; otherwise the commands are the same in Bash and pwsh. Exit code 0 means no errors (there may be warnings), 1 means errors, 2 means the arguments were wrong.
 
-**Without Node:** if `node --version` fails or shows a version below 24, check by hand. For each note, read its `type`, then `_kiln/types/<type>.md` and `_kiln/properties.md`, and apply the rules below. Report in the same format as the script.
+**Node 24 or later** runs the check. If `node --version` fails or shows an older version, stop and tell the owner: `/kiln:setup` offers to install it.
 
 ## 3. Report, then offer fixes
 

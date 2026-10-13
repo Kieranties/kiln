@@ -1,13 +1,13 @@
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runSetup, USAGE, type RunContext } from '../../src/setup/run.js';
-import { cleanupAll, PLUGIN_ROOT, testVault } from './fixture.js';
+import { cleanupAll, pathWithObsidianCli, PLUGIN_ROOT, testVault } from './fixture.js';
 
 afterAll(cleanupAll);
 const t = testVault();
 const context = (o: Partial<RunContext> = {}): RunContext => ({
   cwd: t.root,
-  env: { KILN_HOME: join(t.root, 'kiln-home') },
+  env: { KILN_HOME: join(t.root, 'kiln-home'), PATH: pathWithObsidianCli(t.root) },
   home: t.root,
   platform: process.platform,
   pluginRoot: PLUGIN_ROOT,

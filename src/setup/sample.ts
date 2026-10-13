@@ -6,7 +6,7 @@ import { isObject } from './json.js';
 import type { Fetch, FetchResponse } from './setup.js';
 
 export const REPO = 'Kieranties/kiln';
-export const SAMPLE_PATH = 'tests/fixtures/layer1';
+export const SAMPLE_PATH = 'tests/fixtures/sample';
 
 /** A sample note: `path` is relative to the sample, with `/`. */
 export type SampleFile = { path: string; text: string };

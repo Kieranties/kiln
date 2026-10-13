@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Json } from '../../src/setup/json.js';
 import { mergeFragment, Merger } from '../../src/setup/merge.js';
 import type { MergeExtra } from '../../src/setup/merge.js';
-import { BLUEPRINT } from '../kit/load.js';
+import { BLUEPRINT } from '../support/blueprint.js';
 
 const TARGET: Record<string, string> = {
   'settings/app.json': '.obsidian/app.json',

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { findVault, openVault } from '../../src/check/vault.js';
-import { makeVault } from './fixture.js';
+import { makeVault } from '../support/vault.js';
 
 const vault = makeVault();
 const outside = mkdtempSync(join(tmpdir(), 'kiln-outside-'));

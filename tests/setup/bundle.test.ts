@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { cleanupAll, fingerprint, testVault } from './fixture.js';
+import { cleanupAll, fingerprint, pathWithObsidianCli, testVault } from './fixture.js';
 
 const BUNDLE = fileURLToPath(new URL('../../claude-plugin/scripts/kiln-setup.mjs', import.meta.url));
 const OVERRIDDEN = [
@@ -14,6 +14,7 @@ const OVERRIDDEN = [
   'USERPROFILE',
   'APPDATA',
   'XDG_CONFIG_HOME',
+  'PATH',
 ];
 afterAll(cleanupAll);
 
@@ -25,6 +26,7 @@ const env: Record<string, string | undefined> = {
   USERPROFILE: t.root,
   KILN_HOME: join(t.root, 'kiln-home'),
   KILN_OBSIDIAN_RUNNING: '0',
+  PATH: pathWithObsidianCli(t.root),
 };
 const run = (...args: string[]) =>
   spawnSync(process.execPath, [BUNDLE, ...args], { encoding: 'utf8', env, cwd: t.root });

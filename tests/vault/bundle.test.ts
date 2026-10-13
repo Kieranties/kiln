@@ -3,7 +3,7 @@ import { existsSync, realpathSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { makeVault } from '../check/fixture.js';
+import { makeVault } from '../support/vault.js';
 import { sandbox, type Sandbox } from './fixture.js';
 
 const SCRIPTS = fileURLToPath(new URL('../../claude-plugin/scripts/', import.meta.url));

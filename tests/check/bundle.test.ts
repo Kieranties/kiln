@@ -3,7 +3,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { makeVault } from './fixture.js';
+import { makeVault } from '../support/vault.js';
 
 const REPO = fileURLToPath(new URL('../../', import.meta.url));
 const BUNDLE = join(REPO, 'claude-plugin', 'scripts', 'kiln-check.mjs');

@@ -20,10 +20,11 @@ describe('/kiln:check', () => {
     expect(body).toContain("node '${CLAUDE_PLUGIN_ROOT}/scripts/kiln-check.mjs' --today '<vault>'");
     expect(existsSync(`${PLUGIN}scripts/kiln-check.mjs`)).toBe(true);
   });
-  it('falls back to reading the definitions without Node, and never writes to notes unasked', () => {
-    for (const part of ['node --version', '_kiln/types/', '_kiln/properties.md', 'Obsidian CLI', '<%']) {
+  it('needs Node, pointing to /kiln:setup when it is missing, and never writes to notes unasked', () => {
+    for (const part of ['node --version', 'Node 24 or later', '/kiln:setup', '_kiln/types/', 'Obsidian CLI', '<%']) {
       expect(body, part).toContain(part);
     }
+    expect(body).not.toContain('check by hand');
   });
   it('finds the vault by rule 1 of the vault rules, which say how to run the resolver', () => {
     const step = body.slice(body.indexOf('## 1. Find the vault'), body.indexOf('## 2.'));

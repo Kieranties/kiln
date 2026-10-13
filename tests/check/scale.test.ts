@@ -2,7 +2,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runCheck } from '../../src/check/run.js';
-import { makeVault } from './fixture.js';
+import { makeVault } from '../support/vault.js';
 
 // A large vault: 2,000 topic notes, each with two links to notes that don't exist,
 // one a near miss of another note's name. The check must stay well inside Claude's

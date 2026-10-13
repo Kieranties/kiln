@@ -3,10 +3,10 @@ dist/
 *.log
 .env
 .env.*
-*.sqlite
-*.sqlite-*
 .DS_Store
 Thumbs.db
 tests/fixtures/denylist.txt
 CLAUDE.local.md
 *.tgz
+docs/.vitepress/dist/
+docs/.vitepress/cache/

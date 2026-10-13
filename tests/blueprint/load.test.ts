@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { readBlueprint, readDefinitions, readPropertyCatalogue } from '../../src/blueprint/load.js';
 import { sectionsOf, splitFrontmatter } from '../../src/blueprint/markdown.js';
-import { BLUEPRINT } from '../kit/load.js';
+import { BLUEPRINT } from '../support/blueprint.js';
 
 const tmp = mkdtempSync(join(tmpdir(), 'kiln-blueprint-'));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));

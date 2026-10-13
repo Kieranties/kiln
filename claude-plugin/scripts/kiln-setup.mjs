@@ -8315,7 +8315,7 @@ function writeRecord(vault, record) {
 import { readFileSync as readFileSync6 } from "node:fs";
 import { basename as basename2, join as join10, resolve as resolve5 } from "node:path";
 var REPO = "Kieranties/kiln";
-var SAMPLE_PATH = "tests/fixtures/layer1";
+var SAMPLE_PATH = "tests/fixtures/sample";
 var API = { Accept: "application/vnd.github+json", "User-Agent": "kiln-setup" };
 var COMMIT = /^[0-9a-f]{7,40}$/;
 var FULL_SHA = /^[0-9a-f]{40}$/;
@@ -8389,7 +8389,7 @@ async function loadSample(pluginRoot2, fetch2) {
 // src/setup/setup.ts
 var SETUP_NEEDS_CLOSED = "Obsidian is running. Setup needs it closed, because QuickAdd and Homepage read their settings only when Obsidian starts. Quit Obsidian (with Run in Background installed, use the tray's Close Vault), then run setup again.";
 var SETUP_UNSURE = "Couldn't tell whether Obsidian is running. Ask the owner, and pass --confirm-closed once it is closed.";
-var NO_CLI = "The Obsidian CLI isn't on PATH. kiln's other skills need it: in Obsidian, turn on Settings \u2192 General \u2192 Command line interface, then restart the terminal and Claude.";
+var NO_CLI = "The Obsidian CLI isn't on PATH, and kiln needs it to install the plugins and to create and rename notes. In Obsidian, turn on Settings \u2192 General \u2192 Command line interface, then start Claude again in a new terminal and run setup again.";
 var OPEN = "Obsidian is running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.";
 var MAYBE_OPEN = "Obsidian may be running, so only _kiln/, Iconic and Templater are changed. The rest waits: close Obsidian and run setup again.";
 var SAMPLE_NEEDS_CLOSED = "The sample is written as plain files, which needs Obsidian closed (Templater would run on new notes). Close Obsidian, then run setup again.";
@@ -8704,13 +8704,13 @@ function prepare(o) {
   const recordWrite = () => {
     writeRecord(vault, { plugin: report.plugin, blueprint: report.blueprint, files: nextFiles, kept: nextKept });
   };
-  if (o.cliPath === null) warnings.other.push(NO_CLI);
   if (open) warnings.other.push(o.obsidianRunning === true ? OPEN : MAYBE_OPEN);
   if (!existsSync4(join11(vault, ".obsidian", "workspace.json"))) warnings.other.push(NO_WORKSPACE);
   for (const id of take) if (!matched.has(id)) warnings.other.push(`--take ${id} matched nothing`);
   if (unreadable !== void 0) warnings.other.push(unreadable);
   report.warnings = [...warnings.old, ...warnings.other];
   report.stop = [
+    ...o.cliPath === null ? [NO_CLI] : [],
     ...missing,
     ...problems,
     ...obsidianStop === void 0 ? [] : [obsidianStop],

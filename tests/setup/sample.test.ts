@@ -6,7 +6,7 @@ import { applySetup, planSetup, type Fetch } from '../../src/setup/setup.js';
 import { cleanupAll, fakeGitHub, fingerprint, PLUGIN_ROOT, pluginCopy, testVault } from './fixture.js';
 
 afterAll(cleanupAll);
-const SAMPLE = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'layer1');
+const SAMPLE = join(PLUGIN_ROOT, '..', 'tests', 'fixtures', 'sample');
 const count = readdirSync(SAMPLE, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).length;
 const SHA = 'a1b2c3d4e5f6';
 
@@ -26,7 +26,7 @@ describe('loadSample', () => {
     );
     expect(github.urls[0]).toBe(`https://api.github.com/repos/Kieranties/kiln/commits/${SHA}`);
     expect(github.urls).toContain(
-      `https://raw.githubusercontent.com/Kieranties/kiln/${SHA.padEnd(40, '0')}/tests/fixtures/layer1/People/Priya%20Raman.md`,
+      `https://raw.githubusercontent.com/Kieranties/kiln/${SHA.padEnd(40, '0')}/tests/fixtures/sample/People/Priya%20Raman.md`,
     );
   });
 
@@ -70,9 +70,9 @@ describe('loadSample', () => {
   ])('refuses the unsafe sample path %j before fetching any file', async (path) => {
     const github = fakeGitHub(SHA, { extra: { [path]: 'evil\n' } });
     await expect(loadSample(pluginCopy(SHA), github)).rejects.toThrow(
-      `the sample's file list has a path that isn't safe to use: ${JSON.stringify(`tests/fixtures/layer1/${path}`)}`,
+      `the sample's file list has a path that isn't safe to use: ${JSON.stringify(`tests/fixtures/sample/${path}`)}`,
     );
-    const raw = `https://raw.githubusercontent.com/Kieranties/kiln/${SHA.padEnd(40, '0')}/tests/fixtures/layer1/`;
+    const raw = `https://raw.githubusercontent.com/Kieranties/kiln/${SHA.padEnd(40, '0')}/tests/fixtures/sample/`;
     expect(github.urls.every((url) => url.startsWith('https://api.github.com/') || url.startsWith(raw))).toBe(true);
     expect(github.urls.filter((url) => !url.startsWith('https://api.github.com/'))).toEqual([]);
   });

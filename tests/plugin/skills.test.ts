@@ -27,7 +27,7 @@ describe('the vault rules', () => {
   it('say <plugin>, which each skill names: Claude Code fills in ${CLAUDE_PLUGIN_ROOT} only in skills', () => {
     expect(rules).not.toContain('${CLAUDE_PLUGIN_ROOT}');
     const intro = rules.slice(0, rules.indexOf('\n## 1. '));
-    expect(intro).toContain('`<plugin>` is the plugin folder the skill named in its Follow line');
+    expect(intro).toContain("`<plugin>` is the Claude plugin's folder, which the skill named in its Follow line");
   });
 
   it("number the spec's six rules in order, so skills can name them", () => {

@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runCheck } from '../../src/check/run.js';
-import { makeVault } from './fixture.js';
+import { makeVault } from '../support/vault.js';
 
 const sample = makeVault();
 const broken = makeVault({ broken: true });

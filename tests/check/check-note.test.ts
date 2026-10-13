@@ -4,7 +4,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { checkNote, NoteReadError, type CheckOptions } from '../../src/check/check-note.js';
 import { formatResult } from '../../src/check/format.js';
 import { openVault } from '../../src/check/vault.js';
-import { makeVault } from './fixture.js';
+import { makeVault } from '../support/vault.js';
 
 const dir = makeVault({ broken: true });
 afterAll(() => rmSync(dir, { recursive: true, force: true }));

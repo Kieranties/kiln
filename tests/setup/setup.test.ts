@@ -86,7 +86,7 @@ describe('what stops setup', () => {
       uri: 'obsidian://open?vault=Trial%20Vault',
       plugins: ['iconic', 'quickadd'],
     });
-    // Listed even without the CLI: the skill then falls back to installing by hand.
+    // Listed even without the CLI, which stops setup until it is turned on.
     const noCli = planSetup(testVault({ plugins: { homepage: null } }).options({ cliPath: null }));
     expect(noCli.install).toMatchObject({ vault: 'Trial Vault', plugins: ['homepage'] });
   });
@@ -124,8 +124,11 @@ describe('what stops setup', () => {
     );
   });
 
-  it('no Obsidian CLI only warns', () => {
-    expect(planSetup(testVault().options({ cliPath: null })).warnings[0]).toMatch(/^The Obsidian CLI isn't on PATH/);
+  it('no Obsidian CLI stops setup, and says which switch turns it on', () => {
+    const report = planSetup(testVault().options({ cliPath: null }));
+    const noCli = report.stop.find((s) => s.startsWith("The Obsidian CLI isn't on PATH"));
+    expect(noCli).toContain('Settings → General → Command line interface');
+    expect(report.warnings.some((w) => w.includes('Obsidian CLI'))).toBe(false);
   });
 
   it('a settings file of a shape the merge can’t use, named', () => {
