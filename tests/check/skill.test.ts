@@ -26,6 +26,14 @@ describe('/kiln:check', () => {
     }
     expect(body).not.toContain('check by hand');
   });
+  it('lists nested notes and the whole linkable-name rule, and moves notes by rule 4', () => {
+    const table = body.slice(body.indexOf('## The rules'));
+    for (const part of ["a folder inside its type's folder", '"File names stay linkable"']) {
+      expect(table, part).toContain(part);
+    }
+    // Rule 4 says what to do about a folder a move leaves empty.
+    expect(body).toContain('rule 4 of the vault rules');
+  });
   it('finds the vault by rule 1 of the vault rules, which say how to run the resolver', () => {
     const step = body.slice(body.indexOf('## 1. Find the vault'), body.indexOf('## 2.'));
     expect(step).toContain('rule 1 of the vault rules');

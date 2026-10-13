@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { splitFrontmatter } from '../../src/blueprint/markdown.js';
+import { NAME_LIMIT } from '../../src/blueprint/name.js';
 import { obsidianUri } from '../../src/setup/setup.js';
 
 const PLUGIN = fileURLToPath(new URL('../../claude-plugin/', import.meta.url));
@@ -93,9 +94,26 @@ describe('the vault rules', () => {
       expect(rule(5), part).toContain(part);
   });
 
-  it('4. rename and move with the CLI', () => {
+  it('3. names the note by the whole linkable-name rule', () => {
+    const step = rule(3).slice(0, rule(3).indexOf('\n2. '));
+    for (const part of [
+      ...['/', '\\', ':', '#', '^', '[', ']', '|', '*', '?', '"', '<', '>'].map((c) => `\`${c}\``),
+      'control characters',
+      'leading dots',
+      'trailing dots and spaces',
+      `${NAME_LIMIT} characters`,
+      'Windows reserves',
+      'ask the owner',
+    ]) {
+      expect(step, part).toContain(part);
+    }
+  });
+
+  it('4. rename and move with the CLI, and tell the owner about a folder a move empties', () => {
     for (const part of ["obsidian vault='<folder name>' rename path='", "obsidian vault='<folder name>' move path='"])
       expect(rule(4), part).toContain(part);
+    // The CLI can't remove a folder, and kiln never deletes on disk.
+    for (const part of ["can't remove a folder", 'tell the owner']) expect(rule(4), part).toContain(part);
   });
 
   it('call the CLI in Git Bash and pwsh, from inside the vault or outside it, and say T2 is pending', () => {

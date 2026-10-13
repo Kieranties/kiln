@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { linkableName, NAME_LIMIT } from '../../src/blueprint/name.js';
 import { installedFiles } from '../../src/setup/blueprint.js';
 import { BLUEPRINT } from '../support/blueprint.js';
 
@@ -98,6 +99,34 @@ describe('the blueprint README and the guides', () => {
     for (const part of ['~/.kiln/config.json', 'KILN_VAULT', 'export KILN_VAULT=work', "$env:KILN_VAULT = 'work'"]) {
       expect(conventions, part).toContain(part);
     }
+  });
+});
+
+describe('the README convention "File names stay linkable"', () => {
+  const convention =
+    section(readme, 'Conventions')
+      .split('\n- ')
+      .find((bullet) => bullet.startsWith('**File names stay linkable.**')) ?? '';
+
+  it('lists the whole rule', () => {
+    for (const part of [
+      ...['/', '\\', ':', '#', '^', '[', ']', '|', '*', '?', '"', '<', '>', '%%'].map((c) => `\`${c}\``),
+      'control characters',
+      'Leading dots',
+      'trailing dots and spaces',
+      `${NAME_LIMIT} characters`,
+      ...['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM9', 'LPT1', 'LPT9'].map((n) => `\`${n}\``),
+      'ask the owner',
+      "directly in its type's folder",
+    ]) {
+      expect(convention, part).toContain(part);
+    }
+  });
+
+  it('gives examples the name function agrees with', () => {
+    const examples = [...convention.matchAll(/`([^`]+)` becomes `([^`]+)`/g)];
+    expect(examples.length).toBeGreaterThanOrEqual(2);
+    for (const [, title = '', name] of examples) expect(linkableName(title), title).toEqual({ ok: true, name });
   });
 });
 

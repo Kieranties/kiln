@@ -7420,6 +7420,27 @@ function sectionsOf(body) {
   return sections;
 }
 
+// src/blueprint/name.ts
+var NAME_LIMIT = 120;
+var stripEnds = (name) => name.replace(/^[. ]+|[. ]+$/g, "");
+function cut(name) {
+  const chars = Array.from(name);
+  if (chars.length <= NAME_LIMIT) return name;
+  const head = chars.slice(0, NAME_LIMIT + 1).join("");
+  const space = head.lastIndexOf(" ");
+  return space > 0 ? head.slice(0, space) : chars.slice(0, NAME_LIMIT).join("");
+}
+function linkableName(title) {
+  const cleaned = stripEnds(
+    title.replace(/[/\\:]/g, "-").replace(/[#^[\]|*?"<>\p{Cc}]/gu, " ").replace(/ {2,}/g, " ")
+  );
+  if (cleaned === "") return { ok: false, reason: "nothing is left once path and link characters are removed" };
+  const name = stripEnds(cut(cleaned));
+  const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9]) *(\.|$)/i.exec(name)?.[1];
+  if (reserved) return { ok: false, reason: `"${reserved}" is a reserved name on Windows` };
+  return { ok: true, name };
+}
+
 // src/check/links.ts
 var FENCED = /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[^\n]*$/gm;
 var CODE_SPAN = /`[^`\n]*`/g;
@@ -7547,9 +7568,17 @@ function checkNote(vault, path, options = {}) {
   if (!definition) return result([error(`unknown type: ${t} (types are ${typeNames.join(", ")})`)]);
   const findings = [];
   const add = (message2) => findings.push(error(message2));
-  if (folder !== definition.folder) {
-    const where = folder === void 0 ? "the vault root" : `${folder}/`;
-    add(`type is ${t} but the note is in ${where}; ${t} notes live in ${definition.folder}/`);
+  const dir = path.slice(0, Math.max(path.lastIndexOf("/"), 0));
+  const nested = dir.includes("/");
+  const unsplit = nested && definitions.some((d) => d.folder === folder) ? linkableName(path.slice(slash + 1).replace(/\.md$/, "")) : void 0;
+  const fileName = basename(path).replace(/\.md$/, "");
+  const name = unsplit?.ok ? unsplit.name : fileName;
+  if (folder !== definition.folder || nested) {
+    const where = dir === "" ? "the vault root" : `${dir}/`;
+    const what = folder === definition.folder ? "the note" : `type is ${t} but the note`;
+    const live = nested ? `${t} notes live directly in ${definition.folder}/` : `${t} notes live in ${definition.folder}/`;
+    const rename = unsplit?.ok ? `, so move it there and rename it to "${unsplit.name}"` : "";
+    add(`${what} is in ${where}; ${live}${rename}`);
   }
   const kinds = Object.keys(definition.kinds);
   if (!isEmpty(data.kind)) {
@@ -7565,11 +7594,11 @@ function checkNote(vault, path, options = {}) {
   } else if (!isEmpty(data.status)) {
     add(`${t} has no status; leave status empty`);
   }
-  const name = basename(path).replace(/\.md$/, "");
   const naming = namingError(definition, name);
   if (naming) add(naming);
-  const bad = [...new Set(name.match(/[#^[\]|:]/g) ?? [])];
-  if (bad.length > 0) add(`file name contains ${bad.join(", ")}; replace # ^ [ ] | with a space and : with -`);
+  const linkable = unsplit ?? linkableName(name);
+  if (!linkable.ok) add(`file name isn't usable: ${linkable.reason}; ask the owner for another name`);
+  else if (linkable.name !== name) add(`file name isn't linkable; rename it to "${linkable.name}"`);
   if (isNew && body.trim() === "") {
     add("new note has properties and no body; create it from its template through QuickAdd");
   }
@@ -7622,7 +7651,7 @@ function checkNote(vault, path, options = {}) {
     const hint = near === void 0 ? "" : `; did you mean [[${near}]]?`;
     findings.push({ level: "warn", message: `[[${target}]] doesn't exist yet${hint}` });
   }
-  const sameName = (vault.names.get(name.toLowerCase()) ?? []).filter((other) => other !== path && other.endsWith(".md") && !other.startsWith("_kiln/")).sort();
+  const sameName = (vault.names.get(fileName.toLowerCase()) ?? []).filter((other) => other !== path && other.endsWith(".md") && !other.startsWith("_kiln/")).sort();
   if (sameName.length > 0) findings.push({ level: "warn", message: `file name also used by ${sameName.join(", ")}` });
   return result(findings.sort((a, b) => Number(b.level === "error") - Number(a.level === "error")));
 }

@@ -33,16 +33,16 @@ To check particular notes or folders, pass their paths instead of `<vault>`. Quo
 
 ## 3. Report, then offer fixes
 
-Show the output as it is: each note's path, then its `error` and `warn` lines. Then offer to fix the errors, and change a note only when the owner agrees. Move and rename notes through the Obsidian CLI, so links follow. Never write `<%` into a note.
+Show the output as it is: each note's path, then its `error` and `warn` lines. Then offer to fix the errors, and change a note only when the owner agrees. Move and rename notes through the Obsidian CLI by rule 4 of the vault rules, so links follow. Never write `<%` into a note.
 
 ## The rules
 
 | Result | Rule |
 |---|---|
-| Error | Wrong folder, type, kind or status |
+| Error | Wrong folder, type, kind or status, or a note in a folder inside its type's folder (the error names the folder to move it to, and the name to give it) |
 | Error | A section of the type is missing (extra sections are fine), or the daily note's Log isn't last |
 | Error | A property that isn't shared, optional or the type's own; a relationship that isn't a list of links |
-| Error | A file name that breaks the type's `naming`, or contains `#`, `^`, `[`, `]`, `\|` or `:` |
+| Error | A file name that breaks the type's `naming`, or the convention "File names stay linkable" (the error names the linkable name, or says to ask the owner for another) |
 | Error | A new note with properties and no body, or with `<%` |
 | Warning | A link to a note that doesn't exist yet (suggest a near match) |
 | Warning | A file name another note uses |

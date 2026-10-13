@@ -1,6 +1,7 @@
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { NAME_LIMIT } from '../../src/blueprint/name.js';
 import { checkNote, NoteReadError, type CheckOptions } from '../../src/check/check-note.js';
 import { formatResult } from '../../src/check/format.js';
 import { openVault } from '../../src/check/vault.js';
@@ -80,10 +81,64 @@ describe('checkNote errors', () => {
     ]);
   });
 
-  it('an unlinkable file name', () => {
-    expect(errors('References/NWA-150 Retry #3 fails.md')).toEqual([
-      'file name contains #; replace # ^ [ ] | with a space and : with -',
-    ]);
+  describe('a file name that breaks "File names stay linkable"', () => {
+    const copy = (from: string, to: string) => {
+      writeFileSync(join(dir, to), readFileSync(join(dir, from), 'utf8'));
+      return errors(to);
+    };
+
+    it('suggests the linkable name', () => {
+      expect(errors('References/NWA-150 Retry #3 fails.md')).toEqual([
+        'file name isn\'t linkable; rename it to "NWA-150 Retry 3 fails"',
+      ]);
+    });
+
+    it(`suggests a long name cut to ${NAME_LIMIT} characters`, () => {
+      const kept =
+        'Renewal date rolls over a year early for supporters who renewed during the grace period and then changed card before the';
+      expect(kept).toHaveLength(NAME_LIMIT);
+      expect(copy('References/NWA-150 Retry #3 fails.md', `References/${kept} third retry.md`)).toEqual([
+        `file name isn't linkable; rename it to "${kept}"`,
+      ]);
+    });
+
+    it('asks the owner for another name when there is none to suggest', () => {
+      expect(copy('People/Priya Raman.md', 'People/Con.md')).toEqual([
+        'file name isn\'t usable: "Con" is a reserved name on Windows; ask the owner for another name',
+      ]);
+    });
+  });
+
+  describe('a note nested in a folder', () => {
+    /** Copies the sample note `from` to `to`, making its folders, and returns the errors for `to`. */
+    const nest = (from: string, to: string) => {
+      mkdirSync(dirname(join(dir, to)), { recursive: true });
+      writeFileSync(join(dir, to), readFileSync(join(dir, from), 'utf8'));
+      return errors(to);
+    };
+    const capture = 'Inbox/2026-10-06 Ask Priya about grace periods.md';
+    const project = 'Projects/Season Ticket Renewals 2027.md';
+
+    it('inside its own folder: move it up, under the linkable name of the title the folder split', () => {
+      expect(nest(capture, 'Inbox/2026-10-12 Collect ticket status from the Northwind/Arena project.md')).toEqual([
+        'the note is in Inbox/2026-10-12 Collect ticket status from the Northwind/; capture notes live directly in Inbox/, so move it there and rename it to "2026-10-12 Collect ticket status from the Northwind-Arena project"',
+      ]);
+      expect(nest(project, 'Projects/Northwind/Arena/Relaunch #2.md')).toEqual([
+        'the note is in Projects/Northwind/Arena/; project notes live directly in Projects/, so move it there and rename it to "Northwind-Arena-Relaunch 2"',
+      ]);
+    });
+
+    it("inside another type's folder: move it to its own, under the linkable name", () => {
+      expect(nest(project, 'Inbox/Northwind/Arena relaunch.md')).toEqual([
+        'type is project but the note is in Inbox/Northwind/; project notes live directly in Projects/, so move it there and rename it to "Northwind-Arena relaunch"',
+      ]);
+    });
+
+    it('outside the type folders: move it, with no name to suggest', () => {
+      expect(nest(project, 'Archive/2025/Arena relaunch.md')).toEqual([
+        'type is project but the note is in Archive/2025/; project notes live directly in Projects/',
+      ]);
+    });
   });
 
   it('unknown and missing types', () => {
