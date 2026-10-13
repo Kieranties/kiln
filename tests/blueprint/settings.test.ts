@@ -192,7 +192,7 @@ describe('Obsidian settings', () => {
     });
   });
 
-  it('the kiln snippet shows property names, values and board columns with capitals, and is switched on', () => {
+  it('the kiln snippet shows property names and values with capitals, and is switched on', () => {
     expect(loadJson('settings/appearance.json')).toEqual({ enabledCssSnippets: ['kiln'] });
     const css = readFileSync(join(BLUEPRINT, 'settings', 'snippets', 'kiln.css'), 'utf8');
     for (const selector of ['.metadata-property-key', '.metadata-property-value']) {
