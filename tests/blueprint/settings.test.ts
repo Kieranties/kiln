@@ -195,10 +195,32 @@ describe('Obsidian settings', () => {
   it('the kiln snippet shows property names, values and board columns with capitals, and is switched on', () => {
     expect(loadJson('settings/appearance.json')).toEqual({ enabledCssSnippets: ['kiln'] });
     const css = readFileSync(join(BLUEPRINT, 'settings', 'snippets', 'kiln.css'), 'utf8');
-    for (const selector of ['.metadata-property-key', '.metadata-property-value', 'kanban']) {
+    for (const selector of ['.metadata-property-key', '.metadata-property-value']) {
       expect(css, selector).toContain(selector);
     }
     expect(css).toContain('text-transform: capitalize');
+  });
+
+  it('kanban boards show column headings, and kind, status and priority values on cards, with capitals', () => {
+    const css = readFileSync(join(BLUEPRINT, 'settings', 'snippets', 'kiln.css'), 'utf8').replace(
+      /\/\*[\s\S]*?\*\//g,
+      '',
+    );
+    const capitalised = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+      .filter((rule) => rule[2]?.includes('text-transform: capitalize'))
+      .map((rule) => (rule[1] ?? '').replace(/\s+/g, ' ').trim());
+    const kanban = capitalised.filter((selector) => selector.includes('kanban'));
+    for (const selector of kanban) expect(selector).toMatch(/^\.bases-view\[data-view-type='kanban'\] \.bases-kanban-/);
+
+    expect(kanban.filter((selector) => selector.endsWith('.bases-kanban-column-header'))).toHaveLength(1);
+    // Values are named one by one: links, URLs and relative dates would read wrongly capitalised.
+    const values = kanban.filter((selector) => selector.endsWith('.bases-kanban-card-line'));
+    expect(values).toHaveLength(1);
+    expect([...(values[0] ?? '').matchAll(/\[data-property='([^']+)'\]/g)].map((m) => m[1])).toEqual([
+      'note.kind',
+      'note.status',
+      'note.priority',
+    ]);
   });
 
   it('the right sidebar gets a file properties view', () => {

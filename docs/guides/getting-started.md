@@ -64,7 +64,7 @@ Creating a note in a folder needs Templater's trigger (section 3). Without it, a
 
 - [ ] Create a note in `Projects`: it gets the project's properties and the sections Goal, Current state, Scope and Done when, with a rocket icon. Set its `status` to `active`: Home's Active projects lists it.
 - [ ] Create a note in `Work`: Templater asks for its kind. Choose **task**, and in its `projects` property link your project.
-- [ ] The project's Board shows the task in **Backlog**, with every column (Backlog, Active, Blocked, Review, Done) there even when empty. Drag the task to **Active**: its `status` changes to `active`.
+- [ ] The project's Board shows the task in **Backlog**, with every column (Backlog, Active, Blocked, Review, Done) there even when empty. Its card shows **Kind** with the value **Task**, and a dash under an empty **Priority**. Drag the task to **Active**: its `status` changes to `active`.
 - [ ] Open the **Board** from Home: it shows the task. A task with no project shows here too.
 
 **Flag something for review**
