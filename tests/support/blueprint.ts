@@ -56,9 +56,17 @@ export function allBases(): string[] {
   return [...viewFiles().map((f) => `views/${f}`), 'root/Board.base'];
 }
 
-/** The header a view column shows: 'file.name' reads 'Name', 'summary' reads 'Summary'. */
+/**
+ * The id Bases holds a view column under: a bare name is a note property, so 'kind' is 'note.kind'.
+ * `file.*`, `formula.*` and `note.*` are kept as they are. Bases looks a column's displayName up by this id.
+ */
+export function propertyId(column: string): string {
+  return /^(file|formula|note)\./.test(column) ? column : `note.${column}`;
+}
+
+/** The header a view column shows: 'file.name' reads 'Name', 'summary' and 'note.summary' read 'Summary'. */
 export function columnLabel(property: string): string {
-  const name = property === 'file.name' ? 'name' : property;
+  const name = property === 'file.name' ? 'name' : property.replace(/^note\./, '');
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 

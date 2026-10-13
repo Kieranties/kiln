@@ -7,11 +7,11 @@ filters:
 properties:
   file.name:
     displayName: Name
-  captured:
+  note.captured:
     displayName: Captured
-  from:
+  note.from:
     displayName: From
-  summary:
+  note.summary:
     displayName: Summary
 views:
   - type: table

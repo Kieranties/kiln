@@ -7,6 +7,7 @@ import {
   BLUEPRINT,
   loadBase,
   loadDefinitions,
+  propertyId,
   sectionsOf,
   viewFile,
   viewFiles,
@@ -87,12 +88,15 @@ describe('readable views', () => {
     }
   });
 
-  it('every view column has a readable header', () => {
+  it('every view column has a readable header, keyed by the id Bases looks it up by', () => {
     for (const path of allBases()) {
       const base = loadBase(path);
-      for (const column of base.views[0]?.order ?? []) {
-        expect(base.properties?.[column]?.displayName, `${path}: ${column}`).toBe(columnLabel(column));
+      const order = base.views[0]?.order ?? [];
+      for (const column of order) {
+        expect(base.properties?.[propertyId(column)]?.displayName, `${path}: ${column}`).toBe(columnLabel(column));
       }
+      // A bare key (kind:) would sit unused, since Bases ignores its displayName.
+      expect(Object.keys(base.properties ?? {}), path).toEqual(order.map(propertyId));
     }
   });
 });

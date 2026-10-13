@@ -16,7 +16,20 @@
 }
 
 /* Column headings on Bases kanban boards. */
-.bases-view [class*='kanban'] [class*='column-header'],
-.bases-view [class*='kanban'] [class*='group-title'] {
+.bases-view[data-view-type='kanban'] .bases-kanban-column-header {
+  text-transform: capitalize;
+}
+
+/*
+ * Plain-text values on Bases kanban cards, named one by one: links, URLs and relative dates would
+ * read wrongly with capitals. An empty value keeps Obsidian's dash.
+ */
+.bases-view[data-view-type='kanban']
+  .bases-kanban-card-property:is(
+    [data-property='note.kind'],
+    [data-property='note.status'],
+    [data-property='note.priority']
+  )
+  .bases-kanban-card-line {
   text-transform: capitalize;
 }
