@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, sep } from 'node:path';
+import { delimiter, dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readRequires } from '../../src/setup/blueprint.js';
 import type { Fetch, FetchResponse, SetupOptions } from '../../src/setup/setup.js';
@@ -9,6 +9,17 @@ import type { Fetch, FetchResponse, SetupOptions } from '../../src/setup/setup.j
 export const PLUGIN_ROOT = fileURLToPath(new URL('../../claude-plugin/', import.meta.url));
 
 const made: string[] = [];
+
+/**
+ * A PATH with a stand-in Obsidian CLI first, in `root/bin`. Setup needs the CLI on PATH but only looks for it,
+ * never runs it, so an empty file will do, and the tests pass on machines without Obsidian.
+ */
+export function pathWithObsidianCli(root: string): string {
+  const bin = join(root, 'bin');
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(join(bin, process.platform === 'win32' ? 'Obsidian.com' : 'obsidian'), '');
+  return [bin, process.env.PATH].join(delimiter);
+}
 
 /**
  * A temporary copy of the plugin's blueprint at `<temp>/<name>/blueprint`, changed by `change`.
